@@ -4,7 +4,7 @@
 
 $.get('dataset/location.csv', function(csv) {
 	var data = $.csv.toObjects(csv);
-    data = _.sample(data, 1000); // get few data for test purposes TODO: remove
+    data = _.sample(data, 8000); // get few data for test purposes TODO: remove
 	console.log("data length: ", data.length);
 
 	for (var i=0; i<data.length; i++) {
@@ -18,6 +18,7 @@ $.get('dataset/location.csv', function(csv) {
 	//
 	// ignore locations with accuracy over 1000m
 	//
+
 	data = data.filter(function(row) {
 		return row.accuracy <= 1000;
 	});
@@ -30,6 +31,7 @@ $.get('dataset/location.csv', function(csv) {
 	//
 	// ignore all locations outside CITY
 	//
+
 	data = data.filter(function(row) {
 		return (Math.abs(row.latitude - CITY[0] <= latMargin) &&
 				Math.abs(row.longitude - CITY[1] <= longMargin));
@@ -39,6 +41,7 @@ $.get('dataset/location.csv', function(csv) {
 	//
 	// add column to show if location is home, work, other
 	//
+
 	var HOME = [42.446594, -76.493736];
 	var WORK = [42.444877, -76.480814];
 
@@ -63,6 +66,7 @@ $.get('dataset/location.csv', function(csv) {
     // Add other relevant columns
     // day column: 0 is Sunday, 1 is Monday, etc
     //
+
     var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
     for (var i=0; i < data.length; i++) {
         var row = data[i];
@@ -80,6 +84,7 @@ $.get('dataset/location.csv', function(csv) {
     // =========GRAPH PLOTS ===========
     //
     //
+
 	var homeLoc = [];
 	var workLoc = [];
 	var otherLoc = [];
@@ -104,6 +109,7 @@ $.get('dataset/location.csv', function(csv) {
 	//
 	// combined plot for home, work, other
 	//
+
 	$('#latLongChart').highcharts({
 		chart: {
 			type: 'scatter'
@@ -145,6 +151,7 @@ $.get('dataset/location.csv', function(csv) {
     //
     // where are you by time of weekday
     //
+
     var grpCount = _.groupBy(data, function(obj){
         return obj.locationLabel;
     });
@@ -214,8 +221,81 @@ $.get('dataset/location.csv', function(csv) {
     });
 
     //
-    // utility functions
+    // where are you by time of given DATES
     //
+
+    var grpCount = _.groupBy(data, function(obj){
+        return obj.locationLabel;
+    });
+
+    var homeGrp = grpCount['home'];
+    var workGrp = grpCount['work'];
+    var otherGrp = grpCount['other'];
+
+    homeGrp = _.map(homeGrp, function (obj) {
+        return [obj.datetime, obj.time];
+    });
+    workGrp = _.map(workGrp, function (obj) {
+        return [obj.datetime, obj.time];
+    });
+    otherGrp = _.map(otherGrp, function (obj) {
+        return [obj.datetime, obj.time];
+    });
+
+    console.log("utc: ", Date.UTC(2013,5,2));
+    $('#dateTimeChart').highcharts({
+        chart: {
+            type: 'scatter',
+            zoomType: 'x'
+        },
+        title: {
+            text: 'Where are you by time of date?'
+        },
+        subtitle: {
+            text: document.ontouchstart === undefined ?
+                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+        },
+        xAxis: {
+            type: 'datetime',
+            tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
+            labels: {
+                format: '{value: %a %d %b %Y}',
+                //align: 'right',
+                // rotation: -30
+            },
+            title: {
+                text: 'date',
+            },
+            min: Date.UTC(2013,7,2),
+        },
+        yAxis: {
+            title: {
+                text: 'time of day'
+            },
+            min: 0,
+            tickInterval: 6,
+            categories: timeLabel,
+        },
+        series: [{
+            name: 'Home',
+            color: 'rgba(83, 223, 83, .5)',
+            data: homeGrp,
+        }, {
+            name: 'Work',
+            color: 'rgba(223, 83, 83, .5)',
+            data: workGrp
+        }, {
+            name: 'Other',
+            color: 'rgba(83, 83, 223, .5)',
+            data: otherGrp
+        }]
+    });
+
+
+    //
+    // ====== UTILITY FUNCTIONS =========
+    //
+
     function extractDate(d) {
         return ("0" + d.getDate()).slice(-2) + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
             d.getFullYear();
@@ -224,44 +304,4 @@ $.get('dataset/location.csv', function(csv) {
     function extractTime(d) {
         return (d.getHours() + d.getMinutes()/60.0);
     }
-
-    function extractTimeStr(d) {
-        return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
-    }
-
-    function getColumn(data, colName) {
-        var colArray = [];
-        for (var i = 0; i < data.length; i++) {
-            colArray.push(data[i][colName]);
-        }
-        return colArray;
-    }
-
-});
-
-
-$(function () {
-	$('#container').highcharts({
-		chart: {
-			type: 'bar'
-		},
-		title: {
-			text: 'Fruit Consumption'
-		},
-		xAxis: {
-			categories: ['Apples', 'Bananas', 'Oranges']
-		},
-		yAxis: {
-			title: {
-				text: 'Fruit eaten'
-			}
-		},
-		series: [{
-			name: 'Jane',
-			data: [1, 0, 4]
-		}, {
-			name: 'John',
-			data: [5, 7, 3]
-		}]
-	});
 });
