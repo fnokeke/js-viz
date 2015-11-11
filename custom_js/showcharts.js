@@ -2,12 +2,7 @@
  * Created by fnokeke on 11/7/15.
  */
 
-
-//graph data
-//break
-
-
-// Parse local CSV file
+// Papa parse is super fast in loading data
 $(document).ready(function () {
   Papa.parse('dataset/location.csv', {
     download: true,
@@ -16,49 +11,48 @@ $(document).ready(function () {
   });
 });
 
-
 function processingCharts(results) {
-  console.time('load');
+
+  console.time('load'); //TODO: remove
 
   var data = results.data;
-//data = _.sample(data, 500); // get few data for test purposes TODO: remove
+  data = _.sample(data, 8000); // get few data for test purposes @TODO: remove
 
+  var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
+    row['timestamp'] = parseFloat(row['timestamp']);
     row['datetime'] = new Date(row['datetime']);
     row['latitude'] = parseFloat(row['latitude']);
     row['longitude'] = parseFloat(row['longitude']);
     row['accuracy'] = parseInt(row['accuracy']);
+
+    var rowDate = row.datetime,
+        dayNum = rowDate.getDay();
+
+    row['day'] = dayNum;
+    row['weekday'] = WEEKDAY[dayNum];
+    row['date'] = extractDate(rowDate);
+    row['time'] = extractTime(rowDate);
   }
 
-//
-// re-arrange data in ascending order to be used later
-//
+  // re-arrange data in ascending order to be used later
   data = _.sortBy(data, 'datetime');
-  //console.log("data ", data);
 
-//
-// ignore locations with accuracy over 1000m
-//
-
+  // ignore locations with accuracy over 1000m
   data = data.filter(function (row) {
     return row.accuracy <= 1000;
   });
-  //console.log("data(accuracy < 1000m): ", data.length);
 
   var CITY = [42.446594, -76.493736];
   var latMargin = 0.1;
   var longMargin = 1.0;
 
-//
-// ignore all locations outside CITY
-//
-
+  // ignore all locations outside CITY
   data = data.filter(function (row) {
     return (Math.abs(row.latitude - CITY[0] <= latMargin) &&
     Math.abs(row.longitude - CITY[1] <= longMargin));
   });
-  //console.log("only places in city: ", data.length);
 
 //
 // add column to show if location is home, work, other
@@ -84,22 +78,6 @@ function processingCharts(results) {
     }
   }
 
-//
-// Add other relevant columns
-// day column: 0 is Sunday, 1 is Monday, etc
-//
-
-  var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
-  for (var i = 0; i < data.length; i++) {
-    var row = data[i],
-      date = row.datetime,
-      dayNum = date.getDay();
-
-    row['day'] = dayNum;
-    row['weekday'] = WEEKDAY[dayNum];
-    row['date'] = extractDate(date);
-    row['time'] = extractTime(date);
-  }
   console.timeEnd('load');
 
 //
@@ -214,7 +192,7 @@ function processingCharts(results) {
 
   $('#dayTimeChart').highcharts({
     chart: {
-      type: 'scatter'
+      type: 'scatter',
     },
     title: {
       text: 'Where are you by time of weekday?'
@@ -245,7 +223,6 @@ function processingCharts(results) {
       data: otherGrp
     }]
   });
-  //console.log("first plot processing donee=========");
 
 //
 // where are you by time of given DATES
@@ -260,14 +237,20 @@ function processingCharts(results) {
   var otherGrp = grpCount['other'];
 
   homeGrp = _.map(homeGrp, function (obj) {
-    return [obj.datetime, obj.time];
+    return [obj.timestamp, obj.time];
   });
   workGrp = _.map(workGrp, function (obj) {
-    return [obj.datetime, obj.time];
+    return [obj.timestamp, obj.time];
   });
   otherGrp = _.map(otherGrp, function (obj) {
-    return [obj.datetime, obj.time];
+    return [obj.timestamp, obj.time];
   });
+
+  //console.log("data:", data); //@TODO: remove
+  //console.log("homegrp", homeGrp);
+  //console.log("workgrp", workGrp);
+  //console.log("othergrp", otherGrp);
+
 
   $('#dateTimeChart').highcharts({
     chart: {
@@ -292,7 +275,7 @@ function processingCharts(results) {
       title: {
         text: 'date',
       },
-      min: Date.UTC(2013, 7, 2),
+    //  min: Date.UTC(2013, 7, 2),
     },
     yAxis: {
       title: {
@@ -318,66 +301,172 @@ function processingCharts(results) {
   });
 
 
-//
-// time left home and time returned home
-//
+  // time left home and time returned home
   var groupedDate = _.groupBy(data, 'date');
-//groupedDate = _.each(groupedDate, function(obj) {
-//  obj.leftHome = -1;
-//  obj.returnedHome = -1;
-//});
-//  console.log("groupedDate:\n", groupedDate);
 
-  var count = 0;
+  var dwellHome = {};
   for (var key in groupedDate) {
-    var locArray = groupedDate[key],
-      timeArray = _.map(locArray, 'datetime'),
-      labelArray = _.map(locArray, 'locationLabel');
-
-    if (locArray.length == 0) // no location data
-      locArray.leftHome = -1;
-    else if (_.uniq(labelArray).indexOf('home') === -1) //no home label recorded
-      locArray.leftHome = -2;
-    else if (_.uniq(labelArray).length < 2) //maybe stayed in one location all day
-      locArray.leftHome = -3;
-    else {
-      var firstIndex = locArray.indexOf('home'),
-        workIndex = locArray.indexOf('work', firstIndex),
-        otherIndex = locArray.indexOf('other', firstIndex);
-
-      var LARGE = 999999;
-      workIndex = workIndex === -1 ? LARGE : workIndex;
-      otherIndex = otherIndex === -1 ? LARGE : workIndex;
-
-      var leftHomeIndex = Math.min(workIndex, otherIndex);
-      key.leftHome = timeArray[leftHomeIndex];
-
-
-    }
-
-    //console.log(timeArray);
-    //console.log(labelArray);
-    //
-
-    count++;
-    if (count === 20) break;
+    var locArray = groupedDate[key];
+        dwellHome[key] = [
+            getTimeLeftHome(locArray),
+            getTimeReturnedHome(locArray)
+    ];
   }
+
+  console.log("dwellHome b4:", _.size(dwellHome));
+
+  // drop all dwell time values that have any error/negative numbers
+  var plotDwellHome = {};
+  for (key in dwellHome) {
+    var arrayValue = dwellHome[key];
+    if (_.min(arrayValue) > 0) {
+      plotDwellHome[key] = arrayValue;
+    }
+  }
+  console.log("dwellHome after:", plotDwellHome);
+
+  var leftHomeArray = [],
+      returnedHomeArray = [];
+
+  for (key in plotDwellHome) {
+    var arrayValue = plotDwellHome[key],
+        leftDatetime = arrayValue[0],
+        returnedDatetime = arrayValue[1];
+
+    leftHomeArray.push([ leftDatetime, extractTime(leftDatetime)]);
+    returnedHomeArray.push([ returnedDatetime, extractTime(returnedDatetime)]);
+  }
+
+
+  $('#leftReturnedChart').highcharts({
+    chart: {
+      type: 'area',
+      zoomType: 'xy'
+    },
+    title: {
+      text: 'When do you leave home and when do you get back?'
+    },
+    subtitle: {
+      text: document.ontouchstart === undefined ?
+        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+    },
+    xAxis: {
+      type: 'datetime',
+      tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
+      labels: {
+        format: '{value: %a %d %b %Y}',
+        //align: 'right',
+        // rotation: -30
+      },
+      title: {
+        text: 'date',
+      },
+      //  min: Date.UTC(2013, 7, 2),
+    },
+    yAxis: {
+      title: {
+        text: 'time of day'
+      },
+      min: 0,
+      tickInterval: 6,
+      categories: timeLabel,
+    },
+    series: [{
+      name: 'Left Home',
+     // color: 'rgba(0, 0, 0, .5)',
+      data: leftHomeArray,
+    },{
+      name: 'Returned Home',
+      color: 'rgba(223, 83, 83, .5)',
+      data: returnedHomeArray
+    }]
+  });
+
+
+console.timeEnd('plots');
+}
+
+
+
 
 //
 // ====== UTILITY FUNCTIONS =========
 //
 
-
-  //console.log("finally waiting for document ready plot processing donee=========");
-
-  console.timeEnd('plots');
-}
-
 function extractDate(d) {
+  if (!(d instanceof Date))
+    d = new Date(d);
   return ("0" + d.getDate()).slice(-2) + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
     d.getFullYear();
 }
 
 function extractTime(d) {
+  if (!(d instanceof Date))
+    d = new Date(d);
   return (d.getHours() + d.getMinutes() / 60.0);
+}
+
+function getTimeLeftHome(locArray) {
+  var timeArray = _.map(locArray, 'timestamp'),
+    labelArray = _.map(locArray, 'locationLabel'),
+    homeStatus = getHomeStatus(labelArray),
+    leftHome = 0;
+
+  if (homeStatus < 0) {
+    leftHome = homeStatus;
+  }
+  else {
+    var startIndex = labelArray.indexOf('home'),
+      workIndex = labelArray.indexOf('work', startIndex),
+      otherIndex = labelArray.indexOf('other', startIndex),
+      LARGE = 999999;
+
+    workIndex = workIndex === -1 ? LARGE : workIndex;
+    otherIndex = otherIndex === -1 ? LARGE : workIndex;
+
+    var leftHomeIndex = Math.min(workIndex, otherIndex);
+    if (leftHomeIndex == LARGE) // no record of work or other
+      leftHome = -4;
+    else
+      leftHome = timeArray[leftHomeIndex];
+  }
+  return leftHome;
+}
+
+function getTimeReturnedHome(locArray) {
+  var timeArray = _.map(locArray, 'timestamp'),
+      labelArray = _.map(locArray, 'locationLabel'),
+      homeStatus = getHomeStatus(labelArray),
+      returnedHome = 0;
+
+  if (homeStatus < 0) {
+    returnedHome = homeStatus;
+  }
+  else {
+    var startIndex = labelArray.lastIndexOf('home'),
+        workIndex = labelArray.lastIndexOf('work', startIndex),
+        otherIndex = labelArray.lastIndexOf('other', startIndex),
+        SMALL = -999999;
+
+    workIndex = workIndex === -1 ? SMALL : workIndex;
+    otherIndex = otherIndex === -1 ? SMALL : workIndex;
+
+    var returnedHomeIndex = Math.max(workIndex, otherIndex);
+    if (returnedHomeIndex == SMALL)
+      returnedHome = -4;
+    else
+      returnedHome = timeArray[returnedHomeIndex];
+  }
+  return returnedHome;
+}
+
+function getHomeStatus(labelArray) {
+  var status = 0;
+  if (labelArray.length == 0) // no location data
+    status = -1;
+  else if (_.uniq(labelArray).indexOf('home') === -1) //no home label recorded
+    status = -2;
+  else if (_.uniq(labelArray).length === 1) //maybe stayed in one location all day
+    status = -3;
+  return status;
 }
