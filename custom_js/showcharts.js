@@ -26,7 +26,7 @@ function processingCharts(results) {
   console.time('load'); //TODO: remove
 
   var data = results.data;
-  //data = _.sample(data, 8000); // get few data for test purposes @TODO: remove
+  data = _.sample(data, 800); // get few data for test purposes @TODO: remove
 
   var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
   for (var i = 0; i < data.length; i++) {
@@ -817,3 +817,68 @@ function getPieTime(mGroupedDate) {
 
   return [homeSum, workSum, otherSum]
 }
+
+
+
+//===================================
+//===================================
+//===== CALENDAR ===========
+//===================================
+//===================================
+
+
+$(document).ready(function() {
+
+  // page is now ready, initialize the calendar...
+
+  $('#calendar').fullCalendar({
+
+  });
+
+});
+
+$('#calendar').fullCalendar({
+
+  eventSources: [
+
+    // your event source
+    {
+      events: [ // put the array in the `events` property
+        {
+          title  : 'event1',
+          start  : '2015-11-09'
+        },
+        {
+          title  : 'event2',
+          start  : '2015-11-12',
+          end    : '2015-11-13'
+        },
+        {
+          title  : 'event3',
+          start  : '2015-11-26  T12:30:00',
+        },
+        {
+          title  : 'event4',
+          start  : '2015-11-26T12:30:00',
+        },
+        {
+          title  : 'event5',
+          start  : '2015-11-26T12:30:00',
+        },
+        {
+          title  : 'event6',
+          start  : '2015-11-26T12:30:00',
+        }
+      ],
+      color: 'black',     // an option!
+      textColor: 'yellow' // an option!
+    }
+
+    // any other event sources...
+
+  ]
+
+});
+
+$('#calendar').fullCalendar('option', 'height', 350);
+
