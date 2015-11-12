@@ -9,6 +9,8 @@
 //===================================
 
 // Papa parse is super fast in loading data
+console.time('papaparse'); //TODO: remove
+
 $(document).ready(function () {
   Papa.parse('dataset/location.csv', {
     download: true,
@@ -17,12 +19,14 @@ $(document).ready(function () {
   });
 });
 
+console.timeEnd('papaparse'); //TODO: remove
+
 function processingCharts(results) {
 
   console.time('load'); //TODO: remove
 
   var data = results.data;
-  data = _.sample(data, 8000); // get few data for test purposes @TODO: remove
+  //data = _.sample(data, 8000); // get few data for test purposes @TODO: remove
 
   var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
   for (var i = 0; i < data.length; i++) {
@@ -34,7 +38,7 @@ function processingCharts(results) {
     row['accuracy'] = parseInt(row['accuracy']);
 
     var rowDate = row.datetime,
-      dayNum = rowDate.getDay();
+        dayNum = rowDate.getDay();
 
     row['day'] = dayNum;
     row['weekday'] = WEEKDAY[dayNum];
@@ -117,7 +121,9 @@ function processingCharts(results) {
 
   $('#latLongChart').highcharts({
     chart: {
-      type: 'scatter'
+      type: 'scatter',
+      zoomType: 'x'
+
     },
     title: {
       text: 'Cluster of Three(3) locations'
@@ -256,7 +262,7 @@ function processingCharts(results) {
     },
     xAxis: {
       type: 'datetime',
-      tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
+      tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
       labels: {
         format: '{value: %a %d %b %Y}',
         //align: 'right',
@@ -328,7 +334,8 @@ function processingCharts(results) {
 
   $('#leftReturnedChart').highcharts({
     chart: {
-      type: 'area',
+      type: 'line',
+      //inverted: true,
       zoomType: 'xy'
     },
     title: {
@@ -340,7 +347,7 @@ function processingCharts(results) {
     },
     xAxis: {
       type: 'datetime',
-      tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
+      //tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
       labels: {
         format: '{value: %a %d %b %Y}',
         //align: 'right',
@@ -349,7 +356,6 @@ function processingCharts(results) {
       title: {
         text: 'date',
       },
-      //  min: Date.UTC(2013, 7, 2),
     },
     yAxis: {
       title: {
@@ -361,11 +367,11 @@ function processingCharts(results) {
     },
     series: [{
       name: 'Left Home',
-      // color: 'rgba(0, 0, 0, .5)',
+      //color: 'rgba(0, 0, 0, .5)',
       data: leftHomeArray,
     }, {
       name: 'Returned Home',
-      color: 'rgba(223, 83, 83, .5)',
+      //color: 'rgba(223, 83, 83, .5)',
       data: returnedHomeArray
     }]
   });
@@ -405,7 +411,7 @@ function processingCharts(results) {
     },
     xAxis: {
       type: 'datetime',
-      tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
+      //tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
       labels: {
         format: '{value: %a %d %b %Y}',
         //align: 'right',
@@ -430,13 +436,209 @@ function processingCharts(results) {
       data: homeDwellArray,
     }, {
       name: 'Time at Work',
-      // color: 'rgba(223, 83, 83, .5)',
+     // color: 'rgba(223, 83, 83, .5)',
       data: workDwellArray
     }, {
       name: 'Time at Other Places',
-      color: 'rgba(223, 83, 83, .5)',
+      //color: 'rgba(83, 223, 83, .5)',
       data: otherDwellArray
     }]
+  });
+
+
+  // ===============
+  // total time spent at each location for first half and second half
+  // ===============
+
+  var part01GroupedDate = {},
+      part02GroupedDate = {},
+      part03GroupedDate = {},
+      part04GroupedDate = {},
+      interval = _.size(groupedDate) / 4,
+      counter = 0;
+
+  for (var key in groupedDate) {
+    if (counter < interval)
+      part01GroupedDate[key] = groupedDate[key];
+    else if (counter < interval * 2)
+      part02GroupedDate[key] = groupedDate[key];
+    else if (counter < interval * 3)
+      part03GroupedDate[key] = groupedDate[key];
+    else
+      part04GroupedDate[key] = groupedDate[key];
+    counter++;
+  }
+
+  var allPieTimeArray = getPieTime(part01GroupedDate),
+      homeTotal = allPieTimeArray[0],
+      workTotal = allPieTimeArray[1],
+      otherTotal = allPieTimeArray[2];
+
+  $(function () {
+  $('#part01Pie').highcharts({
+    chart: {
+      type: 'pie',
+      options3d: {
+        enabled: true,
+        alpha: 45,
+        beta: 0
+      }
+    },
+    title: {
+      text: 'First 1/4 of Total Time'
+    },
+    tooltip: {
+      pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+    },
+    plotOptions: {
+      pie: {
+        allowPointSelect: true,
+        cursor: 'pointer',
+        depth: 35,
+        dataLabels: {
+          enabled: true,
+          format: '{point.name}'
+        }
+      }
+    },
+    series: [{
+      name: "Locations",
+      data: [
+        {name: "Home", y: homeTotal},
+        {name: "Work", y: workTotal},
+        {name: "Other", y: otherTotal}
+      ]
+    }]
+  });
+  });
+
+  allPieTimeArray = getPieTime(part02GroupedDate),
+    homeTotal = allPieTimeArray[0],
+    workTotal = allPieTimeArray[1],
+    otherTotal = allPieTimeArray[2];
+
+  $(function () {
+    $('#part02Pie').highcharts({
+      chart: {
+        type: 'pie',
+        options3d: {
+          enabled: true,
+          alpha: 45,
+          beta: 0
+        }
+      },
+      title: {
+        text: 'Second 1/4 of Total Time'
+      },
+      tooltip: {
+        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      },
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          depth: 35,
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}'
+          }
+        }
+      },
+      series: [{
+        name: "Locations",
+        data: [
+          {name: "Home", y: homeTotal},
+          {name: "Work", y: workTotal},
+          {name: "Other", y: otherTotal}
+        ]
+      }]
+    });
+  });
+
+  allPieTimeArray = getPieTime(part03GroupedDate),
+    homeTotal = allPieTimeArray[0],
+    workTotal = allPieTimeArray[1],
+    otherTotal = allPieTimeArray[2];
+
+  $(function () {
+    $('#part03Pie').highcharts({
+      chart: {
+        type: 'pie',
+        options3d: {
+          enabled: true,
+          alpha: 45,
+          beta: 0
+        }
+      },
+      title: {
+        text: 'Third 1/4 of Total Time'
+      },
+      tooltip: {
+        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      },
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          depth: 35,
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}'
+          }
+        }
+      },
+      series: [{
+        name: "Locations",
+        data: [
+          {name: "Home", y: homeTotal},
+          {name: "Work", y: workTotal},
+          {name: "Other", y: otherTotal}
+        ]
+      }]
+    });
+  });
+
+  allPieTimeArray = getPieTime(part04GroupedDate),
+    homeTotal = allPieTimeArray[0],
+    workTotal = allPieTimeArray[1],
+    otherTotal = allPieTimeArray[2];
+
+  $(function () {
+    $('#part04Pie').highcharts({
+      chart: {
+        type: 'pie',
+        options3d: {
+          enabled: true,
+          alpha: 45,
+          beta: 0
+        }
+      },
+      title: {
+        text: 'Fourth 1/4 of Total Time'
+      },
+      tooltip: {
+        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      },
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          depth: 35,
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}'
+          }
+        }
+      },
+      series: [{
+        name: "Locations",
+        data: [
+          {name: "Home", y: homeTotal},
+          {name: "Work", y: workTotal},
+          {name: "Other", y: otherTotal}
+        ]
+      }]
+    });
   });
 
   console.timeEnd('plots');
@@ -580,4 +782,38 @@ function getAllDwellTime(arrayOfLocObjects) {
   otherDwell /= CONVERTER;
 
   return [homeDwell, workDwell, otherDwell];
+}
+
+function getPieTime(mGroupedDate) {
+
+  var homeArray = [],
+    workArray = [],
+    otherArray = [];
+
+  for (var dateKey in mGroupedDate) {
+    var arraylocObj = mGroupedDate[dateKey],
+      arrayDate = new Date(dateKey).getTime(), //float value so Highcharts renders properly
+      allDwellDuration = getAllDwellTime(arraylocObj);
+
+    homeArray.push([arrayDate, allDwellDuration[0]]);
+    workArray.push([arrayDate, allDwellDuration[1]]);
+    otherArray.push([arrayDate, allDwellDuration[2]]);
+  }
+
+  var homeSum = 0;
+  for (var i=0; i < homeArray.length; i++) {
+    homeSum += homeArray[i][1];
+  }
+
+  var workSum = 0;
+  for (var i=0; i < workArray.length; i++) {
+    workSum += workArray[i][1];
+  }
+
+  var otherSum = 0;
+  for (var i=0; i < otherArray.length; i++) {
+    otherSum += otherArray[i][1];
+  }
+
+  return [homeSum, workSum, otherSum]
 }

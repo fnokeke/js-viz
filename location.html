@@ -1,22 +1,40 @@
 <html>
 <head>
-	<script src="lib/jquery.min.js"></script>
-	<script src="lib/highcharts.js"></script>
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/highcharts.js"></script>
     <script src="lib/underscore.js"></script>
     <script src="lib/papaparse.js"></script>
     <script src="https://rawgit.com/highslide-software/highcharts.com/master/js/modules/boost.src.js"></script>
 </head>
-<body>
+<body bgcolor="black">
 
+<table>
+    <tr>
+        <td>
+            <div id="part01Pie" style="width:50%; height:300px;"></div>
+        </td>
+        <td>
+            <div id="part02Pie" style="width:50%; height:300px;"></div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="part03Pie" style="width:100%; height:300px;"></div>
+        </td>
+        <td>
+            <div id="part04Pie" style="width:100%; height:300px;"></div>
+        </td>
+    </tr>
+</table>
 
-<h1>Thanks Sam</h1>
-    <div id="latLongChart" style="width:100%; height:400px;"></div>
-    <div id="dayTimeChart" style="width:100%; height:600px;"></div>
-    <div id="dateTimeChart" style="width:100%; height:600px;"></div>
+<div id="latLongChart" style="width:100%; height:400px;"></div>
+<div id="dayTimeChart" style="width:100%; height:600px;"></div>
+<div id="dateTimeChart" style="width:100%; height:600px;"></div>
 <div id="leftReturnedChart" style="width:100%; height:600px;"></div>
 <div id="timeSpentCharts" style="width:100%; height:600px;"></div>
 
+<script src="custom_js/showcharts.js"></script>
+<script src="custom_js/sandtheme.js"></script>
 
-    <script src="custom_js/showcharts.js"></script>
 </body>
 </html>
