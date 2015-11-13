@@ -333,8 +333,8 @@ function processingCharts(results) {
 
   $('#leftReturnedChart').highcharts({
     chart: {
-      type: 'line',
-      //inverted: true,
+      type: 'scatter',
+      inverted: true,
       zoomType: 'xy'
     },
     title: {
@@ -398,7 +398,7 @@ function processingCharts(results) {
 
   $('#timeSpentCharts').highcharts({
     chart: {
-      type: 'area',
+      type: 'column',
       zoomType: 'x'
     },
     title: {
@@ -670,9 +670,8 @@ function processingCharts(results) {
     },
     plotOptions: {
       column: {
-        stacking: 'normal',
+        stacking: 'percent',
         dataLabels: {
-          format: '{point.y:.1f}', // one decimal
           enabled: true,
           color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
           style: {
@@ -692,6 +691,70 @@ function processingCharts(results) {
       data: [p1[2], p2[2], p3[2], p4[2]],
     },
     ]
+  });
+
+  // ===============
+  // HeatMap for total time spent at each location for first half and second half
+  // ===============
+
+  $(function () {
+    $('#heatMapTimeSpent').highcharts({
+
+    chart: {
+      type: 'heatmap',
+      marginTop: 40,
+      marginBottom: 80,
+      plotBorderWidth: 1
+    },
+
+    title: {
+      text: 'No of hours spent'
+    },
+
+    xAxis: {
+      categories: ['Home', 'Work']
+    },
+
+    yAxis: {
+      categories: ["1st Quarter", "2nd Quarter", "3rd Quarter", "4th Quarter"],
+      title: null
+    },
+
+    colorAxis: {
+      min: 0,
+      minColor: '#FFFFFF',
+      maxColor: Highcharts.getOptions().colors[0]
+    },
+
+    legend: {
+      align: 'right',
+      layout: 'vertical',
+      margin: 0,
+      verticalAlign: 'top',
+      y: 25,
+      symbolHeight: 280
+    },
+
+    tooltip: {
+      formatter: function () {
+        return 'spent '+
+          '<b>' + this.point.value + '</b> hours at <br>' +
+          '<b>' + this.series.xAxis.categories[this.point.x] + '</b> during ' +
+          '<b>' + this.series.yAxis.categories[this.point.y] + '</b>';
+      }
+    },
+    series: [{
+      name: 'Time per location',
+      borderWidth: 1,
+      data: [[0, 0, p1[0]], [0, 1, p2[0]], [0, 2, p3[0]], [0, 3, p4[0]],
+             [1, 0, p1[1]], [1, 1, p2[1]], [1, 2, p3[1]], [1, 3, p4[1]]],
+      dataLabels: {
+        enabled: true,
+        color: '#000000'
+      }
+    }]
+
+  });
   });
 
 
@@ -869,6 +932,9 @@ function getPieTime(mGroupedDate) {
     otherSum += otherArray[i][1];
   }
 
+  homeSum = Math.round(homeSum);
+  workSum = Math.round(workSum);
+  otherSum = Math.round(otherSum);
   return [homeSum, workSum, otherSum]
 }
 
