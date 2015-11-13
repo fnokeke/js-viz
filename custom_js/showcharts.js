@@ -26,7 +26,7 @@ function processingCharts(results) {
   console.time('load'); //TODO: remove
 
   var data = results.data;
-  data = _.sample(data, 800); // get few data for test purposes @TODO: remove
+  data = _.sample(data, 1400); // get few data for test purposes @TODO: remove
 
   var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
   for (var i = 0; i < data.length; i++) {
@@ -271,7 +271,6 @@ function processingCharts(results) {
       title: {
         text: 'date',
       },
-      //  min: Date.UTC(2013, 7, 2),
     },
     yAxis: {
       title: {
@@ -283,7 +282,7 @@ function processingCharts(results) {
     },
     series: [{
       name: 'Home',
-      color: '    rgba(83, 223, 83, .5)',
+      color: 'rgba(83, 223, 83, .5)',
       data: homeGrp,
     }, {
       name: 'Work',
@@ -413,38 +412,37 @@ function processingCharts(results) {
       type: 'datetime',
       //tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
       labels: {
-        format: '{value: %a %d %b %Y}',
-        //align: 'right',
-        // rotation: -30
+        format: '{value: %b %d,%Y}',
       },
       title: {
         text: 'date',
       },
-      //  min: Date.UTC(2013, 7, 2),
     },
     yAxis: {
       title: {
         text: 'number of hours'
       },
       min: 0,
-      //tickInterval: 6,
-      //categories: timeLabel,
+    },
+    plotOptions: {
+      column: {
+        stacking: 'normal'
+      }
     },
     series: [{
       name: 'Time at Home',
-      color: 'rgba(223, 223, 223, .5)',
+      color: 'rgba(0, 100, 0, .1)',
       data: homeDwellArray,
     }, {
       name: 'Time at Work',
-     // color: 'rgba(223, 83, 83, .5)',
-      data: workDwellArray
+      color: 'rgba(223, 0, 0, .9)',
+      data: workDwellArray,
     }, {
       name: 'Time at Other Places',
-      //color: 'rgba(83, 223, 83, .5)',
-      data: otherDwellArray
+      color: 'rgba(223, 223, 223, .5)',
+      data: otherDwellArray,
     }]
   });
-
 
   // ===============
   // total time spent at each location for first half and second half
@@ -473,6 +471,7 @@ function processingCharts(results) {
       homeTotal = allPieTimeArray[0],
       workTotal = allPieTimeArray[1],
       otherTotal = allPieTimeArray[2];
+
 
   $(function () {
   $('#part01Pie').highcharts({
@@ -640,6 +639,61 @@ function processingCharts(results) {
       }]
     });
   });
+
+  var p1 = getPieTime(part01GroupedDate),
+      p2 = getPieTime(part02GroupedDate),
+      p3 = getPieTime(part03GroupedDate),
+      p4 = getPieTime(part04GroupedDate);
+
+  $('#barTimeSpentCharts').highcharts({
+    chart: {
+      type: 'column',
+      inverted: true
+    },
+    title: {
+      text: 'Change in time by splitting location data into four (4) quarters'
+    },
+    subtitle: {
+      text: '(Aug 2013 - Oct 2015)' //@TODO: remove hard coded date
+    },
+    xAxis: {
+      title: {
+        text: 'date',
+      },
+      categories: ["1st Quarter", "2nd Quarter", "3rd Quarter", "4th Quarter"]
+    },
+    yAxis: {
+      title: {
+        text: 'number of hours'
+      },
+      min: 0,
+    },
+    plotOptions: {
+      column: {
+        stacking: 'normal',
+        dataLabels: {
+          format: '{point.y:.1f}', // one decimal
+          enabled: true,
+          color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+          style: {
+            textShadow: '0 0 3px black',
+          }
+        }
+      }
+    },
+    series: [{
+      name: 'Home',
+      data: [p1[0], p2[0], p3[0], p4[0]],
+    }, {
+      name: 'Work',
+      data: [p1[1], p2[1], p3[1], p4[1]],
+    }, {
+      name: 'Other',
+      data: [p1[2], p2[2], p3[2], p4[2]],
+    },
+    ]
+  });
+
 
   console.timeEnd('plots');
 }
@@ -829,56 +883,57 @@ function getPieTime(mGroupedDate) {
 
 $(document).ready(function() {
 
-  // page is now ready, initialize the calendar...
-
   $('#calendar').fullCalendar({
+    header: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'month,agendaWeek,agendaDay'
+    },
+    //defaultDate: '2014-11-12',
+    editable: true,
+    //eventLimit: true, // allow "more" link when too many events
+
+    eventSources: [
+
+      // your event source
+      {
+        events: [ // put the array in the `events` property
+          {
+            title  : 'Home',
+            start  : '2015-11-01:8:00:00',
+            end    : '2015-11-07'
+          },
+          {
+            title  : 'Home',
+            start  : '2015-11-08:8:00:00',
+            end    : '2015-11-15'
+          },
+          {
+            title  : 'Work',
+            start  : '2015-11-10',
+            end    : '2015-11-14'
+          },
+          {
+            title  : 'Work',
+            start  : '2015-11-15T12:45:00',
+            end    : '2015-11-21'
+          },
+          {
+            title  : 'Work',
+            start  : '2015-11-22T14:45:00',
+            end    : '2015-11-28'
+          }
+        ],
+        color: 'black',     // an option!
+        textColor: 'yellow' // an option!
+      }
+
+      // any other event sources...
+
+    ]
 
   });
 
-});
-
-$('#calendar').fullCalendar({
-
-  eventSources: [
-
-    // your event source
-    {
-      events: [ // put the array in the `events` property
-        {
-          title  : 'event1',
-          start  : '2015-11-09'
-        },
-        {
-          title  : 'event2',
-          start  : '2015-11-12',
-          end    : '2015-11-13'
-        },
-        {
-          title  : 'event3',
-          start  : '2015-11-26  T12:30:00',
-        },
-        {
-          title  : 'event4',
-          start  : '2015-11-26T12:30:00',
-        },
-        {
-          title  : 'event5',
-          start  : '2015-11-26T12:30:00',
-        },
-        {
-          title  : 'event6',
-          start  : '2015-11-26T12:30:00',
-        }
-      ],
-      color: 'black',     // an option!
-      textColor: 'yellow' // an option!
-    }
-
-    // any other event sources...
-
-  ]
+  $('#calendar').fullCalendar('option', 'height', 500);
 
 });
-
-$('#calendar').fullCalendar('option', 'height', 350);
-
