@@ -23,7 +23,7 @@ function processingCharts(data) {
   data = data.locations;
 
   // get few data for test purposes @TODO: remove
-  //data = _.sample(data, 2000);
+  //data = _.sample(data, 1000);
 
   // convert columns to expected format and add other new columns
   data.forEach(function (row) {
@@ -108,22 +108,9 @@ function processingCharts(data) {
   // time chart creation
   var start = +new Date();
   // create first stockChart
-
-  //$("#highstockBar").highcharts('StockChart', {
-  //  chart: {
-  //    alignTicks: false,
-  //  },
-  //  title: {
-  //    text: "Avg Time (hours) at Location"
-  //  },
-  //  yAxis: {
-  //    title: {
-  //      text: 'hours'
-  //    }
-  //  },
-  // Create the chart
-  $('#highstockBar').highcharts('StockChart', {
+  $('#timeSpentBar').highcharts('StockChart', {
     chart: {
+      alignTicks: false,
       events: {
         load: function () {
           if (!window.isComparing) {
@@ -170,9 +157,6 @@ function processingCharts(data) {
     title: {
       text: "Avg Time (hours) at Location"
     },
-    subtitle: {
-      text: 'Built chart in ...' // dummy text to reserve space for dynamic subtitle
-    },
     plotOptions: {
       column: {
         stacking: 'normal',
@@ -185,13 +169,6 @@ function processingCharts(data) {
       data: homeData,
       dataGrouping: {
         approximation: "average",
-        units: [[
-          'week', // unit name
-          [1] // allowed multiples
-        ], [
-          'month',
-          [1, 2, 3, 4, 6]
-        ]]
       }
     }, {
       name: 'Work',
@@ -200,19 +177,117 @@ function processingCharts(data) {
       data: workData,
       dataGrouping: {
         approximation: "average",
-        units: [[
-          'week', // unit name
-          [1] // allowed multiples
-        ], [
-          'month',
-          [1, 2, 3, 4, 6]
-        ]]
       }
     }
     ]
   });
 
-}
+  // ===============
+  // time left home and time returned home
+  //
+  // dataformat [[date, timeLeft, timeReturned],
+  //             [date, timeLeft, timeReturned]]
+  // date must be in unix time format so that it is automatically formatted in plot
+  // ===============
+
+  var leftReturnedData = [],
+      arrayOfLocationObjects,
+      timestampLeft,
+      timestampReturned,
+      date;
+
+  for (var dateKey in groupedData) {
+    arrayOfLocationObjects = groupedData[dateKey];
+    timestampLeft = getTimeLeftHome(arrayOfLocationObjects);
+    if (timestampLeft >= 0)
+      timestampReturned = getTimeReturnedHome(arrayOfLocationObjects);
+    if (timestampLeft >= 0 && timestampReturned >= 0) {
+      date = new Date(dateKey).getTime();
+      timestampLeft = extractTime(timestampLeft);
+      timestampReturned = extractTime(timestampReturned);
+      leftReturnedData.push([date, timestampLeft, timestampReturned]);
+    }
+  }
+
+  var TIMELABEL = [];
+  for (var i = 0; i < 25; i++) {
+    if (i == 0 || i == 24) {
+      TIMELABEL.push("Midnight");
+    }
+    else if (i == 12) {
+      TIMELABEL.push("Noon");
+    }
+    else if (i < 12) {
+      TIMELABEL.push(i + "am");
+    }
+    else {
+      TIMELABEL.push(i % 12 + "pm");
+    }
+  }
+
+  // labels for specific dates on x-axis
+  var THANKSGIVING2014 = 1417064400000,
+      FALL2014BEGINS = 1408680000000;
+
+  $('#leftReturnedAreaSpline').highcharts('StockChart', {
+    chart: {
+      type: 'arearange'
+    },
+    title: {
+      text: 'Time left home and returned back'
+    },
+    yAxis: {
+      title: {
+        text: 'time of day'
+      },
+      min: 0,
+      tickInterval: 2,
+      categories: TIMELABEL,
+    },
+    rangeSelector: {
+      selected: 2
+    },
+    tooltip: {
+      valueSuffix: ':00 hours', //@TODO: find better ways to show hours
+      valueDecimals: 0
+    },
+    series: [{
+      name: 'Left-Returned',
+      data: leftReturnedData
+    }, {
+      type: 'flags',
+      name: 'Flags on axis',
+      data: [{
+        x: FALL2014BEGINS,
+        title: 'Fall 2014 Begins'
+      }, {
+        x: THANKSGIVING2014,
+        title: 'Thanksgiving 2014'
+      }],
+      shape: 'squarepin'
+    }]
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //===================================
@@ -232,12 +307,16 @@ function extractDate(d) {
 function extractTime(d) {
   if (!(d instanceof Date))
     d = new Date(d);
-  return (d.getHours() + d.getMinutes() / 60.0);
+  return roundToTwoDP(d.getHours() + d.getMinutes() / 60.0);
 }
 
-function getTimeLeftHome(locArray) {
-  var timeArray = _.map(locArray, 'timestamp'),
-    labelArray = _.map(locArray, 'locationLabel'),
+function roundToTwoDP(num) {
+  return +(Math.round(num + "e+2")  + "e-2");
+}
+
+function getTimeLeftHome(arrayOfLocationObject) {
+  var timeArray = _.map(arrayOfLocationObject, 'timestampMs'),
+    labelArray = _.map(arrayOfLocationObject, 'locationLabel'),
     homeStatus = getHomeStatus(labelArray),
     leftHome = 0;
 
@@ -263,7 +342,7 @@ function getTimeLeftHome(locArray) {
 }
 
 function getTimeReturnedHome(locArray) {
-  var timeArray = _.map(locArray, 'timestamp'),
+  var timeArray = _.map(locArray, 'timestampMs'),
     labelArray = _.map(locArray, 'locationLabel'),
     homeStatus = getHomeStatus(labelArray),
     returnedHome = 0;
@@ -500,84 +579,6 @@ function getQuarterTime(mGroupedDate) {
   });
 
 
-  // ===============
-  // time left home and time returned home
-  // ===============
-  var groupedDate = _.groupBy(data, 'date');
-
-  var dwellHome = {};
-  for (var key in groupedDate) {
-    var locArray = groupedDate[key];
-    dwellHome[key] = [
-      getTimeLeftHome(locArray),
-      getTimeReturnedHome(locArray)
-    ];
-  }
-
-  // drop all dwell time values that have any error/negative numbers
-  var plotDwellHome = {};
-  for (key in dwellHome) {
-    var arrayValue = dwellHome[key];
-    if (_.min(arrayValue) > 0) {
-      plotDwellHome[key] = arrayValue;
-    }
-  }
-
-  var leftHomeArray = [],
-      returnedHomeArray = [];
-
-  for (key in plotDwellHome) {
-    var arrayValue = plotDwellHome[key],
-      leftDatetime = arrayValue[0],
-      returnedDatetime = arrayValue[1];
-
-    leftHomeArray.push([leftDatetime, extractTime(leftDatetime)]);
-    returnedHomeArray.push([returnedDatetime, extractTime(returnedDatetime)]);
-  }
-
-  $('#leftReturnedChart').highcharts({
-    chart: {
-      type: 'scatter',
-      inverted: true,
-      zoomType: 'xy'
-    },
-    title: {
-      text: 'When do you leave home and when do you get back?'
-    },
-    subtitle: {
-      text: document.ontouchstart === undefined ?
-        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-    },
-    xAxis: {
-      type: 'datetime',
-      //tickInterval: 1 * 24 * 36e5, // 24 * 36e5 === 1 day
-      labels: {
-        format: '{value: %a %d %b %Y}',
-        //align: 'right',
-        // rotation: -30
-      },
-      title: {
-        text: 'date',
-      },
-    },
-    yAxis: {
-      title: {
-        text: 'time of day'
-      },
-      min: 0,
-      tickInterval: 6,
-      categories: timeLabel,
-    },
-    series: [{
-      name: 'Left Home',
-      //color: 'rgba(0, 0, 0, .5)',
-      data: leftHomeArray,
-    }, {
-      name: 'Returned Home',
-      //color: 'rgba(223, 83, 83, .5)',
-      data: returnedHomeArray
-    }]
-  });
 
   //@TODO: remember to consistently use single/double quotes throughout
 
@@ -935,18 +936,4 @@ $(document).ready(function() {
 // var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
 //row.weekday = WEEKDAY[row.day];
 
-var timeLabel = [];
-for (var i = 0; i < 25; i++) {
-  if (i == 0 || i == 24) {
-    timeLabel.push("Midnight");
-  }
-  else if (i == 12) {
-    timeLabel.push("Noon");
-  }
-  else if (i < 12) {
-    timeLabel.push(i + "am");
-  }
-  else {
-    timeLabel.push(i % 12 + "pm");
-  }
 }
