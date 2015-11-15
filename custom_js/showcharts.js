@@ -23,7 +23,7 @@ function processingCharts(data) {
   data = data.locations;
 
   // get few data for test purposes @TODO: remove
-  data = _.sample(data, 20);
+  //data = _.sample(data, 2000);
 
   // convert columns to expected format and add other new columns
   data.forEach(function (row) {
@@ -40,7 +40,8 @@ function processingCharts(data) {
     row.time = extractTime(rowDate);
   });
 
-  // sorted time is needed for HighStock plots
+  // sorted entire time once otherwise have to sort each value from groupby date keys
+  // sorting is needed for HighStock plots
   data = _.sortBy(data, 'timestampMs');
 
   // ignore locations with accuracy over 1000m
@@ -76,52 +77,69 @@ function processingCharts(data) {
   console.timeEnd('processingCharts');
 
   // ===============
-  // Highstock bar chart for number of hours spent per location
+  // HighStock bar chart for number of hours spent per location
   // ===============
 
-  var homeArray = [],
-      workArray = [],
-      otherArray = [];
+  var groupedData = _.groupBy(data, 'date'),
+      date,
+      arrayOfLocationObjects,
+      homeData = [],
+      workData = [],
+      timeSpentAtHome,
+      timeSpentAtWork,
+      allDwellTimes;
 
-  data.forEach(function (row) {
-    if (row.locationLabel === 'home')
-      homeArray.push([row.timestampMs, Math.round(row.time)]);
-    else if (row.locationLabel === 'work')
-      workArray.push([row.timestampMs, Math.round(row.time)]);
-    else if (row.locationLabel === 'other')
-      otherArray.push([row.timestampMs, Math.round(row.time)]);
-  });
 
-  // var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
-  //row.weekday = WEEKDAY[row.day];
-
-  var timeLabel = [];
-  for (var i = 0; i < 25; i++) {
-    if (i == 0 || i == 24) {
-      timeLabel.push("Midnight");
-    }
-    else if (i == 12) {
-      timeLabel.push("Noon");
-    }
-    else if (i < 12) {
-      timeLabel.push(i + "am");
-    }
-    else {
-      timeLabel.push(i % 12 + "pm");
-    }
+  for (var dateKey in groupedData) {
+    date = new Date(dateKey).getTime();
+    arrayOfLocationObjects = groupedData[dateKey];
+    allDwellTimes = getAllDwellTime(arrayOfLocationObjects);
+    timeSpentAtHome = Math.round(allDwellTimes[0]);
+    timeSpentAtWork = Math.round(allDwellTimes[1]);
+    homeData.push({'x':date, 'y':timeSpentAtHome});
+    workData.push({'x':date, 'y':timeSpentAtWork});
   }
 
+  // sorted time is needed for HighStock plots
+  // HighStock automatically formats the datetime for you
+  homeData = _.sortBy(homeData, 'x');
+  workData = _.sortBy(workData, 'x');
+
+  // time chart creation
+  var start = +new Date();
   // create first stockChart
-  $("#highstockBar").highcharts('StockChart', {
+
+  //$("#highstockBar").highcharts('StockChart', {
+  //  chart: {
+  //    alignTicks: false,
+  //  },
+  //  title: {
+  //    text: "Avg Time (hours) at Location"
+  //  },
+  //  yAxis: {
+  //    title: {
+  //      text: 'hours'
+  //    }
+  //  },
+  // Create the chart
+  $('#highstockBar').highcharts('StockChart', {
     chart: {
-      alignTicks: false,
+      events: {
+        load: function () {
+          if (!window.isComparing) {
+            this.setTitle(null, {
+              text: 'Built chart in ' + (new Date() - start) + 'ms'
+            });
+          }
+        }
+      },
       zoomType: 'x'
     },
-    rangeSelector : {
+    rangeSelector: {
       buttons: [{
         type: 'week',
         count: 1,
-        text: '1wk'
+        text: '1w'
       }, {
         type: 'month',
         count: 1,
@@ -134,7 +152,7 @@ function processingCharts(data) {
         type: 'month',
         count: 6,
         text: '6m'
-      },{
+      }, {
         type: 'year',
         count: 1,
         text: '1y'
@@ -142,14 +160,18 @@ function processingCharts(data) {
         type: 'all',
         text: 'All'
       }],
-      inputEnabled: false, // it supports only days
-      selected : 1 // index selected
+      selected: 1
+    },
+    yAxis: {
+      title: {
+        text: 'hours'
+      }
     },
     title: {
-      text: "Time at Location"
+      text: "Avg Time (hours) at Location"
     },
     subtitle: {
-      text: "drag mouse to zoom in"
+      text: 'Built chart in ...' // dummy text to reserve space for dynamic subtitle
     },
     plotOptions: {
       column: {
@@ -160,8 +182,9 @@ function processingCharts(data) {
       name: 'Home',
       type: 'column',
       name: "Home",
-      data: homeArray,
+      data: homeData,
       dataGrouping: {
+        approximation: "average",
         units: [[
           'week', // unit name
           [1] // allowed multiples
@@ -174,8 +197,9 @@ function processingCharts(data) {
       name: 'Work',
       type: 'column',
       name: "Work",
-      data: workArray,
+      data: workData,
       dataGrouping: {
+        approximation: "average",
         units: [[
           'week', // unit name
           [1] // allowed multiples
@@ -287,7 +311,7 @@ function getAllDwellTime(arrayOfLocObjects) {
 
   for (var i = 0; i < arrayOfLocObjects.length; i++) {
     var locationObject = arrayOfLocObjects[i],
-      currentTimeStamp = locationObject.timestamp;
+      currentTimeStamp = locationObject.timestampMs;
 
     if (locationObject.locationLabel == 'home') {
       workLastTimestamp = -1;
@@ -893,3 +917,36 @@ $(document).ready(function() {
  }
 
   */
+
+
+//var homeArray = [],
+//    workArray = [],
+//    otherArray = [];
+//
+//data.forEach(function (row) {
+//  if (row.locationLabel === 'home')
+//    homeArray.push([row.timestampMs, Math.round(row.time)]);
+//  else if (row.locationLabel === 'work')
+//    workArray.push([row.timestampMs, Math.round(row.time)]);
+//  else if (row.locationLabel === 'other')
+//    otherArray.push([row.timestampMs, Math.round(row.time)]);
+//});
+
+// var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
+//row.weekday = WEEKDAY[row.day];
+
+var timeLabel = [];
+for (var i = 0; i < 25; i++) {
+  if (i == 0 || i == 24) {
+    timeLabel.push("Midnight");
+  }
+  else if (i == 12) {
+    timeLabel.push("Noon");
+  }
+  else if (i < 12) {
+    timeLabel.push(i + "am");
+  }
+  else {
+    timeLabel.push(i % 12 + "pm");
+  }
+}
