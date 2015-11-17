@@ -8,6 +8,13 @@
 //===================================
 //===================================
 
+//
+// Things to note
+//
+// Date:
+//    For HighCharts plots, it is better to use unix timestamps, date.getTime(), so the date is rendered properly
+//
+
 $(document).ready(function () {
   console.time('loaddata'); //TODO: remove
 
@@ -88,7 +95,6 @@ function processingCharts(data) {
       timeSpentAtHome,
       timeSpentAtWork,
       allDwellTimes;
-
 
   for (var dateKey in groupedData) {
     date = new Date(dateKey).getTime();
@@ -229,43 +235,181 @@ function processingCharts(data) {
   var THANKSGIVING2014 = 1417064400000,
       FALL2014BEGINS = 1408680000000;
 
-  $('#leftReturnedAreaSpline').highcharts('StockChart', {
-    chart: {
-      type: 'arearange'
-    },
-    title: {
-      text: 'Time left home and returned back'
-    },
-    yAxis: {
-      title: {
-        text: 'time of day'
+  $(function () {
+    $('#leftReturnedAreaSpline').highcharts('StockChart', {
+      chart: {
+        type: 'arearange'
       },
-      min: 0,
-      tickInterval: 2,
-      categories: TIMELABEL,
-    },
-    rangeSelector: {
-      selected: 2
-    },
-    tooltip: {
-      valueSuffix: ':00 hours', //@TODO: find better ways to show hours
-      valueDecimals: 0
-    },
-    series: [{
-      name: 'Left-Returned',
-      data: leftReturnedData
-    }, {
-      type: 'flags',
-      name: 'Flags on axis',
-      data: [{
-        x: FALL2014BEGINS,
-        title: 'Fall 2014 Begins'
+      title: {
+        text: 'Time left home and returned back'
+      },
+      yAxis: {
+        title: {
+          text: 'time of day'
+        },
+        min: 0,
+        tickInterval: 2,
+        categories: TIMELABEL,
+      },
+      rangeSelector: {
+        selected: 2
+      },
+      tooltip: {
+        valueSuffix: ':00 hours', //@TODO: find better ways to show hours
+        valueDecimals: 0
+      },
+      series: [{
+        name: 'Left-Returned',
+        data: leftReturnedData
       }, {
-        x: THANKSGIVING2014,
-        title: 'Thanksgiving 2014'
-      }],
-      shape: 'squarepin'
-    }]
+        type: 'flags',
+        name: 'Flags on axis',
+        data: [{
+          x: FALL2014BEGINS,
+          title: 'Fall 2014 Begins'
+        }, {
+          x: THANKSGIVING2014,
+          title: 'Thanksgiving 2014'
+        }],
+        shape: 'squarepin'
+      }]
+    });
+  });
+
+  // ===============
+  // total time spent at each location for different time periods
+  // ===============
+
+  var fallBegins = "08-15-2013",
+      fallBreak = "10-10-2014",
+      thanksgiving2014 = "11-27-2014",
+      lastClass2014 = "12-04-2014",
+      endOfExam = "12-17-2014";
+
+  var dateRange01 = fetchData(groupedData, fallBegins, fallBreak),
+      dateRange02 = fetchData(groupedData, fallBreak, thanksgiving2014),
+      dateRange03 = fetchData(groupedData, thanksgiving2014, lastClass2014),
+      dateRange04 = fetchData(groupedData, lastClass2014, endOfExam);
+
+  var totalArray = [dateRange01, dateRange02, dateRange03, dateRange04],
+      homeData = getDateRangeData(totalArray, "home"),
+      workData = getDateRangeData(totalArray, "work"),
+      categories = [
+        "Fall 2014 Begins - Fall Break",
+        "Fall Break - Thanksgiving 2014",
+        "Thanksgiving 2014 - Last Class",
+        "Last Day of Class - Semester End"
+      ];
+
+  $(function () {
+    $('#barTimeSpentCharts').highcharts({
+      chart: {
+        type: 'column',
+        inverted: true
+      },
+      title: {
+        text: 'How time spent at location changes over time'
+      },
+      xAxis: {
+        categories: categories
+      },
+      yAxis: {
+        title: {
+          text: 'Percent(%) of total hours'
+        },
+        min: 0,
+      },
+      tooltip: {
+        valueSuffix: ' hours',
+      },
+      plotOptions: {
+        column: {
+          stacking: 'percent',
+          dataLabels: {
+            enabled: true,
+            color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+            style: {
+              textShadow: '0 0 3px black',
+            }
+          }
+        }
+      },
+      series: [{
+        name: 'Home',
+        //data: [p1[0], p2[0], p3[0], p4[0]],
+        data: homeData
+      }, {
+        name: 'Work',
+        //data: [p1[1], p2[1], p3[1], p4[1]],
+        data:workData
+      }]
+    });
+  });
+
+
+  // ===============
+  // HeatMap for total time spent at each location for first half and second half
+  // ===============
+
+  var heatMapData = changeToHeatMapFormat([homeData, workData], 2);
+
+  $(function () {
+    $('#heatMapTimeSpent').highcharts({
+
+      chart: {
+        type: 'heatmap',
+        marginTop: 40,
+        marginBottom: 80,
+        plotBorderWidth: 1
+      },
+
+      title: {
+        text: 'No of hours spent'
+      },
+
+      xAxis: {
+        categories: ['Home', 'Work']
+      },
+
+      yAxis: {
+        categories: categories,
+        title: null
+      },
+
+      colorAxis: {
+        min: 0,
+        minColor: '#FFFFFF',
+        maxColor: Highcharts.getOptions().colors[0]
+      },
+
+      legend: {
+        align: 'right',
+        layout: 'vertical',
+        margin: 0,
+        verticalAlign: 'top',
+        y: 25,
+        symbolHeight: 280
+      },
+
+      tooltip: {
+        formatter: function () {
+          return 'Spent '+
+            '<b>' + this.point.value + '</b> hours at <br>' +
+            '<b>' + this.series.xAxis.categories[this.point.x] + '</b> during <br>' +
+            '<b>' + this.series.yAxis.categories[this.point.y] + '</b>';
+        }
+      },
+      series: [{
+        name: 'Time per location',
+        borderWidth: 1,
+        data: heatMapData,
+        dataLabels: {
+          enabled: true,
+          color: '#000000'
+        }
+      }]
+
+    });
   });
 
 
@@ -296,6 +440,30 @@ function processingCharts(data) {
 //===================================
 //===================================
 
+//sample HeapMap format for home,work four parts of data (part1, part2, part3, part4):
+//  where part1 is array of integers for home & work: [totalTimeAtHome, totalTimeAtWork]
+//
+//  [[0, 0, p1[0]], [0, 1, p2[0]], [0, 2, p3[0]], [0, 3, p4[0]],
+//   [1, 0, p1[1]], [1, 1, p2[1]], [1, 2, p3[1]], [1, 3, p4[1]]
+//  ]
+// homeData = [p0[0], p1[0], p2[0], p3[0]
+// workData = [p0[1], p1[1], p2[1], p3[1]
+
+changeToHeatMapFormat([homeData, workData], 2);
+function changeToHeatMapFormat(arrayOfData, noOfCategories) {
+    var len = arrayOfData[0].length;
+    var result = [],
+      element;
+
+    for (var i = 0; i < len; i++) {
+      for (var j = 0; j < noOfCategories; j++) {
+        element = arrayOfData[j][i];
+        result.push([j, i, element]);
+      }
+    }
+    return result;
+  }
+
 function extractDate(d) {
   if (!(d instanceof Date))
     d = new Date(d);
@@ -310,8 +478,46 @@ function extractTime(d) {
   return roundToTwoDP(d.getHours() + d.getMinutes() / 60.0);
 }
 
-function roundToTwoDP(num) {
-  return +(Math.round(num + "e+2")  + "e-2");
+function fetchData(groupedData, fromDate, toDate) {
+  var result = {};
+  for (var dateKey in groupedData) {
+    if (dateKey >= fromDate && dateKey <= toDate)
+      result[dateKey] = groupedData[dateKey];
+  }
+  return result;
+}
+
+function getDateRangeData(arrayOfData, label) {
+  var result = [],
+      totalTimeArray = [];
+  if (label === 'home') {
+    arrayOfData.forEach(function (data) {
+      totalTimeArray = getTotalTimeSpent(data);
+      result.push(totalTimeArray[0]);
+    });
+  }
+  else if (label === 'work') {
+    arrayOfData.forEach(function (data) {
+      totalTimeArray = getTotalTimeSpent(data);
+      result.push(totalTimeArray[1]);
+    });
+  }
+  return result;
+}
+
+function getHomeAndWorkTimeForDateRange(arrayOfData) {
+  var totalTimeArray = [],
+      result = [],
+      homeTime,
+      workTime;
+
+  arrayOfData.forEach(function (data) {
+    totalTimeArray = getTotalTimeSpent(data);
+    homeTime = totalTimeArray[0];
+    workTime = totalTimeArray[1];
+    result.push([homeTime, workTime]);
+  });
+  return result;
 }
 
 function getTimeLeftHome(arrayOfLocationObject) {
@@ -433,7 +639,8 @@ function getAllDwellTime(arrayOfLocObjects) {
   return [homeDwell, workDwell, otherDwell];
 }
 
-function getQuarterTime(mGroupedDate) {
+// return array consisting of time at home, at work, and other
+function getTotalTimeSpent(mGroupedDate) {
 
   var homeArray = [],
     workArray = [],
@@ -441,7 +648,7 @@ function getQuarterTime(mGroupedDate) {
 
   for (var dateKey in mGroupedDate) {
     var arraylocObj = mGroupedDate[dateKey],
-      arrayDate = new Date(dateKey).getTime(), //float value so Highcharts renders properly
+      arrayDate = new Date(dateKey).getTime(),
       allDwellDuration = getAllDwellTime(arraylocObj);
 
     homeArray.push([arrayDate, allDwellDuration[0]]);
@@ -470,454 +677,464 @@ function getQuarterTime(mGroupedDate) {
   return [homeSum, workSum, otherSum]
 }
 
-
-/*
-
-
-  $('#dayTimeChart').highcharts({
-    chart: {
-      type: 'scatter',
-    },
-    title: {
-      text: 'Where are you by time of weekday?'
-    },
-    xAxis: {
-      title: {
-        text: 'Weekday',
-      },
-      categories: ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"],
-    },
-    yAxis: {
-      title: {
-        text: 'Time'
-      },
-      categories: timeLabel,
-    },
-    series: [{
-      name: 'Home',
-      color: 'rgba(83, 223, 83, .5)',
-      data: homeGrp
-    }, {
-      name: 'Work',
-      color: 'rgba(223, 83, 83, .5)',
-      data: workGrp
-    }, {
-      name: 'Other',
-      color: 'rgba(83, 83, 223, .5)',
-      data: otherGrp
-    }]
-  });
-
-
-  // ===============
-  // where are you by given dates
-  // ===============
-
-  var grpCount = _.groupBy(data, function (obj) {
-    return obj.locationLabel;
-  });
-
-  var homeGrp = grpCount['home'];
-  var workGrp = grpCount['work'];
-  var otherGrp = grpCount['other'];
-
-  homeGrp = _.map(homeGrp, function (obj) {
-    return [obj.timestamp, obj.time];
-  });
-  workGrp = _.map(workGrp, function (obj) {
-    return [obj.timestamp, obj.time];
-  });
-  otherGrp = _.map(otherGrp, function (obj) {
-    return [obj.timestamp, obj.time];
-  });
-
-  $('#dateTimeChart').highcharts({
-    chart: {
-      type: 'scatter',
-      zoomType: 'x'
-    },
-    title: {
-      text: 'Where are you by time of date?'
-    },
-    subtitle: {
-      text: document.ontouchstart === undefined ?
-        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-    },
-    xAxis: {
-      type: 'datetime',
-      tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
-      labels: {
-        format: '{value: %a %d %b %Y}',
-        //align: 'right',
-        // rotation: -30
-      },
-      title: {
-        text: 'date',
-      },
-    },
-    yAxis: {
-      title: {
-        text: 'time of day'
-      },
-      min: 0,
-      tickInterval: 6,
-      categories: timeLabel,
-    },
-    series: [{
-      name: 'Home',
-      color: 'rgba(83, 223, 83, .5)',
-      data: homeGrp,
-    }, {
-      name: 'Work',
-      color: 'rgba(223, 83, 83, .5)',
-      data: workGrp
-    }, {
-      name: 'Other',
-      color: 'rgba(83, 83, 223, .5)',
-      data: otherGrp
-    }]
-  });
-
-
-
-  //@TODO: remember to consistently use single/double quotes throughout
-
-
-  // ===============
-  // time spent at home
-  // ===============
-
-    homeArray = [],
-    workArray = [],
-    otherArray = [];
-
-  for (var dateKey in groupedDate) {
-    var arraylocObj = groupedDate[dateKey],
-      arrayDate = new Date(dateKey).getTime(), //float value so Highcharts renders properly
-      allDwellDuration = getAllDwellTime(arraylocObj);
-
-    homeArray.push([arrayDate, allDwellDuration[0]]);
-    workArray.push([arrayDate, allDwellDuration[1]]);
-    otherArray.push([arrayDate, allDwellDuration[2]]);
+function roundToTwoDP(num) {
+    return +(Math.round(num + "e+2")  + "e-2");
   }
 
-  $('#timeSpentCharts').highcharts({
-    chart: {
-      type: 'column',
-      zoomType: 'x'
-    },
-    title: {
-      text: 'How much time do you spend at specific locations?'
-    },
-    subtitle: {
-      text: document.ontouchstart === undefined ?
-        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-    },
-    xAxis: {
-      type: 'datetime',
-      //tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
-      labels: {
-        format: '{value: %b %d,%Y}',
+
+  /*
+
+
+    $('#dayTimeChart').highcharts({
+      chart: {
+        type: 'scatter',
       },
       title: {
-        text: 'date',
+        text: 'Where are you by time of weekday?'
       },
-    },
-    yAxis: {
+      xAxis: {
+        title: {
+          text: 'Weekday',
+        },
+        categories: ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"],
+      },
+      yAxis: {
+        title: {
+          text: 'Time'
+        },
+        categories: timeLabel,
+      },
+      series: [{
+        name: 'Home',
+        color: 'rgba(83, 223, 83, .5)',
+        data: homeGrp
+      }, {
+        name: 'Work',
+        color: 'rgba(223, 83, 83, .5)',
+        data: workGrp
+      }, {
+        name: 'Other',
+        color: 'rgba(83, 83, 223, .5)',
+        data: otherGrp
+      }]
+    });
+
+
+    // ===============
+    // where are you by given dates
+    // ===============
+
+    var grpCount = _.groupBy(data, function (obj) {
+      return obj.locationLabel;
+    });
+
+    var homeGrp = grpCount['home'];
+    var workGrp = grpCount['work'];
+    var otherGrp = grpCount['other'];
+
+    homeGrp = _.map(homeGrp, function (obj) {
+      return [obj.timestamp, obj.time];
+    });
+    workGrp = _.map(workGrp, function (obj) {
+      return [obj.timestamp, obj.time];
+    });
+    otherGrp = _.map(otherGrp, function (obj) {
+      return [obj.timestamp, obj.time];
+    });
+
+    $('#dateTimeChart').highcharts({
+      chart: {
+        type: 'scatter',
+        zoomType: 'x'
+      },
       title: {
-        text: 'number of hours'
+        text: 'Where are you by time of date?'
       },
-      min: 0,
-    },
-    plotOptions: {
-      column: {
-        stacking: 'normal'
-      }
-    },
-    series: [{
-      name: 'Time at Home',
-      color: 'rgba(0, 100, 0, .1)',
-      data: homeArray,
-    }, {
-      name: 'Time at Work',
-      color: 'rgba(223, 0, 0, .9)',
-      data: workArray,
-    }, {
-      name: 'Time at Other Places',
-      color: 'rgba(223, 223, 223, .5)',
-      data: otherArray,
-    }]
-  });
+      subtitle: {
+        text: document.ontouchstart === undefined ?
+          'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+      },
+      xAxis: {
+        type: 'datetime',
+        tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
+        labels: {
+          format: '{value: %a %d %b %Y}',
+          //align: 'right',
+          // rotation: -30
+        },
+        title: {
+          text: 'date',
+        },
+      },
+      yAxis: {
+        title: {
+          text: 'time of day'
+        },
+        min: 0,
+        tickInterval: 6,
+        categories: timeLabel,
+      },
+      series: [{
+        name: 'Home',
+        color: 'rgba(83, 223, 83, .5)',
+        data: homeGrp,
+      }, {
+        name: 'Work',
+        color: 'rgba(223, 83, 83, .5)',
+        data: workGrp
+      }, {
+        name: 'Other',
+        color: 'rgba(83, 83, 223, .5)',
+        data: otherGrp
+      }]
+    });
 
-  // ===============
-  // total time spent at each location for first half and second half
-  // ===============
 
-  var part01GroupedDate = {},
-      part02GroupedDate = {},
-      part03GroupedDate = {},
-      part04GroupedDate = {},
-      interval = _.size(groupedDate) / 4,
-      counter = 0;
 
-  for (var key in groupedDate) {
-    if (counter < interval)
-      part01GroupedDate[key] = groupedDate[key];
-    else if (counter < interval * 2)
-      part02GroupedDate[key] = groupedDate[key];
-    else if (counter < interval * 3)
-      part03GroupedDate[key] = groupedDate[key];
-    else
-      part04GroupedDate[key] = groupedDate[key];
-    counter++;
-  }
+    //@TODO: remember to consistently use single/double quotes throughout
 
-  var p1 = getQuarterTime(part01GroupedDate),
-      p2 = getQuarterTime(part02GroupedDate),
-      p3 = getQuarterTime(part03GroupedDate),
-      p4 = getQuarterTime(part04GroupedDate);
 
-  $('#barTimeSpentCharts').highcharts({
-    chart: {
-      type: 'column',
-      inverted: true
-    },
-    title: {
-      text: 'Change in time by splitting location data into four (4) quarters'
-    },
-    subtitle: {
-      text: '(Aug 2013 - Oct 2015)' //@TODO: remove hard coded date
-    },
-    xAxis: {
+    // ===============
+    // time spent at home
+    // ===============
+
+      homeArray = [],
+      workArray = [],
+      otherArray = [];
+
+    for (var dateKey in groupedDate) {
+      var arraylocObj = groupedDate[dateKey],
+        arrayDate = new Date(dateKey).getTime(), //float value so Highcharts renders properly
+        allDwellDuration = getAllDwellTime(arraylocObj);
+
+      homeArray.push([arrayDate, allDwellDuration[0]]);
+      workArray.push([arrayDate, allDwellDuration[1]]);
+      otherArray.push([arrayDate, allDwellDuration[2]]);
+    }
+
+    $('#timeSpentCharts').highcharts({
+      chart: {
+        type: 'column',
+        zoomType: 'x'
+      },
       title: {
-        text: 'date',
+        text: 'How much time do you spend at specific locations?'
       },
-      categories: ["1st Quarter", "2nd Quarter", "3rd Quarter", "4th Quarter"]
-    },
-    yAxis: {
+      subtitle: {
+        text: document.ontouchstart === undefined ?
+          'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+      },
+      xAxis: {
+        type: 'datetime',
+        //tickInterval: 60 * 24 * 36e5, // 24 * 36e5 === 1 day
+        labels: {
+          format: '{value: %b %d,%Y}',
+        },
+        title: {
+          text: 'date',
+        },
+      },
+      yAxis: {
+        title: {
+          text: 'number of hours'
+        },
+        min: 0,
+      },
+      plotOptions: {
+        column: {
+          stacking: 'normal'
+        }
+      },
+      series: [{
+        name: 'Time at Home',
+        color: 'rgba(0, 100, 0, .1)',
+        data: homeArray,
+      }, {
+        name: 'Time at Work',
+        color: 'rgba(223, 0, 0, .9)',
+        data: workArray,
+      }, {
+        name: 'Time at Other Places',
+        color: 'rgba(223, 223, 223, .5)',
+        data: otherArray,
+      }]
+    });
+
+    // ===============
+    // total time spent at each location for first half and second half
+    // ===============
+
+    var part01GroupedDate = {},
+        part02GroupedDate = {},
+        part03GroupedDate = {},
+        part04GroupedDate = {},
+        interval = _.size(groupedDate) / 4,
+        counter = 0;
+
+    for (var key in groupedDate) {
+      if (counter < interval)
+        part01GroupedDate[key] = groupedDate[key];
+      else if (counter < interval * 2)
+        part02GroupedDate[key] = groupedDate[key];
+      else if (counter < interval * 3)
+        part03GroupedDate[key] = groupedDate[key];
+      else
+        part04GroupedDate[key] = groupedDate[key];
+      counter++;
+    }
+
+    var p1 = getTotalTimeSpent(part01GroupedDate),
+        p2 = getTotalTimeSpent(part02GroupedDate),
+        p3 = getTotalTimeSpent(part03GroupedDate),
+        p4 = getTotalTimeSpent(part04GroupedDate);
+
+    $('#barTimeSpentCharts').highcharts({
+      chart: {
+        type: 'column',
+        inverted: true
+      },
       title: {
-        text: 'number of hours'
+        text: 'Change in time by splitting location data into four (4) quarters'
       },
-      min: 0,
-    },
-    plotOptions: {
-      column: {
-        stacking: 'percent',
-        dataLabels: {
-          enabled: true,
-          color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
-          style: {
-            textShadow: '0 0 3px black',
+      subtitle: {
+        text: '(Aug 2013 - Oct 2015)' //@TODO: remove hard coded date
+      },
+      xAxis: {
+        title: {
+          text: 'date',
+        },
+        categories: ["1st Quarter", "2nd Quarter", "3rd Quarter", "4th Quarter"]
+      },
+      yAxis: {
+        title: {
+          text: 'number of hours'
+        },
+        min: 0,
+      },
+      plotOptions: {
+        column: {
+          stacking: 'percent',
+          dataLabels: {
+            enabled: true,
+            color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+            style: {
+              textShadow: '0 0 3px black',
+            }
           }
         }
-      }
-    },
-    series: [{
-      name: 'Home',
-      data: [p1[0], p2[0], p3[0], p4[0]],
-    }, {
-      name: 'Work',
-      data: [p1[1], p2[1], p3[1], p4[1]],
-    }, {
-      name: 'Other',
-      data: [p1[2], p2[2], p3[2], p4[2]],
-    },
-    ]
-  });
-
-  // ===============
-  // HeatMap for total time spent at each location for first half and second half
-  // ===============
-
-  $(function () {
-    $('#heatMapTimeSpent').highcharts({
-
-    chart: {
-      type: 'heatmap',
-      marginTop: 40,
-      marginBottom: 80,
-      plotBorderWidth: 1
-    },
-
-    title: {
-      text: 'No of hours spent'
-    },
-
-    xAxis: {
-      categories: ['Home', 'Work']
-    },
-
-    yAxis: {
-      categories: ["1st Quarter", "2nd Quarter", "3rd Quarter", "4th Quarter"],
-      title: null
-    },
-
-    colorAxis: {
-      min: 0,
-      minColor: '#FFFFFF',
-      maxColor: Highcharts.getOptions().colors[0]
-    },
-
-    legend: {
-      align: 'right',
-      layout: 'vertical',
-      margin: 0,
-      verticalAlign: 'top',
-      y: 25,
-      symbolHeight: 280
-    },
-
-    tooltip: {
-      formatter: function () {
-        return 'spent '+
-          '<b>' + this.point.value + '</b> hours at <br>' +
-          '<b>' + this.series.xAxis.categories[this.point.x] + '</b> during ' +
-          '<b>' + this.series.yAxis.categories[this.point.y] + '</b>';
-      }
-    },
-    series: [{
-      name: 'Time per location',
-      borderWidth: 1,
-      data: [[0, 0, p1[0]], [0, 1, p2[0]], [0, 2, p3[0]], [0, 3, p4[0]],
-             [1, 0, p1[1]], [1, 1, p2[1]], [1, 2, p3[1]], [1, 3, p4[1]]],
-      dataLabels: {
-        enabled: true,
-        color: '#000000'
-      }
-    }]
-
-  });
-  });
+      },
+      series: [{
+        name: 'Home',
+        data: [p1[0], p2[0], p3[0], p4[0]],
+      }, {
+        name: 'Work',
+        data: [p1[1], p2[1], p3[1], p4[1]],
+      }, {
+        name: 'Other',
+        data: [p1[2], p2[2], p3[2], p4[2]],
+      },
+      ]
+    });
 
 
-  console.timeEnd('plots');
-}
+    console.timeEnd('plots');
+  }
 
 
-//===================================
-//===================================
-//===== CALENDAR ===========
-//===================================
-//===================================
+  //===================================
+  //===================================
+  //===== CALENDAR ===========
+  //===================================
+  //===================================
 
 
-$(document).ready(function() {
+  $(document).ready(function() {
 
-  $('#calendar').fullCalendar({
-    header: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'month,agendaWeek,agendaDay'
-    },
-    //defaultDate: '2014-11-12',
-    editable: true,
-    //eventLimit: true, // allow "more" link when too many events
+    $('#calendar').fullCalendar({
+      header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'month,agendaWeek,agendaDay'
+      },
+      //defaultDate: '2014-11-12',
+      editable: true,
+      //eventLimit: true, // allow "more" link when too many events
 
-    eventSources: [
+      eventSources: [
 
-      // your event source
-      {
-        events: [ // put the array in the `events` property
-          {
-            title  : 'Home',
-            start  : '2015-11-01:8:00:00',
-            end    : '2015-11-07'
-          },
-          {
-            title  : 'Home',
-            start  : '2015-11-08:8:00:00',
-            end    : '2015-11-15'
-          },
-          {
-            title  : 'Work',
-            start  : '2015-11-10',
-            end    : '2015-11-14'
-          },
-          {
-            title  : 'Work',
-            start  : '2015-11-15T12:45:00',
-            end    : '2015-11-21'
-          },
-          {
-            title  : 'Work',
-            start  : '2015-11-22T14:45:00',
-            end    : '2015-11-28'
-          }
-        ],
-        color: 'black',     // an option!
-        textColor: 'yellow' // an option!
-      }
+        // your event source
+        {
+          events: [ // put the array in the `events` property
+            {
+              title  : 'Home',
+              start  : '2015-11-01:8:00:00',
+              end    : '2015-11-07'
+            },
+            {
+              title  : 'Home',
+              start  : '2015-11-08:8:00:00',
+              end    : '2015-11-15'
+            },
+            {
+              title  : 'Work',
+              start  : '2015-11-10',
+              end    : '2015-11-14'
+            },
+            {
+              title  : 'Work',
+              start  : '2015-11-15T12:45:00',
+              end    : '2015-11-21'
+            },
+            {
+              title  : 'Work',
+              start  : '2015-11-22T14:45:00',
+              end    : '2015-11-28'
+            }
+          ],
+          color: 'black',     // an option!
+          textColor: 'yellow' // an option!
+        }
 
-      // any other event sources...
+        // any other event sources...
 
-    ]
+      ]
+
+    });
+
+    $('#calendar').fullCalendar('option', 'height', 500);
 
   });
 
-  $('#calendar').fullCalendar('option', 'height', 500);
 
-});
+   function showDefaultChart(chartDiv) {
+   $(chartDiv).highcharts({
+   chart: {
+   zoomType: 'x'
+   },
+   title: {
+   text: 'Where are you by time of day?'
+   },
+   subtitle: {
+   text: document.ontouchstart === undefined ?
+   'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+   },
+   xAxis: {
+   type: 'datetime'
+   },
+   yAxis: {
+   title: {
+   text: 'Exchange rate'
+   }
+   },
+   legend: {
+   enabled: false
+   },
+   plotOptions: {
+   area: {
+   fillColor: {
+   linearGradient: {
+   x1: 0,
+   y1: 0,
+   x2: 0,
+   y2: 1
+   },
+   stops: [
+   [0, Highcharts.getOptions().colors[0]],
+   [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+   ]
+   },
+   marker: {
+   radius: 2
+   },
+   lineWidth: 1,
+   states: {
+   hover: {
+   lineWidth: 1
+   }
+   },
+   threshold: null
+   }
+   },
+
+   series: [{
+   type: 'area',
+   name: 'USD to EUR',
+   data: []
+   }]
+   });
+   }
 
 
- function showDefaultChart(chartDiv) {
- $(chartDiv).highcharts({
- chart: {
- zoomType: 'x'
- },
- title: {
- text: 'Where are you by time of day?'
- },
- subtitle: {
- text: document.ontouchstart === undefined ?
- 'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
- },
- xAxis: {
- type: 'datetime'
- },
- yAxis: {
- title: {
- text: 'Exchange rate'
- }
- },
- legend: {
- enabled: false
- },
- plotOptions: {
- area: {
- fillColor: {
- linearGradient: {
- x1: 0,
- y1: 0,
- x2: 0,
- y2: 1
- },
- stops: [
- [0, Highcharts.getOptions().colors[0]],
- [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
- ]
- },
- marker: {
- radius: 2
- },
- lineWidth: 1,
- states: {
- hover: {
- lineWidth: 1
- }
- },
- threshold: null
- }
- },
+   // ===============
+   // HeatMap for total time spent at each location for first half and second half
+   // ===============
 
- series: [{
- type: 'area',
- name: 'USD to EUR',
- data: []
- }]
- });
- }
+   $(function () {
+   $('#heatMapTimeSpent').highcharts({
 
-  */
+   chart: {
+   type: 'heatmap',
+   marginTop: 40,
+   marginBottom: 80,
+   plotBorderWidth: 1
+   },
+
+   title: {
+   text: 'No of hours spent'
+   },
+
+   xAxis: {
+   categories: ['Home', 'Work']
+   },
+
+   yAxis: {
+   categories: ["1st Quarter", "2nd Quarter", "3rd Quarter", "4th Quarter"],
+   title: null
+   },
+
+   colorAxis: {
+   min: 0,
+   minColor: '#FFFFFF',
+   maxColor: Highcharts.getOptions().colors[0]
+   },
+
+   legend: {
+   align: 'right',
+   layout: 'vertical',
+   margin: 0,
+   verticalAlign: 'top',
+   y: 25,
+   symbolHeight: 280
+   },
+
+   tooltip: {
+   formatter: function () {
+   return 'spent '+
+   '<b>' + this.point.value + '</b> hours at <br>' +
+   '<b>' + this.series.xAxis.categories[this.point.x] + '</b> during ' +
+   '<b>' + this.series.yAxis.categories[this.point.y] + '</b>';
+   }
+   },
+   series: [{
+   name: 'Time per location',
+   borderWidth: 1,
+   data: [[0, 0, p1[0]], [0, 1, p2[0]], [0, 2, p3[0]], [0, 3, p4[0]],
+   [1, 0, p1[1]], [1, 1, p2[1]], [1, 2, p3[1]], [1, 3, p4[1]]],
+   dataLabels: {
+   enabled: true,
+   color: '#000000'
+   }
+   }]
+
+   });
+   });
+
+
+
+   */
+
+
+
 
 
 //var homeArray = [],
@@ -935,5 +1152,8 @@ $(document).ready(function() {
 
 // var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
 //row.weekday = WEEKDAY[row.day];
+
+
+
 
 }
