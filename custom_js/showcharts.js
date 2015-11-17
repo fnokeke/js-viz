@@ -113,7 +113,6 @@ function processingCharts(data) {
 
   // time chart creation
   var start = +new Date();
-  // create first stockChart
   $('#timeSpentBar').highcharts('StockChart', {
     chart: {
       alignTicks: false,
@@ -413,11 +412,202 @@ function processingCharts(data) {
   });
 
 
+  // ===============
+  // where are you by given dates
+  // ===============
+
+  var groupedLocLabel = _.groupBy(data, 'locationLabel');
+
+  var homeGrp = groupedLocLabel['home'];
+  var workGrp = groupedLocLabel['work'];
+
+  homeGrp = _.map(homeGrp, function (row) {
+    return [row.timestampMs, row.time];
+  });
+  workGrp = _.map(workGrp, function (row) {
+    return [row.timestampMs, row.time];
+  });
+
+  var PLOTSIZE = 2;
+
+  $('#dateTimeHomeChart').highcharts({
+    chart: {
+      type: 'scatter',
+      zoomType: 'x'
+    },
+    title: {
+      text: 'Time at Home'
+    },
+    subtitle: {
+      text: document.ontouchstart === undefined ?
+        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+    },
+    xAxis: {
+      type: 'datetime',
+      tickInterval: 45 * 24 * 36e5, // 24 * 36e5 === 1 day
+      labels: {
+        format: '{value: %a %d %b %Y}',
+        //align: 'right',
+        // rotation: -30
+      },
+      title: {
+        text: 'date',
+      },
+    },
+    yAxis: {
+      title: {
+        text: 'time of day'
+      },
+      min: 0,
+      tickInterval: 2,
+      categories: TIMELABEL,
+    },
+    plotOptions: {
+      series: {
+        marker: {
+          radius: PLOTSIZE,
+          symbol: 'square'
+        }
+      }
+    },
+    series: [{
+      name: 'Home',
+      color: 'rgba(83, 223, 83, .5)',
+      data: homeGrp,
+    }]
+  });
+
+  $('#dateTimeWorkChart').highcharts({
+    chart: {
+      type: 'scatter',
+      zoomType: 'x'
+    },
+    title: {
+      text: 'Time at Work'
+    },
+    subtitle: {
+      text: document.ontouchstart === undefined ?
+        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+    },
+    xAxis: {
+      type: 'datetime',
+      tickInterval: 30 * 24 * 36e5, // 24 * 36e5 === 1 day
+      labels: {
+        format: '{value: %a %d %b %Y}',
+        //align: 'right',
+        // rotation: -30
+      },
+      title: {
+        text: 'date',
+      },
+    },
+    yAxis: {
+      title: {
+        text: 'time of day'
+      },
+      min: 0,
+      tickInterval: 2,
+      categories: TIMELABEL,
+    },
+    plotOptions: {
+      series: {
+        marker: {
+          radius: PLOTSIZE,
+          symbol: 'square'
+        }
+      }
+    },
+    series: [{
+      name: 'Work',
+      color: 'rgba(223, 83, 83, .5)',
+      data: workGrp
+    }]
+  });
 
 
+  // ===============
+  // where are you by weekday
+  // ===============
 
+  homeGrp = groupedLocLabel['home'];
+  workGrp = groupedLocLabel['work'];
 
+  homeGrp = _.map(homeGrp, function (row) {
+    return [row.day, row.time];
+  });
+  workGrp = _.map(workGrp, function (row) {
+    return [row.day, row.time];
+  });
 
+  var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
+
+  $('#weekdayHomeTimeChart').highcharts({
+    chart: {
+      type: 'scatter',
+    },
+    title: {
+      text: 'Where are you by time of weekday?'
+    },
+    xAxis: {
+      title: {
+        text: 'Weekday',
+      },
+      categories: WEEKDAY,
+    },
+    yAxis: {
+      title: {
+        text: 'Time'
+      },
+      categories: TIMELABEL,
+    },
+    plotOptions: {
+      series: {
+        marker: {
+          radius: PLOTSIZE,
+          symbol: 'square'
+        }
+      }
+    },
+    series: [{
+      name: 'Home',
+      color: 'rgba(83, 223, 83, .5)',
+      data: homeGrp
+    }]
+  });
+
+  $('#weekdayWorkTimeChart').highcharts({
+    chart: {
+      type: 'scatter',
+    },
+    title: {
+      text: 'Where are you by time of weekday?'
+    },
+    xAxis: {
+      title: {
+        text: 'Weekday',
+      },
+      categories: WEEKDAY,
+    },
+    yAxis: {
+      title: {
+        text: 'Time'
+      },
+      categories: TIMELABEL,
+    },
+    plotOptions: {
+      series: {
+        marker: {
+          radius: PLOTSIZE,
+          symbol: 'square'
+        }
+      }
+    },
+    series: [{
+      name: 'Work',
+      color: 'rgba(223, 83, 83, .5)',
+      data: workGrp
+    }]
+  });
 
 
 
@@ -724,13 +914,13 @@ function roundToTwoDP(num) {
     // where are you by given dates
     // ===============
 
-    var grpCount = _.groupBy(data, function (obj) {
+    var groupedLocLabel = _.groupBy(data, function (obj) {
       return obj.locationLabel;
     });
 
-    var homeGrp = grpCount['home'];
-    var workGrp = grpCount['work'];
-    var otherGrp = grpCount['other'];
+    var homeGrp = groupedLocLabel['home'];
+    var workGrp = groupedLocLabel['work'];
+    var otherGrp = groupedLocLabel['other'];
 
     homeGrp = _.map(homeGrp, function (obj) {
       return [obj.timestamp, obj.time];
