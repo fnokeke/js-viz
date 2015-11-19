@@ -430,51 +430,6 @@ function processingCharts(data) {
 
   var RADIUS = 2; // determine radius of scatter plot circles
 
-  $('#dateTimeHomeChart').highcharts({
-    chart: {
-      type: 'scatter',
-      zoomType: 'x'
-    },
-    title: {
-      text: 'Time at Home'
-    },
-    subtitle: {
-      text: document.ontouchstart === undefined ?
-        'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-    },
-    xAxis: {
-      type: 'datetime',
-      tickInterval: 45 * 24 * 36e5, // 24 * 36e5 === 1 day
-      labels: {
-        format: '{value: %a %d %b %Y}',
-      },
-      title: {
-        text: 'date',
-      },
-    },
-    yAxis: {
-      title: {
-        text: 'time of day'
-      },
-      min: 0,
-      tickInterval: 2,
-      categories: TIMELABEL,
-    },
-    plotOptions: {
-      series: {
-        marker: {
-          radius: RADIUS,
-          symbol: 'square'
-        }
-      }
-    },
-    series: [{
-      name: 'Home',
-      color: 'rgba(83, 223, 83, .5)',
-      data: homeGrp,
-    }]
-  });
-
   $('#dateTimeWorkChart').highcharts({
     chart: {
       type: 'scatter',
@@ -552,12 +507,12 @@ function processingCharts(data) {
   });
 
   var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
-  $('#weekdayHomeTimeChart').highcharts({
+  $('#weekdayChart').highcharts({
     chart: {
       type: 'scatter',
     },
     title: {
-      text: 'Time at Home (Last ' + noOfDays + ' days)'
+      text: 'Time at Location (Last ' + noOfDays + ' days)'
     },
     xAxis: {
       title: {
@@ -583,41 +538,11 @@ function processingCharts(data) {
       name: 'Home',
       color: 'rgba(83, 223, 83, .5)',
       data: homeGrp
-    }]
-  });
-
-  $('#weekdayWorkTimeChart').highcharts({
-    chart: {
-      type: 'scatter',
     },
-    title: {
-      text: 'Time at Work (Last ' + noOfDays + ' days)'
-    },
-    xAxis: {
-      title: {
-        text: 'Weekday',
-      },
-      categories: WEEKDAY,
-    },
-    yAxis: {
-      title: {
-        text: 'Time'
-      },
-      categories: TIMELABEL,
-    },
-    plotOptions: {
-      series: {
-        marker: {
-          radius: RADIUS,
-          symbol: 'square'
-        }
-      }
-    },
-    series: [{
-      name: 'Work',
-      color: 'rgba(223, 83, 83, .5)',
-      data: workGrp
-    }]
+      {
+        name: 'Work',
+        data: workGrp
+      }]
   });
 
   console.timeEnd('plots');
