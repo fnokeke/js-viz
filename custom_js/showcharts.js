@@ -524,6 +524,23 @@ function processingCharts(data) {
   // ===============
   // where are you by weekday
   // ===============
+
+  //
+  // use last two weeks of data for weekday charts
+  //
+  var lastDay = data[data.length - 1],
+      lastDayTimestamp = lastDay.timestampMs,
+      dateOfLastDay = new Date(lastDayTimestamp),
+      noOfDays = 30,
+      twoWeeksAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
+
+  var twoWeeksData = data.filter(function (row) {
+    return row.timestampMs >= twoWeeksAgoTimestamp &&
+           row.timestampMs <= lastDayTimestamp;
+  });
+
+  var groupedLocLabel = _.groupBy(twoWeeksData, 'locationLabel');
+
   homeGrp = groupedLocLabel['home'];
   workGrp = groupedLocLabel['work'];
 
@@ -535,13 +552,12 @@ function processingCharts(data) {
   });
 
   var WEEKDAY = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
-
   $('#weekdayHomeTimeChart').highcharts({
     chart: {
       type: 'scatter',
     },
     title: {
-      text: 'Where are you by time of weekday?'
+      text: 'Time at Home (Last ' + noOfDays + ' days)'
     },
     xAxis: {
       title: {
@@ -575,7 +591,7 @@ function processingCharts(data) {
       type: 'scatter',
     },
     title: {
-      text: 'Where are you by time of weekday?'
+      text: 'Time at Work (Last ' + noOfDays + ' days)'
     },
     xAxis: {
       title: {
