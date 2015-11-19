@@ -20,7 +20,7 @@
 $(document).ready(function () {
   console.time('loaddata'); //TODO: remove
 
-  $.getJSON('dataset/RifatLocationHistory.json', function (data) {
+  $.getJSON('dataset/FabianLocationHistory.json', function (data) {
     processingCharts(data);
   });
 });
@@ -71,7 +71,7 @@ function processingCharts(data) {
 
   // HOME = [42.4393512,-76.4979702] // Jean
   // HOME = [42.4526518, -76.4875169] // Mash
-  HOME = [42.4412221,-76.4765972] // Rifat
+  // HOME = [42.4412221,-76.4765972] // Rifat
   data.forEach(function (row) {
     if (Math.abs(row.latitudeE7 - HOME[0] < latMargin) &&
       Math.abs(row.longitudeE7 - HOME[1] < lonMargin)) {
@@ -887,6 +887,5 @@ function roundToTwoDP(num) {
   });
 
    */
-
 
 }

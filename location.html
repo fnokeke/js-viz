@@ -3,49 +3,39 @@
 
     <script src="lib/jquery.min.js"></script>
 
+    <script src="lib/highstock.js"></script>
+    <script src="lib/highcharts-more.js"></script>
+    <script src="lib/heatmap.js"></script>
+
+    <script src="lib/exporting.js"></script>
+    <script src="lib/boost.src.js"></script>
+
+    <script src="lib/underscore.js"></script>
+
+
     <link rel='stylesheet' href='fullcalendar/fullcalendar.css'/>
     <script src='lib/moment.js'></script>
     <script src='fullcalendar/fullcalendar.js'></script>
 
 
-    <script src="lib/highstock.js"></script>
-    <script src="https://code.highcharts.com/stock/highcharts-more.js"></script>
-    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
 
-    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
-    <script src="https://rawgit.com/highslide-software/highcharts.com/master/js/modules/boost.src.js"></script>
-
-
-    <script src="lib/underscore.js"></script>
-
-<!--
-
-    <script src="https://code.highcharts.com/maps/highmaps.js"></script>
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.6/proj4.js"></script>
-    -->
-
-
+    <script src="custom_js/showcharts.js"></script>
+    <script src="custom_js/sandtheme.js"></script>
 
 </head>
 <body>
 
 <div id="timeSpentBar" style="width:100%; height:600px;"></div>
+<div id="leftReturnedAreaSpline" style="width:100%; height:600px;"></div>
 
 <div id="barTimeSpentCharts" style="width:50%; float:left;"></div>
 <div id="heatMapTimeSpent" style="width:50%; float:right;">></div>
-
-<div id="leftReturnedAreaSpline" style="width:100%; height:600px;"></div>
 
 <div id="dateTimeHomeChart"></div>
 <div id="weekdayHomeTimeChart"></div>
 
 <div id="dateTimeWorkChart"></div>
 <div id="weekdayWorkTimeChart"></div>
-
-<div id="latLongChart" style="width:100%; height:400px;"></div>
-
 
 <style>
     #dateTimeHomeChart {
@@ -71,10 +61,6 @@
 
 
 
-
-
-<script src="custom_js/showcharts.js"></script>
-<script src="custom_js/sandtheme.js"></script>
 
 <div id="calendar"></div>
 
