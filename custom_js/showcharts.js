@@ -59,30 +59,74 @@ function processingCharts(data) {
     cityLonMargin = 1.0;
   data = data.filter(function (row) {
     return row.accuracy <= 1000 &&
-      Math.abs(row.latitudeE7 - CITY[0] <= cityLatMargin) &&
-      Math.abs(row.longitudeE7 - CITY[1] <= cityLonMargin)
+      Math.abs(row.latitudeE7 - CITY[0]) <= cityLatMargin &&
+      Math.abs(row.longitudeE7 - CITY[1]) <= cityLonMargin
   });
 
-  // determine if location falls into either of home, work, other
+  // determine if location falls into specific locaiton label such as home, work, etc
   var HOME = [42.446594, -76.493736], // Fabian Home
       WORK = [42.444877, -76.480814], //Gates Hall
-      latMargin = 0.0005,
+      HOBBY = [42.4391184, -76.5693154]; // lot 10
+      HOBBY = [42.4333419, -76.4753694]; //Woodcrest
+
+  var latMargin = 0.0005,
       lonMargin = 0.005;
 
-  // HOME = [42.4393512,-76.4979702] // Jean
-  // HOME = [42.4526518, -76.4875169] // Mash
-  // HOME = [42.4412221,-76.4765972] // Rifat
   data.forEach(function (row) {
-    if (Math.abs(row.latitudeE7 - HOME[0] < latMargin) &&
-      Math.abs(row.longitudeE7 - HOME[1] < lonMargin)) {
+    if (Math.abs(row.latitudeE7 - HOME[0]) < latMargin &&
+      Math.abs(row.longitudeE7 - HOME[1]) < lonMargin) {
       row.locationLabel = 'home';
-    } else if (Math.abs(row.latitudeE7 - WORK[0] < latMargin) &&
-      Math.abs(row.longitudeE7 - WORK[1] < lonMargin)) {
+    } else if (Math.abs(row.latitudeE7 - WORK[0]) < latMargin &&
+      Math.abs(row.longitudeE7 - WORK[1]) < lonMargin) {
       row.locationLabel = 'work';
-    } else {
+    } else if (Math.abs(row.latitudeE7 - HOBBY[0]) < latMargin &&
+      Math.abs(row.longitudeE7 - HOBBY[1]) < lonMargin) {
+      row.locationLabel = 'hobby';
+    }
+    else {
       row.locationLabel = 'other';
     }
   });
+
+  //
+  //var hobbyTestData = data.filter(function (row) {
+  //  return row.locationLabel == 'hobby';
+  //});
+  //
+  // HOME = [42.4393512,-76.4979702] // Jean
+  // HOME = [42.4526518, -76.4875169] // Mash
+  // HOME = [42.4412221,-76.4765972] // Rifat
+  //
+
+ //addLocationLabel(data, {
+ //   'home': HOME,
+ //   'work': WORK,
+ //   'hobby': HOBBY
+ // });
+ //
+ // function addLocationLabel(data, listOfLocations) {
+ //   var latMargin = 0.0005,
+ //       lonMargin = 0.005,
+ //       latDiff,
+ //       lonDiff,
+ //       exactLocation,
+ //       isLabelled = false;
+ //
+ //   data.forEach(function (row) {
+ //     for (var locLabel in listOfLocations) {
+ //       exactLocation = listOfLocations[locLabel];
+ //       latDiff = Math.abs(row.latitudeE7 - exactLocation[0]);
+ //       lonDiff = Math.abs(row.longitudeE7- exactLocation[1]);
+ //       if (latDiff <= latMargin && lonDiff <= lonMargin) {
+ //         row.secondLabel = locLabel;
+ //         isLabelled = true;
+ //         break;
+ //       }
+ //     }
+ //     if (!isLabelled)
+ //       row.secondLabel = "other";
+ //   });
+ // }
 
   console.timeEnd('processingCharts');
   console.time('plots');
@@ -101,8 +145,10 @@ function processingCharts(data) {
       arrayOfLocationObjects,
       homeData = [],
       workData = [],
+      hobbyData = [],
       timeSpentAtHome,
       timeSpentAtWork,
+      timeSpentAtHobby,
       allDwellTimes;
   for (var dateKey in groupedData) {
     date = new Date(dateKey).getTime();
@@ -110,16 +156,20 @@ function processingCharts(data) {
     allDwellTimes = getAllDwellTime(arrayOfLocationObjects);
     timeSpentAtHome = Math.round(allDwellTimes[0]);
     timeSpentAtWork = Math.round(allDwellTimes[1]);
+    timeSpentAtHobby = Math.round(allDwellTimes[2]);
     homeData.push({'x':date, 'y':timeSpentAtHome});
     workData.push({'x':date, 'y':timeSpentAtWork});
+    hobbyData.push({'x':date, 'y':timeSpentAtHobby});
   }
 
   // sorted time is needed for HighStock plots
   // HighStock automatically formats the datetime for you
   homeData = _.sortBy(homeData, 'x');
   workData = _.sortBy(workData, 'x');
+  hobbyData = _.sortBy(hobbyData, 'x');
 
-  $('#timeSpentBar').highcharts('StockChart', {
+
+  $('#timeSpentBar').highcharts("StockChart", {
     chart: {
       alignTicks: false,
       zoomType: 'x'
@@ -180,8 +230,16 @@ function processingCharts(data) {
       dataGrouping: {
         approximation: "average",
       }
-    }
-    ]
+    }, {
+      name: 'Hobby',
+      type: 'column',
+      name: "Hobby",
+      color: (0,0,233),
+      data: hobbyData,
+      dataGrouping: {
+        approximation: "average",
+      }
+    }]
   });
 
   // ===============
@@ -227,8 +285,11 @@ function processingCharts(data) {
   }
 
   // labels for specific dates on x-axis
-  var THANKSGIVING2014 = 1417064400000,
-      FALL2014BEGINS = 1408680000000;
+  var THANKSGIVING2014 = "11-27-2014",
+      FALL2014BEGINS = "08-14-2014";
+
+  THANKSGIVING2014 = new Date(THANKSGIVING2014).getTime();
+  FALL2014BEGINS = new Date(FALL2014BEGINS).getTime();
 
   $(function () {
     $('#leftReturnedAreaSpline').highcharts('StockChart', {
