@@ -239,6 +239,16 @@ function processingCharts(data) {
       dataGrouping: {
         approximation: "average",
       }
+    }],
+    annotations: [{
+      xValue: new Date("11-27-2014").getTime(),
+      yValue: 22,
+      title: {
+        text: "this is my annotation!"
+      },
+      events: {
+        // click: function(e) { console.log("Annotation clicked:", this };
+      }
     }]
   });
 
@@ -608,6 +618,276 @@ function processingCharts(data) {
 
   console.timeEnd('plots');
 
+
+  //
+  // highcharts capture double click
+  //
+  $(function () {
+    var lastUpdate = +new Date(),
+      timeout = 3000;
+
+    function reloadFlash() {
+      $("#flash").fadeIn();
+      lastUpdate = +new Date();
+      setTimeout(hideFlash, timeout);
+    }
+
+    function hideFlash() {
+      var now = +new Date();
+      if (now >= lastUpdate + timeout) {
+        $("#flash").fadeOut();
+      }
+    }
+
+    $('#annotations').highcharts({
+      chart: {
+        renderTo: 'chart',
+        borderWidth: 5,
+        borderColor: '#e8eaeb',
+        borderRadius: 0,
+        backgroundColor: '#f7f7f7',
+        marginTop: 70,
+        events: {
+          load: function () {
+            //add report div
+            var ch = this,
+              x = 20,
+              y = 57;
+
+            ch.flashText = ch.renderer.text('<div id="flash"><div id="report"></div></div>', x , y +10, true).attr({
+              zIndex: 101
+            }).add();
+          }
+        }
+      },
+      title: {
+        style: {
+          'fontSize': '1em'
+        },
+        useHTML: true,
+        align: 'left',
+        x: -5,
+        y: 8,
+        text: '<span class="chart-title"> Custom events  <span class="chart-href"> <a href="http://www.blacklabel.pl/highcharts" target="_blank"> Black Label </a> </span> <span class="chart-subtitle">plugin by </span></span>',
+        events: {
+          dblclick: function () {
+            reloadFlash();
+            $('#report').html('dbclick on title');
+          },
+          click: function () {
+            reloadFlash();
+            $('#report').html('click on title');
+          },
+          contextmenu: function () {
+            reloadFlash();
+            $('#report').html('context menu on title ');
+          }
+        }
+      },
+      yAxis: [{
+        title: {
+          text: 'Values',
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              alert("hello bros");
+              $('#report').html('dbclick on yAxis title');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on yAxis title');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on yAxis title');
+            }
+          }
+        },
+        plotLines: [{
+          color: '#a4c08e',
+          width: 10,
+          value: 70,
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on plotline');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on plotline');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on plotline');
+            }
+          }
+        }],
+        plotBands: [{ // mark the weekend
+          color: '#FCFFC5',
+          from: 100,
+          to: 200,
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on plotband');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on plotband');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on plotband');
+            }
+          }
+        }],
+        labels: {
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on yAxis label');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on yAxis label');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on yAxis label');
+            }
+          }
+        }
+      }, {
+        opposite: true,
+        linkedTo: 0,
+        labels: {
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on second yAxis label');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on second yAxis label');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on second yAxis');
+            }
+          }
+        }
+      }],
+      xAxis: {
+        title:{
+          text: 'xAxis title',
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on xAxis title');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on xAxis title');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on xAxis title');
+            }
+          }
+        },
+        labels: {
+          rotation: -45,
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on xAxis label');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on xAxis label');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on xAxis label');
+            }
+          }
+        }
+      },
+      plotOptions: {
+        series: {
+          dataLabels: {
+            enabled: true,
+            events: {
+              dblclick: function () {
+                reloadFlash();
+                $('#report').html('dbclick on datalabel');
+              },
+              click: function () {
+                reloadFlash();
+                $('#report').html('click on datalabel');
+              },
+              contextmenu: function () {
+                reloadFlash();
+                $('#report').html('context menu on datalabel');
+              }
+            }
+          },
+          events: {
+            dblclick: function () {
+              reloadFlash();
+              $('#report').html('dbclick on serie');
+            },
+            click: function () {
+              reloadFlash();
+              $('#report').html('click on serie');
+            },
+            contextmenu: function () {
+              reloadFlash();
+              $('#report').html('context menu on serie');
+            }
+          },
+          point: {
+            events: {
+              dblclick: function () {
+                reloadFlash();
+                $('#report').html('dbclick on serie point');
+              },
+              click: function () {
+                reloadFlash();
+                $('#report').html('click on serie point');
+              },
+              contextmenu: function () {
+                reloadFlash();
+                $('#report').html('context menu on serie point');
+              }
+            }
+          }
+        }
+      },
+      legend: {
+        itemEvents: {
+          dblclick: function () {
+            reloadFlash();
+            $('#report').html('dbclick on legend item');
+          },
+          click: function () {
+            reloadFlash();
+            $('#report').html('click on legend item');
+          },
+          contextmenu: function () {
+            reloadFlash();
+            $('#report').html('context menu on legend item ');
+          }
+        }
+      },
+      series: [{
+        data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135, 43]
+      }, {
+        type: 'column',
+        data: [50, 16, 21, 11, 22, 12]
+      }]
+    });
+  });
 
 //===================================
 //===== UTILITY FUNCTIONS ===========
