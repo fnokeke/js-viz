@@ -1,6 +1,7 @@
 <html xmlns:width="http://www.w3.org/1999/xhtml">
 <head>
 
+    <!-- javascript loaded -->
     <script src="lib/jquery.min.js"></script>
 
     <script src="lib/highstock.js"></script>
@@ -18,24 +19,20 @@
     <script src='lib/moment.js'></script>
     <script src='fullcalendar/fullcalendar.js'></script>
 
-
-
     <script src="custom_js/showcharts.js"></script>
+    <script src="custom_js/sandtheme.js"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
 
 
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+          integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
+          crossorigin="anonymous">
 
 
 </head>
 <body>
-
-<div>
-    <form class="form-inline" id="hobbyForm">
-        <input type="text" class="form-control" id="hobby" placeholder="hobby (in one word)">
-        <input type="text" class="form-control" id="hobbyLocation" placeholder="location of hobby">
-    </form>
-</div>
 
 <div id="timeSpentBar"></div>
 
@@ -49,29 +46,20 @@
 
 <style>
     #weekdayChart {
-        float:left;
-        width:50%;
+        float: left;
+        width: 50%;
     }
 
     #dateTimeWorkChart {
-        float:right;
-        width:50%;
+        float: right;
+        width: 50%;
     }
 
     #timeSpentBar {
-        float:right;
-        width:100%;
+        float: right;
+        width: 100%;
     }
-
-
-    #hobbyForm {
-        float:right;
-        width:100%;
-    }
-
 </style>
-
-
 
 
 <div id="calendar"></div>
