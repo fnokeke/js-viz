@@ -1,0 +1,189 @@
+<html>
+<head>
+    <script type="text/javascript">
+        // Your Client ID can be retrieved from your project in the Google
+        // Developer Console, https://console.developers.google.com
+        var CLIENT_ID = '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com';
+
+        var SCOPES = ["https://www.googleapis.com/auth/calendar"];
+
+        /**
+         * Check if current user has authorized this application.
+         */
+        function checkAuth() {
+            gapi.auth.authorize(
+                    {
+                        'client_id': CLIENT_ID,
+                        'scope': SCOPES.join(' '),
+                        'immediate': true
+                    }, handleAuthResult);
+        }
+
+        /**
+         * Handle response from authorization server.
+         *
+         * @param {Object} authResult Authorization result.
+         */
+        function handleAuthResult(authResult) {
+            var authorizeDiv = document.getElementById('authorize-div');
+            if (authResult && !authResult.error) {
+                // Hide auth UI, then load client library.
+                authorizeDiv.style.display = 'none';
+                loadCalendarApi();
+            } else {
+                // Show auth UI, allowing the user to initiate authorization by
+                // clicking authorize button.
+                authorizeDiv.style.display = 'inline';
+            }
+        }
+
+        /**
+         * Initiate auth flow in response to user clicking authorize button.
+         *
+         * @param {Event} event Button click event.
+         */
+        function handleAuthClick(event) {
+            gapi.auth.authorize(
+                    {client_id: CLIENT_ID, scope: SCOPES, immediate: false},
+                    handleAuthResult);
+            return false;
+        }
+
+        /**
+         * Load Google Calendar client library. List upcoming events
+         * once client library is loaded.
+         */
+        function loadCalendarApi() {
+            gapi.client.load('calendar', 'v3', doCalendarOperations);
+        }
+
+        /**
+         * Print the summary and start datetime/date of the next ten events in
+         * the authorized user's calendar. If no events are found an
+         * appropriate message is printed.
+         */
+        var allCalendars = {};
+        function doCalendarOperations() {
+            // make all calendar list
+            var request = gapi.client.calendar.calendarList.list();
+            request.execute(function(resp) {
+                var events = resp.items;
+                if (events.length > 0) {
+                    for (i = 0; i < events.length; i++) {
+                        var event = events[i];
+                        allCalendars[event.id] = event.summary;
+                    }
+                } else {
+                    console.log('No calendar list found.');
+                }
+
+                //show calendar list
+                appendPre("Calendar List");
+                for (var calId in allCalendars) {
+                    var summary = allCalendars[calId];
+                    appendPre( summary + ' (' + calId + ')');
+                }
+
+                // add new calendar to calendar list
+                // avoid creating duplicate calendar
+                var newLocationCalSummary = 'My Location Calendar';
+                var canMakeNewCalendar = true;
+
+                var newLocationCalId;
+                for (var calId in allCalendars) {
+                    var summary = allCalendars[calId];
+                    if (summary === newLocationCalSummary) {
+                        canMakeNewCalendar = false;
+                        newLocationCalId = calId;
+                        break;
+                    }
+                }
+
+                // TODO: handle errors
+                if (canMakeNewCalendar) {
+                    var request = gapi.client.calendar.calendars.insert({
+                        'summary': newLocationCalSummary
+                    });
+                    request.execute(function(resp) {
+                        console.log('Just added new calendar: ' + newLocationCalSummary);
+                    });
+                }
+
+                // add event to Location Calendar
+                console.log("adding event to Location Calendar");
+                var resource = {
+                    "summary": "Demo Event: Gym Workout",
+                    "location": "Somewhere in Noyes",
+                    "start": {
+                        "dateTime": "2015-12-23T10:00:00.000-07:00"
+                    },
+                    "end": {
+                        "dateTime": "2015-12-23T10:25:00.000-07:00"
+                    }
+                };
+                var request = gapi.client.calendar.events.insert({
+                    'calendarId': newLocationCalId,
+                    'resource': resource
+                });
+                request.execute(function(resp) {
+                    console.log(resp);
+                });
+            });
+
+            // show upcoming events
+            var request = gapi.client.calendar.events.list({
+                'calendarId': 'primary',
+                'timeMin': (new Date()).toISOString(),
+                'showDeleted': false,
+                'singleEvents': true,
+                'maxResults': 10,
+                'orderBy': 'startTime'
+            });
+            request.execute(function(resp) {
+                var events = resp.items;
+                appendPre('Upcoming events:');
+
+                if (events.length > 0) {
+                    for (i = 0; i < events.length; i++) {
+                        var event = events[i];
+                        var when = event.start.dateTime;
+                        if (!when) {
+                            when = event.start.date;
+                        }
+                        appendPre(event.summary + ' (' + when + ')');
+                    }
+                } else {
+                    appendPre('No upcoming events found.');
+                }
+
+            });
+        }
+
+        /**
+         * Append a pre element to the body containing the given message
+         * as its text node.
+         *
+         * @param {string} message Text to be placed in pre element.
+         */
+        function appendPre(message) {
+            var pre = document.getElementById('output');
+            var textContent = document.createTextNode(message + '\n');
+            pre.appendChild(textContent);
+        }
+
+
+    </script>
+    <script src="https://apis.google.com/js/client.js?onload=checkAuth"> </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+</head>
+<body>
+<div id="authorize-div" style="display: none">
+    <span>Authorize access to Google Calendar API</span>
+    <!--Button for the user to click to initiate auth sequence -->
+    <button id="authorize-button" onclick="handleAuthClick(event)">
+        Authorize
+    </button>
+</div>
+<pre id="output"></pre>
+</body>
+</html>
