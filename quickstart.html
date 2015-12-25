@@ -258,8 +258,10 @@
                         }
                     });
 
-                    // clear all events on Location Calendar
-                    var batchDelete = gapi.client.newBatch();
+                    /*
+                     * clear all events on Location Calendar
+                     */
+                    //TODO: make sure that calendar exists before you check its events
                     var request = gapi.client.calendar.events.list({
                         'calendarId': newLocationCalId
                     });
@@ -267,8 +269,11 @@
                     request.execute(function (resp) {
                         var events = typeof resp.items !== 'undefined' ? resp.items : [];
 
-                        // delete events one by one but batch the requests
+                        /*
+                         * delete events one by one but batch the requests
+                         */
                         if (events.length > 0) {
+                            var batchDelete = gapi.client.newBatch();
                             for (var i = 0; i < events.length; i++) {
                                 var event = events[i];
                                 var request = deleteRequest(event.id);
@@ -285,10 +290,14 @@
                     var allEventsForDay;
                     var groupedByDayData = _.groupBy(data, 'date');
                     var batchInsert;
+                    var dataForDay;
                     for (var selectedDay in groupedByDayData) {
 
                         batchInsert = gapi.client.newBatch();
-                        allEventsForDay = getEventsFromDay(selectedDay);
+                        // allEventsForDay = getEventsFromDay(selectedDay);
+                        dataForDay = groupedByDayData[selectedDay];
+                        allEventsForDay = getAllDwellTime(dataForDay);
+                        console.log("ggd",groupedByDayData);
                         if (allEventsForDay.length > 0) {
 
                             console.log("allEvents:", allEventsForDay);
@@ -359,7 +368,52 @@
 
         function getAllDwellTime(dayData) {
 
-            if (_.size(dayData) < 1)
+            if (dayData.length < 1)
+                return [];
+
+            var allResourcesForDay = [],
+                    resource,
+                    firstItem,
+                    lastItem,
+                    placeLocation,
+                    timeDiff,
+                    currentLocObject,
+                    locLabel,
+                    prevLocObject,
+                    tmpStore = [];
+
+            tmpStore.push(dayData[0]);
+            for (var i = 1; i < dayData.length; i++) {
+                currentLocObject = dayData[i];
+                prevLocObject = dayData[i-1];
+                if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length-1) {
+                    tmpStore.push(currentLocObject);
+                }
+                else {
+                    firstItem = tmpStore[0];
+                    lastItem = tmpStore[tmpStore.length - 1];
+                    placeLocation = firstItem.latitudeE7 + "," + firstItem.longitudeE7;
+                    timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000*60*60));
+                    locLabel = "Time Spent at " + firstItem.locationLabel + "( ~ " + timeDiff + " hours)";
+                    //TODO: reverse geocode address
+
+                    resource = createResource(
+                            new Date(firstItem.timestampMs),
+                            new Date(lastItem.timestampMs),
+                            locLabel, placeLocation);
+                    allResourcesForDay.push(resource);
+
+                    // reset tmpStore
+                    tmpStore = [];
+                }
+            }
+
+            return allResourcesForDay;
+        }
+
+        function OLDgetAllDwellTime(dayData) {
+
+            if (dayData.length < 1)
                 return [];
 
             var homeDwell = 0,
@@ -406,7 +460,7 @@
                         workDwell += currentTimeStamp - workLastTimestamp;
                         placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
                         resource = createResource(
-                                new Date(homeLastTimestamp),
+                                new Date(workLastTimestamp),
                                 new Date(currentTimeStamp),
                                 locationObject.locationLabel, placeLocation);
                         allResourcesForDay.push(resource);
@@ -423,7 +477,7 @@
                         hobbyDwell += currentTimeStamp - hobbyLastTimestamp;
                         placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
                         resource = createResource(
-                                new Date(homeLastTimestamp),
+                                new Date(hobbyLastTimestamp),
                                 new Date(currentTimeStamp),
                                 locationObject.locationLabel, placeLocation);
                         allResourcesForDay.push(resource);
@@ -440,7 +494,7 @@
                         otherDwell += currentTimeStamp - otherLastTimestamp;
                         placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
                         resource = createResource(
-                                new Date(homeLastTimestamp),
+                                new Date(otherLastTimestamp),
                                 new Date(currentTimeStamp),
                                 locationObject.locationLabel, placeLocation);
                         allResourcesForDay.push(resource);
