@@ -535,20 +535,20 @@ $(function () {
         // ===============
 
         //
-        // use last two weeks of data for weekday charts
+        // use last n days of data for weekday charts
         //
         var lastDay = data[data.length - 1],
             lastDayTimestamp = lastDay.timestampMs,
             dateOfLastDay = new Date(lastDayTimestamp),
             noOfDays = 30,
-            twoWeeksAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
+            nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
 
-        var twoWeeksData = data.filter(function (row) {
-            return row.timestampMs >= twoWeeksAgoTimestamp &&
+        var nDaysData = data.filter(function (row) {
+            return row.timestampMs >= nDaysAgoTimestamp &&
                 row.timestampMs <= lastDayTimestamp;
         });
 
-        var groupedLocLabel = _.groupBy(twoWeeksData, 'locationLabel');
+        var groupedLocLabel = _.groupBy(nDaysData, 'locationLabel');
 
         homeGrp = groupedLocLabel['home'];
         workGrp = groupedLocLabel['work'];

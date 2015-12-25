@@ -1,0 +1,517 @@
+<html>
+<head>
+    <script type="text/javascript">
+        // Your Client ID can be retrieved from your project in the Google
+        // Developer Console, https://console.developers.google.com
+        var CLIENT_ID = '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com';
+
+        var SCOPES = ["https://www.googleapis.com/auth/calendar"];
+
+        /**
+         * Check if current user has authorized this application.
+         */
+        function checkAuth() {
+            gapi.auth.authorize(
+                    {
+                        'client_id': CLIENT_ID,
+                        'scope': SCOPES.join(' '),
+                        'immediate': true
+                    }, handleAuthResult);
+        }
+
+        /**
+         * Handle response from authorization server.
+         *
+         * @param {Object} authResult Authorization result.
+         */
+        function handleAuthResult(authResult) {
+            var authorizeDiv = document.getElementById('authorize-div');
+            if (authResult && !authResult.error) {
+                // Hide auth UI, then load client library.
+                authorizeDiv.style.display = 'none';
+                loadCalendarApi();
+            } else {
+                // Show auth UI, allowing the user to initiate authorization by
+                // clicking authorize button.
+                authorizeDiv.style.display = 'inline';
+            }
+        }
+
+        /**
+         * Initiate auth flow in response to user clicking authorize button.
+         *
+         * @param {Event} event Button click event.
+         */
+        function handleAuthClick(event) {
+            gapi.auth.authorize(
+                    {client_id: CLIENT_ID, scope: SCOPES, immediate: false},
+                    handleAuthResult);
+            return false;
+        }
+
+        /**
+         * Load Google Calendar client library. List upcoming events
+         * once client library is loaded.
+         */
+        function loadCalendarApi() {
+            gapi.client.load('calendar', 'v3', doCalendarOperations);
+        }
+
+        /**
+         *
+         * Print the summary and start datetime/date of the next ten events in
+         * the authorized user's calendar. If no events are found an
+         * appropriate message is printed.
+         */
+        //TODO: handle these variable scope
+        var allCalendars = {};
+        var newLocationCalId;
+        var newLocationCalSummary;
+        function doCalendarOperations() {
+            // make all calendar list
+            var request = gapi.client.calendar.calendarList.list();
+            request.execute(function (resp) {
+                var events = resp.items;
+                if (events.length > 0) {
+                    for (i = 0; i < events.length; i++) {
+                        var event = events[i];
+                        allCalendars[event.id] = event.summary;
+                    }
+                } else {
+                    console.log('No calendar list found.');
+                }
+
+                //show calendar list
+                appendPre('<h2>List of Calendars</h2>');
+                for (var calId in allCalendars) {
+                    var summary = allCalendars[calId];
+                    appendPre('---' + summary + ' (' + calId + ')' + '<br><br>');
+                }
+
+                // add new calendar to calendar list
+                // avoid creating duplicate calendar
+                newLocationCalSummary = 'My Location Calendar';
+                var canMakeNewCalendar = true;
+
+                for (var calId in allCalendars) {
+                    var summary = allCalendars[calId];
+                    if (summary === newLocationCalSummary) {
+                        canMakeNewCalendar = false;
+                        newLocationCalId = calId;
+                        break;
+                    }
+                }
+
+                // TODO: handle errors
+                if (canMakeNewCalendar) {
+                    var request = gapi.client.calendar.calendars.insert({
+                        'summary': newLocationCalSummary
+                    });
+                    request.execute(function (resp) {
+                        console.log('Just added new calendar: ' + newLocationCalSummary);
+                        console.log('Response from add cal', resp);
+                    });
+                }
+
+                // TODO: batch events
+                // TODO: add timezone to calendar
+                // TODO: clear calendar then reload event
+            });
+
+            // show upcoming events
+            var request = gapi.client.calendar.events.list({
+                'calendarId': 'primary',
+                'timeMin': (new Date()).toISOString(),
+                'showDeleted': false,
+                'singleEvents': true,
+                'maxResults': 10,
+                'orderBy': 'startTime'
+            });
+            request.execute(function (resp) {
+                var events = resp.items;
+                appendPre('<h2>Upcoming events:</h2>');
+
+                if (events.length > 0) {
+                    for (i = 0; i < events.length; i++) {
+                        var event = events[i];
+                        var when = event.start.dateTime;
+                        if (!when) {
+                            when = event.start.date;
+                        }
+                        appendPre(event.summary + ' (' + when + ')' + '<br/>');
+                    }
+                } else {
+                    appendPre('No upcoming events found.');
+                }
+
+            });
+
+            //====== DATA FILTERING =============
+            $(function () {
+
+                $(document).ready(function () {
+                    console.time('loaddata'); //TODO: remove
+
+                    $.getJSON('dataset/FabianLocationHistory.json', function (data) {
+                        filterDataset(data);
+                    });
+                });
+
+                function filterDataset(data) {
+                    console.timeEnd('loaddata'); //TODO: remove
+                    console.time('filterDataset'); //TODO: remove
+
+                    data = data.locations;
+
+                    // TODO: testing template to be removed
+                    (function testing() {
+                    })();
+
+                    // TODO: use actual testing
+                    (function testing() {
+                        if (data.length > 0) {
+                            console.log("Data Load Test Passed!");
+                            console.log("Number of rows:", data.length);
+                        } else {
+                            console.log("Data Load Test Failed!");
+                        }
+                    })();
+
+                    // convert columns to expected format and add other new columns
+                    data.forEach(function (row) {
+                        var timestamp = parseInt(row.timestampMs),
+                                rowDate = new Date(timestamp);
+
+                        row.latitudeE7 = row.latitudeE7 / 10e6;
+                        row.longitudeE7 = row.longitudeE7 / 10e6;
+                        row.timestampMs = timestamp;
+
+                        row.fullDate = rowDate;
+                        row.day = rowDate.getDay();
+                        row.date = extractDate(rowDate);
+                        row.time = extractTime(rowDate);
+                    });
+
+                    // sorted entire time once otherwise have to sort each value from groupby date keys
+                    var oldDataLen = data.length; //TODO: remove after passing test
+                    data = _.sortBy(data, 'timestampMs');
+
+                    // reduce data to only last N days
+                    var noOfDays = 7;
+                    var lastDay = data[data.length - 1],
+                            lastDayTimestamp = lastDay.timestampMs,
+                            dateOfLastDay = new Date(lastDayTimestamp),
+                            nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
+
+                    data = data.filter(function (row) {
+                        return row.timestampMs >= nDaysAgoTimestamp &&
+                                row.timestampMs <= lastDayTimestamp;
+                    });
+
+                    // TODO: use actual testing
+                    (function testing() {
+                        var newDataLen = data.length;
+                        var diff = oldDataLen - newDataLen;
+                        if (diff > 0) {
+                            console.log("2 Weeks Test Passed!");
+                            console.log("Number of rows dropped:", diff);
+                        } else {
+                            console.log("2 Weeks Test Failed!");
+                            console.log("Old Length:", oldDataLen);
+                            console.log("New Length:", newDataLen);
+                        }
+                    })();
+
+                    // ignore locations with accuracy over 1000m
+                    // ignore all locations outside CITY
+                    var CITY = [42.446594, -76.493736],
+                            cityLatMargin = 0.1,
+                            cityLonMargin = 1.0;
+
+                    data = data.filter(function (row) {
+                        return row.accuracy <= 1000 &&
+                                Math.abs(row.latitudeE7 - CITY[0]) <= cityLatMargin &&
+                                Math.abs(row.longitudeE7 - CITY[1]) <= cityLonMargin
+                    });
+
+                    // determine if location falls into specific location label such as home, work, etc
+                    var HOME = [42.446594, -76.493736], // Fabian Home
+                            WORK = [42.444877, -76.480814], //Gates Hall
+                            HOBBY = [42.4333261, -76.4709491]; // woodcrest
+
+                    var LAT_MARGIN = 0.00005,
+                            LON_MARGIN = 0.0005;
+
+                    data.forEach(function (row) {
+                        if (Math.abs(row.latitudeE7 - HOME[0]) < LAT_MARGIN &&
+                                Math.abs(row.longitudeE7 - HOME[1]) < LON_MARGIN) {
+                            row.locationLabel = 'home';
+                        } else if (Math.abs(row.latitudeE7 - WORK[0]) < LAT_MARGIN &&
+                                Math.abs(row.longitudeE7 - WORK[1]) < LON_MARGIN) {
+                            row.locationLabel = 'work';
+                        } else if (Math.abs(row.latitudeE7 - HOBBY[0]) < LAT_MARGIN &&
+                                Math.abs(row.longitudeE7 - HOBBY[1]) < LON_MARGIN) {
+                            row.locationLabel = 'hobby';
+                        }
+                        else {
+                            row.locationLabel = 'other';
+                        }
+                    });
+
+                    // clear all events on Location Calendar
+                    var batchDelete = gapi.client.newBatch();
+                    var request = gapi.client.calendar.events.list({
+                        'calendarId': newLocationCalId
+                    });
+                    // TODO: use promise instead of callback
+                    request.execute(function (resp) {
+                        var events = typeof resp.items !== 'undefined' ? resp.items : [];
+
+                        // delete events one by one but batch the requests
+                        if (events.length > 0) {
+                            for (var i = 0; i < events.length; i++) {
+                                var event = events[i];
+                                var request = deleteRequest(event.id);
+                                batchDelete.add(request);
+                            }
+                            batchDelete.execute(function (resp) {
+                                console.log("Batch delete response: ", resp);
+                            });
+                        }
+                    });
+
+                    // create calendar of events for each day
+                    // batch insert events to reduce HTTP overhead
+                    var allEventsForDay;
+                    var groupedByDayData = _.groupBy(data, 'date');
+                    var batchInsert;
+                    for (var selectedDay in groupedByDayData) {
+
+                        batchInsert = gapi.client.newBatch();
+                        allEventsForDay = getEventsFromDay(selectedDay);
+                        if (allEventsForDay.length > 0) {
+
+                            console.log("allEvents:", allEventsForDay);
+                            for (var i = 0; i < allEventsForDay.length; i++) {
+                                var event = allEventsForDay[i];
+                                var request = insertRequest(event);
+                                batchInsert.add(request);
+                            }
+                        }
+
+                        batchInsert.execute(function (resp) {
+                            console.log("Batch insert response: ", resp);
+                        });
+
+                    }
+
+
+                    console.timeEnd('filterDataset');
+                    console.time('plots');
+                }
+
+            });
+
+
+        }
+
+        //===================================
+        //===== UTILITY FUNCTIONS ===========
+        //===================================
+        function appendPre(message) {
+            var pre = document.getElementById('output');
+            pre.innerHTML += message;
+        }
+
+        function createResource(startTime, endTime, summary, location) {
+            return {
+                "summary": summary || 'no summary',
+                "location": location || 'no location',
+                "start": {
+                    "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
+                },
+                "end": {
+                    "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
+                }
+            };
+        }
+
+        function deleteRequest(eventId) {
+            return gapi.client.calendar.events.delete({
+                'calendarId': newLocationCalId,
+                'eventId': eventId
+            });
+        }
+
+        function extractDate(date) {
+            if (!(date instanceof Date))
+                date = new Date(date);
+
+            return ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2) + "-" +
+                    date.getFullYear();
+        }
+
+        function extractTime(date) {
+            if (!(date instanceof Date))
+                date = new Date(date);
+            return roundToTwoDP(date.getHours() + date.getMinutes() / 60.0);
+        }
+
+        function getAllDwellTime(dayData) {
+
+            if (_.size(dayData) < 1)
+                return [];
+
+            var homeDwell = 0,
+                    workDwell = 0,
+                    hobbyDwell = 0,
+                    otherDwell = 0,
+                    placeLocation,
+                    resource,
+                    allResourcesForDay = [],
+                    homeLastTimestamp = -1,
+                    workLastTimestamp = -1,
+                    hobbyLastTimestamp = -1,
+                    otherLastTimestamp = -1,
+                    CONVERTER = 1000 * 60 * 60;
+
+            for (var i = 0; i < dayData.length; i++) {
+                var locationObject = dayData[i],
+                        currentTimeStamp = locationObject.timestampMs;
+
+                if (locationObject.locationLabel == 'home') {
+                    workLastTimestamp = -1;
+                    hobbyLastTimestamp = -1;
+                    otherLastTimestamp = -1;
+
+                    if (homeLastTimestamp != -1) {
+                        homeDwell += currentTimeStamp - homeLastTimestamp;
+                        placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
+                        resource = createResource(
+                                new Date(homeLastTimestamp),
+                                new Date(currentTimeStamp),
+                                locationObject.locationLabel, placeLocation);
+                        allResourcesForDay.push(resource);
+
+                    }
+                    homeLastTimestamp = currentTimeStamp;
+                }
+
+                else if (locationObject.locationLabel == 'work') {
+                    homeLastTimestamp = -1;
+                    hobbyLastTimestamp = -1;
+                    otherLastTimestamp = -1;
+
+                    if (workLastTimestamp != -1) {
+                        workDwell += currentTimeStamp - workLastTimestamp;
+                        placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
+                        resource = createResource(
+                                new Date(homeLastTimestamp),
+                                new Date(currentTimeStamp),
+                                locationObject.locationLabel, placeLocation);
+                        allResourcesForDay.push(resource);
+                    }
+                    workLastTimestamp = currentTimeStamp;
+                }
+
+                else if (locationObject.locationLabel == 'hobby') {
+                    homeLastTimestamp = -1;
+                    workLastTimestamp = -1;
+                    otherLastTimestamp = -1;
+
+                    if (hobbyLastTimestamp != -1) {
+                        hobbyDwell += currentTimeStamp - hobbyLastTimestamp;
+                        placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
+                        resource = createResource(
+                                new Date(homeLastTimestamp),
+                                new Date(currentTimeStamp),
+                                locationObject.locationLabel, placeLocation);
+                        allResourcesForDay.push(resource);
+                    }
+                    hobbyLastTimestamp = currentTimeStamp;
+                }
+
+                else if (locationObject.locationLabel == 'other') {
+                    homeLastTimestamp = -1;
+                    workLastTimestamp = -1;
+                    hobbyLastTimestamp = -1;
+
+                    if (otherLastTimestamp != -1) {
+                        otherDwell += currentTimeStamp - otherLastTimestamp;
+                        placeLocation = '' + locationObject.latitudeE7 + ',' + locationObject.longitudeE7;
+                        resource = createResource(
+                                new Date(homeLastTimestamp),
+                                new Date(currentTimeStamp),
+                                locationObject.locationLabel, placeLocation);
+                        allResourcesForDay.push(resource);
+                    }
+                    otherLastTimestamp = currentTimeStamp;
+                }
+            }
+
+            // original value is in milliseconds
+            // seconds = milliseconds/1000
+            homeDwell /= CONVERTER;
+            workDwell /= CONVERTER;
+            hobbyDwell /= CONVERTER;
+            otherDwell /= CONVERTER;
+
+            // return [homeDwell, workDwell, hobbyDwell, otherDwell];
+            return allResourcesForDay;
+        }
+
+        function getEventsFromDay(dayData) {
+            var allEvents = [];
+            var noOfEvents = 5;
+            var summary;
+            if (_.size(dayData) > 0) {
+
+                for (var i = 0; i < noOfEvents; i++) {
+                    summary = "(" + i + ") demoName";
+                    var event = {
+                        "summary": summary,
+                        "location": "Somewhere in Noyes",
+                        "start": {
+                            "dateTime": "2015-12-23T10:00:00.000-07:00"
+                        },
+                        "end": {
+                            "dateTime": "2015-12-23T17:25:00.000-07:00"
+                        }
+                    }
+                    allEvents.push(event);
+                }
+
+            }
+            return allEvents;
+        }
+
+        function insertRequest(event) {
+            return gapi.client.calendar.events.insert({
+                'calendarId': newLocationCalId,
+                'resource': event
+            });
+        }
+
+        function roundToTwoDP(num) {
+            return +(Math.round(num + "e+2") + "e-2");
+        }
+
+
+    </script>
+
+    <script src="https://apis.google.com/js/client.js?onload=checkAuth"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="lib/underscore.js"></script>
+
+</head>
+<body>
+<div id="authorize-div" style="display: none">
+    <span>Authorize access to Google Calendar API</span>
+    <!--Button for the user to click to initiate auth sequence -->
+    <button id="authorize-button" onclick="handleAuthClick(event)">
+        Authorize
+    </button>
+</div>
+<pre id="output"></pre>
+</body>
+</html>
