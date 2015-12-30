@@ -270,9 +270,7 @@
                              */
                             var dataForDay,
                                     allEventsForDay,
-                                    event,
                                     request,
-                                    locAddress,
                                     groupedByDayData = _.groupBy(givenData, 'date');
 
                             // TODO: use only one batchInsert
@@ -299,7 +297,6 @@
                                     request.execute();
                                 });
                             }
-
 
                         });
 
@@ -444,19 +441,23 @@
                 var reversedAddress = 'no result address assigned';
 
                 geocoder.geocode({'location': latlng}, function (results, status) {
-                    if (status === google.maps.GeocoderStatus.OK) {
-                        if (results[0]) {
-                            reversedAddress = results[0].formatted_address;
-                            resolve(reversedAddress);
-                        } else {
-                            reversedAddress = "No results found for address.";
-                            reject(reversedAddress);
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                if (results[0]) {
+                                    reversedAddress = results[0].formatted_address;
+                                    resolve(reversedAddress);
+                                } else {
+                                    reversedAddress = "No results found for address.";
+                                    reject(reversedAddress);
+                                }
+                            } else if (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                                reversedAddress = "Sadly OVER_QUERY_LIMIT error happened:";
+                                reject(reversedAddress);
+                            } else {
+                                reversedAddress = "Geocoder failed due to: " + status;
+                                reject(reversedAddress);
+                            }
                         }
-                    } else {
-                        reversedAddress = "Geocoder failed due to: " + status;
-                        reject(reversedAddress);
-                    }
-                });
+                );
             });
         }
 
