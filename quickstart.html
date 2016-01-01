@@ -69,54 +69,26 @@
 
         function doCalendarOperations() {
             // make all calendar list
-            var request = gapi.client.calendar.calendarList.list();
-            request.execute(function (resp) {
-                var events = resp.items;
-                if (events.length > 0) {
-                    for (var i = 0; i < events.length; i++) {
-                        var event = events[i];
-                        ALLCALENDARS[event.id] = event.summary;
-                    }
-                } else {
-                    console.log('No calendar list found.');
-                }
-
-                //show calendar list
-                appendPre('<h2>List of Calendars</h2>');
-                for (var calId in ALLCALENDARS) {
-                    var summary = ALLCALENDARS[calId];
-                    appendPre('---' + summary + ' (' + calId + ')' + '<br><br>');
-                }
-
-            });
-
-            // show upcoming events
-            var request = gapi.client.calendar.events.list({
-                'calendarId': 'primary',
-                'timeMin': (new Date()).toISOString(),
-                'showDeleted': false,
-                'singleEvents': true,
-                'maxResults': 10,
-                'orderBy': 'startTime'
-            });
-            request.execute(function (resp) {
-                var events = resp.items;
-                appendPre('<h2>Upcoming events:</h2>');
-
-                if (events.length > 0) {
-                    for (var i = 0; i < events.length; i++) {
-                        var event = events[i];
-                        var when = event.start.dateTime;
-                        if (!when) {
-                            when = event.start.date;
-                        }
-                        appendPre(event.summary + ' (' + when + ')' + '<br/>');
-                    }
-                } else {
-                    appendPre('No upcoming events found.');
-                }
-
-            });
+//            var request = gapi.client.calendar.calendarList.list();
+//            request.execute(function (resp) {
+//                var events = resp.items;
+//                if (events.length > 0) {
+//                    for (var i = 0; i < events.length; i++) {
+//                        var event = events[i];
+//                        ALLCALENDARS[event.id] = event.summary;
+//                    }
+//                } else {
+//                    console.log('No calendar list found.');
+//                }
+//
+//                //show calendar list
+//                appendPre('<h2>List of Calendars</h2>');
+//                for (var calId in ALLCALENDARS) {
+//                    var summary = ALLCALENDARS[calId];
+//                    appendPre('---' + summary + ' (' + calId + ')' + '<br><br>');
+//                }
+//
+//            });
 
             /* ====== DATA FILTERING ============= */
             $(function () {
@@ -239,6 +211,7 @@
 
                     if (localStorage.createdCalendarId === undefined) {
                         var createdCalendarSummary = 'My Location Calendar';
+                        localStorage.createdCalendarSummary = createdCalendarSummary;
                         var request = gapi.client.calendar.calendars.insert({
                             'summary': createdCalendarSummary
                         });
@@ -246,16 +219,45 @@
                         request.execute(function (resp) {
                             console.log('Just added new calendar: ' + createdCalendarSummary);
                             localStorage.createdCalendarId = resp.result.id;
-                            clearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                            showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
                         });
 
                     }
                     else {
                         console.log("Created CalendarId already exists:", localStorage.createdCalendarId);
-                        clearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                        showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
                     }
 
-                    function clearThenBatchInsertEvents(calendarId, givenData) {
+                    function showClearThenBatchInsertEvents(calendarId, givenData) {
+
+                        /*
+                         * show all events
+                         */
+                        var request = gapi.client.calendar.events.list({
+                            'calendarId': localStorage.createdCalendarId,
+                            'showDeleted': false,
+                            'singleEvents': true,
+                            'orderBy': 'startTime'
+                        });
+                        request.execute(function (resp) {
+                            var events = resp.result.items;
+                            var text = "All Events Before Resetting " + localStorage.createdCalendarSummary;
+                            appendPre('<h2>' + text + '</h2>');
+
+                            if (events.length > 0) {
+                                for (var i = 0; i < events.length; i++) {
+                                    var event = events[i];
+                                    var when = event.start.dateTime;
+                                    if (!when) {
+                                        when = event.start.date;
+                                    }
+                                    appendPre(event.summary + ' (' + when + ')' + '<br/>');
+                                }
+                            } else {
+                                appendPre('No upcoming events found.');
+                            }
+
+                        });
 
                         /*
                          * remove events to avoid creating duplicates when refreshing page during testing phase
@@ -273,7 +275,17 @@
                                     request,
                                     groupedByDayData = _.groupBy(givenData, 'date');
 
-                            // TODO: use only one batchInsert
+                            var reverseAddressThenInsertRequest = function(ev) {
+                                getReversedGeodata(ev.location).then(function (reversedAddress) {
+                                    ev.location = reversedAddress;
+                                    request = gapi.client.calendar.events.insert({
+                                        'calendarId': localStorage.createdCalendarId,
+                                        'resource': ev
+                                    });
+                                    request.execute();
+                                });
+                            }
+
                             for (var selectedDay in groupedByDayData) {
 
                                 dataForDay = groupedByDayData[selectedDay];
@@ -287,19 +299,7 @@
                                 }
                             }
 
-                            function reverseAddressThenInsertRequest(ev) {
-                                getReversedGeodata(ev.location).then(function (reversedAddress) {
-                                    ev.location = reversedAddress;
-                                    request = gapi.client.calendar.events.insert({
-                                        'calendarId': localStorage.createdCalendarId,
-                                        'resource': ev
-                                    });
-                                    request.execute();
-                                });
-                            }
-
                         });
-
                     }
 
                     console.timeEnd('filterDataset');
@@ -312,6 +312,7 @@
             // TODO: add timezone to calendar
             // TODO: clear calendar then reload event
             //TODO: make sure that calendar exists before you check its events
+            //TODO: set calendar timezone
 
         }
 
@@ -330,7 +331,10 @@
 
             return new Promise(function (resolve) {
                 var request = gapi.client.calendar.events.list({
-                    'calendarId': calendarId
+                    'calendarId': calendarId,
+                    'showDeleted': false,
+                    'singleEvents': true,
+                    'orderBy': 'startTime'
                 });
 
                 request.execute(function (resp) {
