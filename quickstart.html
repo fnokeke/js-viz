@@ -229,40 +229,7 @@
                                     });
                                 });
                             }
-
-                            var createdCalendarSummary = 'My Location Calendar';
-                            if (localStorage.createdCalendarId === undefined) {
-
-                                createCalendar(createdCalendarSummary).then(function(result) {
-                                    console.log(result);
-                                    showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
-                                });
-
-                            }
-
-                            else {
-
-                                var request = gapi.client.calendar.calendars.get({
-                                    'calendarId': localStorage.createdCalendarId
-                                });
-
-                                request.execute(function (resp) {
-
-                                    if (resp.code === 404) {
-                                        console.log("404: CalendarId not found. Creating one...");
-                                        createCalendar(createdCalendarSummary).then(function(result) {
-                                            console.log(result);
-                                            showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
-                                        });
-                                    }
-                                    else {
-                                        console.log("Calendar exists and everything is fine.");
-                                        showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
-                                    }
-                                });
-                            }
-
-                            function showClearThenBatchInsertEvents(calendarId, givenData) {
+                            var showClearThenBatchInsertEvents = function (calendarId, givenData) {
 
                                 /*
                                  * show all events
@@ -320,6 +287,32 @@
                                         });
                                     }
 
+                                    var reverseGeonamesThenInsertRequest = function (ev) {
+                                        var urlRequest = "http://api.geonames.org/findNearestAddressJSON?lat=" +
+                                                ev.location.lat + "&lng=" + ev.location.lng +
+                                                "&username=fnokeke";
+
+                                        $.getJSON(urlRequest, function (result) {
+                                            result = result.address;
+                                            var address = [
+                                                result.streetNumber + " " + result.street,
+                                                result.placename,
+                                                result.adminCode1,
+                                                result.postalcode
+                                            ];
+                                            var reversedAddress = address.join(", ");
+                                            console.log(reversedAddress);
+
+                                            ev.location = reversedAddress;
+                                            request = gapi.client.calendar.events.insert({
+                                                'calendarId': localStorage.createdCalendarId,
+                                                'resource': ev
+                                            });
+
+                                            request.execute();
+                                        });
+                                    }
+
                                     for (var selectedDay in groupedByDayData) {
 
                                         dataForDay = groupedByDayData[selectedDay];
@@ -328,11 +321,42 @@
 
                                         if (allEventsForDay.length > 0) {
                                             for (var i = 0; i < allEventsForDay.length; i++) {
-                                                reverseAddressThenInsertRequest(allEventsForDay[i]);
+                                                reverseGeonamesThenInsertRequest(allEventsForDay[i]);
                                             }
                                         }
                                     }
 
+                                });
+                            }
+
+                            var createdCalendarSummary = 'My Location Calendar';
+                            if (localStorage.createdCalendarId === undefined) {
+
+                                createCalendar(createdCalendarSummary).then(function (result) {
+                                    console.log(result);
+                                    showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                });
+
+                            }
+                            else {
+
+                                var request = gapi.client.calendar.calendars.get({
+                                    'calendarId': localStorage.createdCalendarId
+                                });
+
+                                request.execute(function (resp) {
+
+                                    if (resp.code === 404) {
+                                        console.log("404: CalendarId not found. Creating one...");
+                                        createCalendar(createdCalendarSummary).then(function (result) {
+                                            console.log(result);
+                                            showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                        });
+                                    }
+                                    else {
+                                        console.log("Calendar exists and everything is fine.");
+                                        showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                    }
                                 });
                             }
 
@@ -383,7 +407,7 @@
                             var request = deleteRequest(event.id);
                             batchDelete.add(request);
                         }
-                        batchDelete.execute(function() {
+                        batchDelete.execute(function () {
                             var msg = "No of events deleted before loading new ones: " + events.length;
                             resolve(msg);
                         });
@@ -457,7 +481,7 @@
                     firstItem = tmpStore[0];
                     lastItem = tmpStore[tmpStore.length - 1];
                     timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
-                    locLabel = "Time Spent at " + firstItem.locationLabel + "( ~ " + timeDiff + " hours)";
+                    locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() + " (~ " + timeDiff + " hours)";
                     latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
                     resource = createResource(
                             new Date(firstItem.timestampMs),
