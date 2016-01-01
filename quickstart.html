@@ -93,221 +93,258 @@
             /* ====== DATA FILTERING ============= */
             $(function () {
 
-                $(document).ready(function () {
-                    console.time('loaddata'); //TODO: remove
+                        $(document).ready(function () {
+                            console.time('loaddata'); //TODO: remove
 
-                    $.getJSON('dataset/FabianLocationHistory.json', function (data) {
-                        filterDataset(data);
-                    });
-                });
-
-                function filterDataset(data) {
-                    console.timeEnd('loaddata'); //TODO: remove
-                    console.time('filterDataset'); //TODO: remove
-
-                    data = data.locations;
-
-                    // TODO: testing template to be removed
-                    (function testing() {
-                    })();
-
-                    // TODO: use actual testing
-                    (function testing() {
-                        if (data.length > 0) {
-                            console.log("Data Load Test Passed!");
-                            console.log("Number of rows:", data.length);
-                        } else {
-                            console.log("Data Load Test Failed!");
-                        }
-                    })();
-
-                    // convert columns to expected format and add other new columns
-                    data.forEach(function (row) {
-                        var timestamp = parseInt(row.timestampMs),
-                                rowDate = new Date(timestamp);
-
-                        row.latitudeE7 = row.latitudeE7 / 10e6;
-                        row.longitudeE7 = row.longitudeE7 / 10e6;
-                        row.timestampMs = timestamp;
-
-                        row.fullDate = rowDate;
-                        row.day = rowDate.getDay();
-                        row.date = extractDate(rowDate);
-                        row.time = extractTime(rowDate);
-                    });
-
-                    // sorted entire time once otherwise have to sort each value from groupby date keys
-                    var oldDataLen = data.length; //TODO: remove after passing test
-                    data = _.sortBy(data, 'timestampMs');
-
-                    // reduce data to only last N days
-                    var noOfDays = 7;
-                    var lastDay = data[data.length - 1],
-                            lastDayTimestamp = lastDay.timestampMs,
-                            dateOfLastDay = new Date(lastDayTimestamp),
-                            nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
-
-                    data = data.filter(function (row) {
-                        return row.timestampMs >= nDaysAgoTimestamp &&
-                                row.timestampMs <= lastDayTimestamp;
-                    });
-
-                    // TODO: use actual testing
-                    (function testing() {
-                        var newDataLen = data.length;
-                        var diff = oldDataLen - newDataLen;
-                        if (diff > 0) {
-                            console.log("2 Weeks Test Passed!");
-                            console.log("Number of rows dropped:", diff);
-                        } else {
-                            console.log("2 Weeks Test Failed!");
-                            console.log("Old Length:", oldDataLen);
-                            console.log("New Length:", newDataLen);
-                        }
-                    })();
-
-                    /* ignore locations with accuracy over 1000m
-                     * ignore all locations outside CITY
-                     */
-                    var CITY = [42.446594, -76.493736],
-                            cityLatMargin = 0.1,
-                            cityLonMargin = 1.0;
-
-                    data = data.filter(function (row) {
-                        return row.accuracy <= 1000 &&
-                                Math.abs(row.latitudeE7 - CITY[0]) <= cityLatMargin &&
-                                Math.abs(row.longitudeE7 - CITY[1]) <= cityLonMargin
-                    });
-
-                    // determine if location falls into specific location label such as home, work, etc
-                    var HOME = [42.446594, -76.493736], // Fabian Home
-                            WORK = [42.444877, -76.480814], //Gates Hall
-                            HOBBY = [42.4333261, -76.4709491]; // woodcrest
-
-                    var LAT_MARGIN = 0.00005,
-                            LON_MARGIN = 0.0005;
-
-                    data.forEach(function (row) {
-                        if (Math.abs(row.latitudeE7 - HOME[0]) < LAT_MARGIN &&
-                                Math.abs(row.longitudeE7 - HOME[1]) < LON_MARGIN) {
-                            row.locationLabel = 'home';
-                        } else if (Math.abs(row.latitudeE7 - WORK[0]) < LAT_MARGIN &&
-                                Math.abs(row.longitudeE7 - WORK[1]) < LON_MARGIN) {
-                            row.locationLabel = 'work';
-                        } else if (Math.abs(row.latitudeE7 - HOBBY[0]) < LAT_MARGIN &&
-                                Math.abs(row.longitudeE7 - HOBBY[1]) < LON_MARGIN) {
-                            row.locationLabel = 'hobby';
-                        }
-                        else {
-                            row.locationLabel = 'other';
-                        }
-                    });
-
-                    /*
-                     * add new calendar to calendar list
-                     * avoid creating duplicate calendar
-                     * store new calendar id in localStorage
-                     */
-
-                    if (localStorage.createdCalendarId === undefined) {
-                        var createdCalendarSummary = 'My Location Calendar';
-                        localStorage.createdCalendarSummary = createdCalendarSummary;
-                        var request = gapi.client.calendar.calendars.insert({
-                            'summary': createdCalendarSummary
+                            $.getJSON('dataset/FabianLocationHistory.json', function (data) {
+                                filterDataset(data);
+                            });
                         });
 
-                        request.execute(function (resp) {
-                            console.log('Just added new calendar: ' + createdCalendarSummary);
-                            localStorage.createdCalendarId = resp.result.id;
-                            showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
-                        });
+                        function filterDataset(data) {
+                            console.timeEnd('loaddata'); //TODO: remove
+                            console.time('filterDataset'); //TODO: remove
 
-                    }
-                    else {
-                        console.log("Created CalendarId already exists:", localStorage.createdCalendarId);
-                        showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
-                    }
+                            data = data.locations;
 
-                    function showClearThenBatchInsertEvents(calendarId, givenData) {
+                            // TODO: testing template to be removed
+                            (function testing() {
+                            })();
 
-                        /*
-                         * show all events
-                         */
-                        var request = gapi.client.calendar.events.list({
-                            'calendarId': localStorage.createdCalendarId,
-                            'showDeleted': false,
-                            'singleEvents': true,
-                            'orderBy': 'startTime'
-                        });
-                        request.execute(function (resp) {
-                            var events = resp.result.items;
-                            var text = "All Events Before Resetting " + localStorage.createdCalendarSummary;
-                            appendPre('<h2>' + text + '</h2>');
-
-                            if (events.length > 0) {
-                                for (var i = 0; i < events.length; i++) {
-                                    var event = events[i];
-                                    var when = event.start.dateTime;
-                                    if (!when) {
-                                        when = event.start.date;
-                                    }
-                                    appendPre(event.summary + ' (' + when + ')' + '<br/>');
+                            // TODO: use actual testing
+                            (function testing() {
+                                if (data.length > 0) {
+                                    console.log("Data Load Test Passed!");
+                                    console.log("Number of rows:", data.length);
+                                } else {
+                                    console.log("Data Load Test Failed!");
                                 }
-                            } else {
-                                appendPre('No upcoming events found.');
-                            }
+                            })();
 
-                        });
+                            // convert columns to expected format and add other new columns
+                            data.forEach(function (row) {
+                                var timestamp = parseInt(row.timestampMs),
+                                        rowDate = new Date(timestamp);
 
-                        /*
-                         * remove events to avoid creating duplicates when refreshing page during testing phase
-                         */
-                        deleteAllEvents(calendarId).then(function (deleteResp) {
-                            console.log("DeleteAllEvents response: ", deleteResp);
+                                row.latitudeE7 = row.latitudeE7 / 10e6;
+                                row.longitudeE7 = row.longitudeE7 / 10e6;
+                                row.timestampMs = timestamp;
+
+                                row.fullDate = rowDate;
+                                row.day = rowDate.getDay();
+                                row.date = extractDate(rowDate);
+                                row.time = extractTime(rowDate);
+                            });
+
+                            // sorted entire time once otherwise have to sort each value from groupby date keys
+                            var oldDataLen = data.length; //TODO: remove after passing test
+                            data = _.sortBy(data, 'timestampMs');
+
+                            // reduce data to only last N days
+                            var noOfDays = 7;
+                            var lastDay = data[data.length - 1],
+                                    lastDayTimestamp = lastDay.timestampMs,
+                                    dateOfLastDay = new Date(lastDayTimestamp),
+                                    nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
+
+                            data = data.filter(function (row) {
+                                return row.timestampMs >= nDaysAgoTimestamp &&
+                                        row.timestampMs <= lastDayTimestamp;
+                            });
+
+                            // TODO: use actual testing
+                            (function testing() {
+                                var newDataLen = data.length;
+                                var diff = oldDataLen - newDataLen;
+                                if (diff > 0) {
+                                    console.log("2 Weeks Test Passed!");
+                                    console.log("Number of rows dropped:", diff);
+                                } else {
+                                    console.log("2 Weeks Test Failed!");
+                                    console.log("Old Length:", oldDataLen);
+                                    console.log("New Length:", newDataLen);
+                                }
+                            })();
+
+                            /* ignore locations with accuracy over 1000m
+                             * ignore all locations outside CITY
+                             */
+                            var CITY = [42.446594, -76.493736],
+                                    cityLatMargin = 0.1,
+                                    cityLonMargin = 1.0;
+
+                            data = data.filter(function (row) {
+                                return row.accuracy <= 1000 &&
+                                        Math.abs(row.latitudeE7 - CITY[0]) <= cityLatMargin &&
+                                        Math.abs(row.longitudeE7 - CITY[1]) <= cityLonMargin
+                            });
+
+                            // determine if location falls into specific location label such as home, work, etc
+                            var HOME = [42.446594, -76.493736], // Fabian Home
+                                    WORK = [42.444877, -76.480814], //Gates Hall
+                                    HOBBY = [42.4333261, -76.4709491]; // woodcrest
+
+                            var LAT_MARGIN = 0.00005,
+                                    LON_MARGIN = 0.0005;
+
+                            data.forEach(function (row) {
+                                if (Math.abs(row.latitudeE7 - HOME[0]) < LAT_MARGIN &&
+                                        Math.abs(row.longitudeE7 - HOME[1]) < LON_MARGIN) {
+                                    row.locationLabel = 'home';
+                                } else if (Math.abs(row.latitudeE7 - WORK[0]) < LAT_MARGIN &&
+                                        Math.abs(row.longitudeE7 - WORK[1]) < LON_MARGIN) {
+                                    row.locationLabel = 'work';
+                                } else if (Math.abs(row.latitudeE7 - HOBBY[0]) < LAT_MARGIN &&
+                                        Math.abs(row.longitudeE7 - HOBBY[1]) < LON_MARGIN) {
+                                    row.locationLabel = 'hobby';
+                                }
+                                else {
+                                    row.locationLabel = 'other';
+                                }
+                            });
 
                             /*
-                             * create new events where each event is time at each location of interest per day
-                             * batch insert events to reduce HTTP overhead
-                             * make sure calendar exists before you insert events
+                             * add new calendar to calendar list but avoid creating duplicate calendar
+                             * but make sure the calendar id exists on Google Server
+                             * store new calendar id in localStorage
                              */
-                            var dataForDay,
-                                    allEventsForDay,
-                                    request,
-                                    groupedByDayData = _.groupBy(givenData, 'date');
+                            var createCalendar = function (calendarSummary) {
 
-                            var reverseAddressThenInsertRequest = function(ev) {
-                                getReversedGeodata(ev.location).then(function (reversedAddress) {
-                                    ev.location = reversedAddress;
-                                    request = gapi.client.calendar.events.insert({
-                                        'calendarId': localStorage.createdCalendarId,
-                                        'resource': ev
+                                return new Promise(function (resolve, reject) {
+                                    var request = gapi.client.calendar.calendars.insert({
+                                        'summary': calendarSummary
                                     });
-                                    request.execute();
+
+                                    request.execute(function (resp) {
+                                        if (resp === undefined) {
+                                            var msg = "error making calendar: " + resp;
+                                            reject(msg);
+                                        }
+                                        else {
+                                            var msg = "Successful in creating calendar: " + createdCalendarSummary;
+                                            resolve(msg);
+                                            localStorage.createdCalendarId = resp.result.id;
+                                            localStorage.createdCalendarSummary = calendarSummary;
+                                        }
+                                    });
                                 });
                             }
 
-                            for (var selectedDay in groupedByDayData) {
+                            var createdCalendarSummary = 'My Location Calendar';
+                            if (localStorage.createdCalendarId === undefined) {
 
-                                dataForDay = groupedByDayData[selectedDay];
-                                allEventsForDay = getAllDwellTime(dataForDay);
-                                console.log("No of events to be inserted:", allEventsForDay.length);
+                                createCalendar(createdCalendarSummary).then(function(result) {
+                                    console.log(result);
+                                    showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                });
 
-                                if (allEventsForDay.length > 0) {
-                                    for (var i = 0; i < allEventsForDay.length; i++) {
-                                        reverseAddressThenInsertRequest(allEventsForDay[i]);
-                                    }
-                                }
                             }
 
-                        });
+                            else {
+
+                                var request = gapi.client.calendar.calendars.get({
+                                    'calendarId': localStorage.createdCalendarId
+                                });
+
+                                request.execute(function (resp) {
+
+                                    if (resp.code === 404) {
+                                        console.log("404: CalendarId not found. Creating one...");
+                                        createCalendar(createdCalendarSummary).then(function(result) {
+                                            console.log(result);
+                                            showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                        });
+                                    }
+                                    else {
+                                        console.log("Calendar exists and everything is fine.");
+                                        showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                    }
+                                });
+                            }
+
+                            function showClearThenBatchInsertEvents(calendarId, givenData) {
+
+                                /*
+                                 * show all events
+                                 */
+                                var request = gapi.client.calendar.events.list({
+                                    'calendarId': localStorage.createdCalendarId,
+                                    'showDeleted': false,
+                                    'singleEvents': true,
+                                    'orderBy': 'startTime'
+                                });
+                                request.execute(function (resp) {
+                                    var events = resp.result.items;
+                                    var text = "All Events Before Resetting " + localStorage.createdCalendarSummary;
+                                    appendPre('<h2>' + text + '</h2>');
+
+                                    if (events.length > 0) {
+                                        for (var i = 0; i < events.length; i++) {
+                                            var event = events[i];
+                                            var when = event.start.dateTime;
+                                            if (!when) {
+                                                when = event.start.date;
+                                            }
+                                            appendPre(event.summary + ' (' + when + ')' + '<br/>');
+                                        }
+                                    } else {
+                                        appendPre('No upcoming events found.');
+                                    }
+
+                                });
+
+                                /*
+                                 * remove events to avoid creating duplicates when refreshing page during testing phase
+                                 */
+                                deleteAllEvents(calendarId).then(function (deleteResp) {
+                                    console.log(deleteResp);
+
+                                    /*
+                                     * create new events where each event is time at each location of interest per day
+                                     * batch insert events to reduce HTTP overhead
+                                     * make sure calendar exists before you insert events
+                                     */
+                                    var dataForDay,
+                                            allEventsForDay,
+                                            request,
+                                            groupedByDayData = _.groupBy(givenData, 'date');
+
+                                    var reverseAddressThenInsertRequest = function (ev) {
+                                        getReversedGeodata(ev.location).then(function (reversedAddress) {
+                                            ev.location = reversedAddress;
+                                            request = gapi.client.calendar.events.insert({
+                                                'calendarId': localStorage.createdCalendarId,
+                                                'resource': ev
+                                            });
+                                            request.execute();
+                                        });
+                                    }
+
+                                    for (var selectedDay in groupedByDayData) {
+
+                                        dataForDay = groupedByDayData[selectedDay];
+                                        allEventsForDay = getAllDwellTime(dataForDay);
+                                        console.log("No of events to be inserted:", allEventsForDay.length);
+
+                                        if (allEventsForDay.length > 0) {
+                                            for (var i = 0; i < allEventsForDay.length; i++) {
+                                                reverseAddressThenInsertRequest(allEventsForDay[i]);
+                                            }
+                                        }
+                                    }
+
+                                });
+                            }
+
+                            console.timeEnd('filterDataset');
+                            console.time('plots');
+                        }
+
                     }
+            )
+            ;
 
-                    console.timeEnd('filterDataset');
-                    console.time('plots');
-                }
-
-            });
-
+            //TODO: check if calendar exists before continue other operations
             // TODO: batch events
             // TODO: add timezone to calendar
             // TODO: clear calendar then reload event
@@ -346,14 +383,13 @@
                             var request = deleteRequest(event.id);
                             batchDelete.add(request);
                         }
-                        batchDelete.execute(function (resp) {
-                            var msg = "No of events deleted before loading new ones: " + events.length +
-                                    "\nresp:" + resp;
+                        batchDelete.execute(function() {
+                            var msg = "No of events deleted before loading new ones: " + events.length;
                             resolve(msg);
                         });
                     }
                     else {
-                        var msg = "Nothing to delete in calendar events"
+                        var msg = "No events to delete.";
                         resolve(msg);
                     }
                 });
