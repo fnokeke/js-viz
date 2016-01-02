@@ -121,7 +121,7 @@
                             data = _.sortBy(data, 'timestampMs');
 
                             // reduce data to only last N days
-                            var noOfDays = 14;
+                            var noOfDays = 30;
                             var lastDay = "10-02-2015",
                                     dateOfLastDay = new Date(lastDay),
                                     lastDayTimestamp = dateOfLastDay.getTime(),
@@ -400,6 +400,7 @@
             //TODO: make sure that calendar exists before you check its events
             //TODO: set calendar timezone
             //TODO: remove locations where user was moving or not stationary
+            //TODO: add colors to calendar events
 
         }
 
@@ -446,10 +447,11 @@
             });
         }
 
-        function createResource(startTime, endTime, summary, location) {
+        function createResource(startTime, endTime, summary, location, colorId) {
             return {
                 "summary": summary || 'no summary',
                 "location": location || 'empty location',
+                "colorId": colorId,
                 "start": {
                     "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
                 },
@@ -493,6 +495,7 @@
                     currentLocObject,
                     locLabel,
                     latlng,
+                    colorId,
                     prevLocObject,
                     tmpStore = [];
 
@@ -517,10 +520,20 @@
                     locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
                             " (~ " + timeDiff + " hours)" +
                             " [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
+
+                    if (firstItem.locationLabel == "home")
+                        colorId = "10"; //green
+                    else if (firstItem.locationLabel == "work")
+                        colorId = "11"; //red
+                    else if (firstItem.locationLabel == "hobby")
+                        colorId = "6"; //brown
+                    else if (firstItem.locationLabel == "other")
+                        colorId = "8"; //grey
+
                     resource = createResource(
                             new Date(firstItem.timestampMs),
                             new Date(lastItem.timestampMs),
-                            locLabel, latlng);
+                            locLabel, latlng, colorId);
                     allResourcesForDay.push(resource);
 
                     // reset tmpStore to store next location
