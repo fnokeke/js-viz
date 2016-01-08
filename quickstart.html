@@ -2,10 +2,6 @@
 <head>
     <script>
 
-        /*
-         * Google Calendar Operations
-         */
-
         // Your Client ID can be retrieved from your project in the Google
         // Developer Console, https://console.developers.google.com
         var CLIENT_ID = '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com';
@@ -70,9 +66,10 @@
             var home = $('#homeAddress').val();
             var work = $('#workAddress').val();
             var hobby = $('#hobbyAddress').val();
+            var daysCount = $('#daysCount').val();
 
             /* do not move past this until user provides all addresses */
-            if (home === '' || work === '' || hobby === '') {
+            if (home === '' || work === '' || hobby === '' || daysCount === '') {
                 $('#statusDisplay').text('Please enter valid addresses');
                 $('#statusDisplay').css('color', 'red');
                 return;
@@ -157,6 +154,7 @@
                     $.getJSON('dataset/FabianLocationHistory.json', function (data) {
                         filterDataset(data);
                     });
+
                 });
 
                 function filterDataset(data) {
@@ -650,9 +648,11 @@
     <script src="lib/jquery.min.js"></script>
     <script src="custom_js/dsu.js"></script>
 
-    <script src="https://apis.google.com/js/client.js?onload=checkAuth"></script>
-    <script src="http://maps.google.com/maps/api/js"></script>
-    <script src="lib/underscore.js"></script>
+    <!--<script src="https://apis.google.com/js/client.js?onload=checkAuth"></script>-->
+    <!--<script src="http://maps.google.com/maps/api/js"></script>-->
+
+    <!--<script src="lib/underscore.js"></script>-->
+
 
 </head>
 <body>
@@ -669,6 +669,7 @@
     Home Address: <input type="text" id="homeAddress"><br>
     Work Address: <input type="text" id="workAddress"><br>
     Hobby Address: <input type="text" id="hobbyAddress"><br>
+    Days Count: <input type="text" value="7" id="daysCount"><br>
     <input type="button" value="continue" onclick="executeAllCalendarOperations()">
     <div id="statusDisplay"></div>
 </div>
@@ -678,31 +679,55 @@
     /*
      * dsu code for fetching mobility data
      */
-    var dsuDates = [
-        "2015-12-30",
-        "2015-12-31",
-        "2016-01-01",
-        "2016-01-02",
-        "2016-01-03",
-    ];
+    (function () {
 
-    dsuDates.forEach(function (date) {
-        dsu.query({
-            "date": date,
-            "device": "android",
-            "success": function (msg) {
-                $("body").append('<h3>' + 'Date: ' + msg.date + '</h3>');
-                $("body").append('- ' + 'Step Count: ' + msg.step_count + '' + '<br>');
-                $("body").append('**' + 'Walking Distance: ' + msg.walking_distance.value + 'km' + '**' + '<br><br>');
-                console.log("callback success:", msg);
-            },
-            "error": function (msg) {
-                appendPre('**Error: ' + msg + '**<br>');
-                console.log("callback error:", msg);
-            },
+        $.getJSON('dataset/mobility_sample_andy.json', function (data) {
+            console.log("No of days of data:", data.length);
+
+            // use today as end date if custom end date is not provided
+            var nDays = 3;
+            var endDate = '2015-12-20';
+            var todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime();
+            var dsuDates = [];
+            for (var i = 0; i < nDays; i++) {
+                var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+                tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+                dsuDates.push(tmpDate);
+            }
+            console.log("dsuDates:", dsuDates);
+
+            var results = [];
+            var place = [34.0529931, -118.4443538];
+            data.forEach(function(day) {
+                if (dsuDates.indexOf(day.body.date) !== -1 && day.body.episodes) {
+                    var episodes = day.body.episodes;
+                    episodes.forEach(function (episode) {
+                        if (episode.cluster) {
+                            var ec = episode.cluster;
+                            if (place[0] === ec.latitude && place[1] === ec.longitude) {
+                                results.push([episode.start, episode.end]);
+                            }
+                        }
+                    });
+                }
+            });
+            console.log("results:", results);
         });
-    });
 
+//        dsuDates.forEach(function (date) {
+//            dsu.query({
+//                "date": date,
+//                "device": "android",
+//                "success": function (result) {
+//                    console.log("callback success:", result);
+//                },
+//                "error": function (result) {
+//                    console.log(date + " not found. Error code = " + result);
+//                },
+//            });
+//        });
+
+    }());
 </script>
 </body>
 </html>
