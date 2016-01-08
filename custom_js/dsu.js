@@ -12,7 +12,7 @@ var dsu =
         var date = args["date"];
         var device = args["device"];
         var success = args["success"];
-        var error = args["error"];
+        var errorFunction = args["error"];
         var deferred = args["deferred"] || $.Deferred();
 
         // if the requested data available, call success callback and resolve promise,
@@ -24,9 +24,9 @@ var dsu =
             deferred.resolve(target);
         }
         else if(this._lastDate < date){
-            error(dsu.NOT_FOUND);
+            errorFunction("requested data not seen yet");
             deferred.reject(dsu.NOT_FOUND)
-        }else {
+        } else {
             $.ajax({
                 method: "GET",
                 headers: {
@@ -53,16 +53,21 @@ var dsu =
                         dsu._skip = skip + result.length;
                         dsu._lastDate =  result[result.length-1].body.date;
 
-                        dsu.query({date: date, device: device, success: success, error: error, deferred: deferred});
+                        dsu.query({date: date, device: device, success: success, error: errorFunction, deferred: deferred});
                     }else{
                         // no more data, call error callback
-                        error(dsu.NOT_FOUND);
+                        errorFunction("no more data");
                         deferred.reject(dsu.NOT_FOUND)
                     }
                 },
                 error: function (e, status, error) {
                     // assume it is an authorization error. redirect to the sign in page
-                    window.location.href = dsu_url + "oauth/authorize?client_id=mobility-visualization&response_type=token";
+                    console.log("ajax failed:");
+                    console.log("e:",e);
+                    console.log("status:",status);
+                    console.log("error", error);
+                    errorFunction("authorization error");
+                    //window.location.href = dsu_url + "oauth/authorize?client_id=mobility-visualization&response_type=token";
                 }
 
             });
