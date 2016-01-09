@@ -73,16 +73,12 @@
                 $('#statusDisplay').css('color', 'red');
                 return;
             }
+            $('#statusDisplay').text('Addresses successfully entered!');
+            $('#statusDisplay').css('color', 'green');
 
             /* remove user fields since it should be a one-time event */
             var locationDiv = document.getElementById('location-div');
             locationDiv.style.display = 'none';
-
-//            var allMappedAddresses = {
-//                "home": home,
-//                "work": work,
-//                "hobby": hobby
-//            };
 
             var allMappedAddresses = {
                 "home": "308 University Ave, Ithaca, NY, 14850",
@@ -223,7 +219,7 @@
                     })();
 
                     /*
-                     *ignore locations with accuracy over 1000m
+                     * ignore locations with accuracy over 1000m
                      */
                     data = data.filter(function (row) {
                         return row.accuracy <= 1000;
@@ -320,7 +316,6 @@
                             } else {
                                 appendPre('No upcoming events found.');
                             }
-
                         });
 
                         /*
@@ -368,7 +363,6 @@
                                         'resource': ev
                                     });
                                     request.execute();
-
                                 });
                             }
 
@@ -397,7 +391,6 @@
                             console.log(result);
                             showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
                         });
-
                     }
                     else {
 
@@ -575,66 +568,6 @@
                 return allResourcesForDay;
             }
 
-            function getReversedGeodata(latlng) {
-
-                return new Promise(function (resolve, reject) {
-
-                    var geocoder = new google.maps.Geocoder();
-                    var reversedAddress = 'no result address assigned';
-
-                    geocoder.geocode({'location': latlng}, function (results, status) {
-                                if (status === google.maps.GeocoderStatus.OK) {
-                                    if (results[0]) {
-                                        reversedAddress = results[0].formatted_address;
-                                        resolve(reversedAddress);
-                                    } else {
-                                        reversedAddress = "No results found for address.";
-                                        reject(reversedAddress);
-                                    }
-                                } else if (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-                                    reversedAddress = "Sadly OVER_QUERY_LIMIT error happened:";
-                                    reject(reversedAddress);
-                                } else {
-                                    reversedAddress = "Geocoder failed due to: " + status;
-                                    reject(reversedAddress);
-                                }
-                            }
-                    );
-                });
-            }
-
-            function getEventsFromDay(dayData) {
-                var allEvents = [];
-                var noOfEvents = 5;
-                var summary;
-                if (_.size(dayData) > 0) {
-
-                    for (var i = 0; i < noOfEvents; i++) {
-                        summary = "(" + i + ") demoName";
-                        var event = {
-                            "summary": summary,
-                            "location": "Somewhere in Noyes",
-                            "start": {
-                                "dateTime": "2015-12-23T10:00:00.000-07:00"
-                            },
-                            "end": {
-                                "dateTime": "2015-12-23T17:25:00.000-07:00"
-                            }
-                        }
-                        allEvents.push(event);
-                    }
-
-                }
-                return allEvents;
-            }
-
-            function insertRequest(event, calendarId) {
-                return gapi.client.calendar.events.insert({
-                    'calendarId': calendarId,
-                    'resource': event
-                });
-            }
-
             function roundToTwoDP(num) {
                 return +(Math.round(num + "e+2") + "e-2");
             }
@@ -647,10 +580,10 @@
     <script src="lib/jquery.min.js"></script>
     <script src="custom_js/dsu.js"></script>
 
-    <!--<script src="https://apis.google.com/js/client.js?onload=checkAuth"></script>-->
-    <!--<script src="http://maps.google.com/maps/api/js"></script>-->
+    <script src="https://apis.google.com/js/client.js?onload=checkAuth"></script>
+    <script src="http://maps.google.com/maps/api/js"></script>
 
-    <!--<script src="lib/underscore.js"></script>-->
+    <script src="lib/underscore.js"></script>
 
 
 </head>
@@ -741,8 +674,6 @@ Days Count: <input type="text" value="7" id="daysCount"><br>
         var fileSize = prettySize(file.size);
         var reader = new FileReader();
 
-        console.log('Size of imported file (' + fileSize + ')...');
-
         function status(message, color) {
             $('#fileStatus').text(message);
             if (color)
@@ -750,8 +681,7 @@ Days Count: <input type="text" value="7" id="daysCount"><br>
         }
 
         function getLocationDataFromJson(data) {
-            var SCALAR_E7 = 0.0000001, // Since Google Takeout stores latlngs as integers
-                    locations = JSON.parse(data).locations;
+            var locations = JSON.parse(data).locations;
 
             if (!locations || locations.length === 0) {
                 throw new ReferenceError('No location data found.');
@@ -761,7 +691,7 @@ Days Count: <input type="text" value="7" id="daysCount"><br>
 
         reader.onprogress = function (e) {
             var percentLoaded = Math.round(( e.loaded / e.total ) * 100);
-            status(percentLoaded + '% of ' + fileSize + ' loaded...');
+            status(percentLoaded + '% of ' + fileSize + ' loaded...', 'grey');
         };
 
         reader.onload = function (e) {
@@ -769,7 +699,7 @@ Days Count: <input type="text" value="7" id="daysCount"><br>
 
             try {
                 data = getLocationDataFromJson(e.target.result);
-                status('File loaded successfully!', 'green');
+                status('File loaded successfully! ('+fileSize+')', 'green');
             } catch(ex) {
                 status('Something went wrong generating your map. Ensure you\'re uploading a ' +
                         'Google Takeout JSON file that contains location data and try again. ' +
