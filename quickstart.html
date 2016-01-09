@@ -60,7 +60,6 @@
             });
         }
 
-
         function executeAllCalendarOperations() {
 
             var home = $('#homeAddress').val();
@@ -664,16 +663,19 @@
 </div>
 <pre id="output"></pre>
 
-<div id="location-div" style="display: block">
-    <h2>Enter Location Address</h2>
-    Home Address: <input type="text" id="homeAddress"><br>
-    Work Address: <input type="text" id="workAddress"><br>
-    Hobby Address: <input type="text" id="hobbyAddress"><br>
-    Days Count: <input type="text" value="7" id="daysCount"><br>
-    <input type="button" value="continue" onclick="executeAllCalendarOperations()">
-    <div id="statusDisplay"></div>
-</div>
+<p id="location-div" style="display: block">
+<h2>Enter Location Address</h2>
+Home Address: <input type="text" id="homeAddress"><br>
+Work Address: <input type="text" id="workAddress"><br>
+Hobby Address: <input type="text" id="hobbyAddress"><br>
+Days Count: <input type="text" value="7" id="daysCount"><br>
+<input name="file" type="file" id="file"><br>
 
+<input type="button" value="continue" onclick="executeAllCalendarOperations()">
+<div id="fileStatus"></div>
+<div id="statusDisplay"></div>
+
+<script src="lib/prettysize.js"></script>
 <script>
 
     /*
@@ -698,7 +700,7 @@
 
             var results = [];
             var place = [34.0529931, -118.4443538];
-            data.forEach(function(day) {
+            data.forEach(function (day) {
                 if (dsuDates.indexOf(day.body.date) !== -1 && day.body.episodes) {
                     var episodes = day.body.episodes;
                     episodes.forEach(function (episode) {
@@ -727,7 +729,67 @@
 //            });
 //        });
 
+
     }());
+
+    // For mobile browsers, allow direct file selection as well
+    $('#file').change(function () {
+        if (!this.files[0]) return;
+
+        var file = this.files[0];
+        console.log(file);
+        var fileSize = prettySize(file.size);
+        var reader = new FileReader();
+
+        console.log('Size of imported file (' + fileSize + ')...');
+
+        function status(message, color) {
+            $('#fileStatus').text(message);
+            if (color)
+                $('#fileStatus').css('color', color);
+        }
+
+        function getLocationDataFromJson(data) {
+            var SCALAR_E7 = 0.0000001, // Since Google Takeout stores latlngs as integers
+                    locations = JSON.parse(data).locations;
+
+            if (!locations || locations.length === 0) {
+                throw new ReferenceError('No location data found.');
+            }
+            return locations;
+        }
+
+        reader.onprogress = function (e) {
+            var percentLoaded = Math.round(( e.loaded / e.total ) * 100);
+            status(percentLoaded + '% of ' + fileSize + ' loaded...');
+        };
+
+        reader.onload = function (e) {
+            var data;
+
+            try {
+                data = getLocationDataFromJson(e.target.result);
+                status('File loaded successfully!', 'green');
+            } catch(ex) {
+                status('Something went wrong generating your map. Ensure you\'re uploading a ' +
+                        'Google Takeout JSON file that contains location data and try again. ' +
+                        '(error: ' + ex.message + ')', 'red');
+                return;
+            }
+            console.log("data:", data);
+        };
+
+        reader.onerror = function () {
+            status('Something went wrong reading your JSON file. ' +
+                    'Ensure you\'re uploading a "direct-from-Google" JSON file and try again. ' +
+                    '(error: ' + reader.error + ')', 'red');
+        };
+
+        reader.readAsText(file);
+
+
+    });
+
 </script>
 </body>
 </html>

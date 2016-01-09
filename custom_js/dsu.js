@@ -62,7 +62,7 @@ var dsu =
                 },
                 error: function (e, status, error) {
                     // assume it is an authorization error. redirect to the sign in page
-                    console.log("ajax failed:");
+                    console.log("ajax failed");
                     console.log("e:",e);
                     console.log("status:",status);
                     console.log("error", error);
