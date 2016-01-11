@@ -1,8 +1,10 @@
-var dsu_url = "https://ohmage-omh.smalldata.io/dsu/";
-var token = "81a0b396-7ff8-4552-ae0c-31964f53690c";
+//var dsu_url = "https://ohmage-omh.smalldata.io/dsu/";
+//var token = "81a0b396-7ff8-4552-ae0c-31964f53690c";
 
 var dsu =
 {
+    dsu_url: "https://ohmage-omh.smalldata.io/dsu/",
+    token:  "81a0b396-7ff8-4552-ae0c-31964f53690c",
     _data : [],
     _skip : 0,
     _lastDate : null,
@@ -30,7 +32,7 @@ var dsu =
             $.ajax({
                 method: "GET",
                 headers: {
-                    "Authorization": "Bearer " + token
+                    "Authorization": "Bearer " + dsu.token
                 },
                 url: dsu_url + "dataPoints",
                 data: {
@@ -67,7 +69,7 @@ var dsu =
                     console.log("status:",status);
                     console.log("error", error);
                     errorFunction("authorization error");
-                    //window.location.href = dsu_url + "oauth/authorize?client_id=mobility-visualization&response_type=token";
+                    //window.location.href = dsu.dsu_url + "oauth/authorize?client_id=mobility-visualization&response_type=token";
                 }
 
             });

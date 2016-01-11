@@ -1,0 +1,42 @@
+<html>
+<head>
+</head>
+<body>
+
+<div id="authorize-div" style="display: none">
+    <h2>Authorize Calendar API</h2>
+    <input type="button" value="Authorize" onclick="gCal.handleAuthClick(event)">
+    <scan id="output"></scan>
+</div>
+
+<div id="upload-div" style="display: block">
+    <h2>Upload Location Data</h2>
+    <input name="file" type="file" id="file"><br>
+    <scan id="fileStatus"></scan>
+</div>
+
+<div id="address-div" style="display: block">
+    <h2>Enter Location Address</h2>
+    Home Address: <input type="text" id="homeAddress"><br>
+    Work Address: <input type="text" id="workAddress"><br>
+    Hobby Address: <input type="text" id="hobbyAddress"><br>
+    Days Count: <input type="text" value="7" id="daysCount"><br>
+    <input type="button" value="continue" onclick="ui.run()">
+    <scan id="addressStatus"></scan>
+</div>
+
+
+<script src="lib/jquery.min.js"></script>
+<script src="lib/underscore.js"></script>
+<script src="lib/prettysize.js"></script>
+
+<!--TODO: separately load client.js then call checkAuth-->
+<!--<script src="https://apis.google.com/js/client.js?onload=gCal.checkAuth()"></script>-->
+
+<script src="http://maps.google.com/maps/api/js"></script>
+<script src="js/dsu.js"></script>
+<script src="js/locationcalendar.js"></script>
+
+
+</body>
+</html>
