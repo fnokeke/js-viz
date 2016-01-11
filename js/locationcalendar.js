@@ -712,4 +712,4 @@ var dsuAnalysis = {
     }
 
 };
-dsu.run();
+dsuAnalysis.run();
