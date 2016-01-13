@@ -3,40 +3,57 @@
 </head>
 <body>
 
+<div id="welcome-div" style="display: block">
+    <h2>Welcome to Student LifeMaps</h2>
+</div>
+
 <div id="authorize-div" style="display: none">
     <h2>Authorize Calendar API</h2>
     <input type="button" value="Authorize" onclick="gCal.handleAuthClick(event)">
-    <scan id="output"></scan>
 </div>
 
-<div id="upload-div" style="display: block">
+<div id="source-div" style="display: none">
+    <scan id="sourceStatus"></scan>
+    <h2>Is your location data downloaded from Google Services?</h2>
+    <input name="source" type="radio" value="yes">Yes
+    <input name="source" type="radio" value="no">No<br>
+    <input type="button" value="Next" id="nextButton" onclick="ui.run()"><br>
+</div>
+
+<div id="upload-div" style="display: none">
     <h2>Upload Location Data</h2>
     <input name="file" type="file" id="file"><br>
     <scan id="fileStatus"></scan>
 </div>
 
-<div id="address-div" style="display: block">
+<div id="mobility-div" style="display: none">
+    <h2>Mobility data coming soon...</h2>
+</div>
+
+<div id="address-div" style="display: none">
     <h2>Enter Location Address</h2>
-    Home Address: <input type="text" id="homeAddress"><br>
-    Work Address: <input type="text" id="workAddress"><br>
-    Hobby Address: <input type="text" id="hobbyAddress"><br>
+    Home Address: <input type="text" id="homeAddress" value="sample home"><br>
+    Work Address: <input type="text" id="workAddress" value="sample work"><br>
+    Hobby Address: <input type="text" id="hobbyAddress" value="sample hobby"><br>
     Days Count: <input type="text" value="7" id="daysCount"><br>
-    <input type="button" value="continue" onclick="ui.run()">
+    <input type="button" value="continue" id="btnAddress"><br>
     <scan id="addressStatus"></scan>
 </div>
 
+<div id="calendar-div" style="display: none">
+    <h2>Preparing calendar view...</h2>
+    <scan id="output"></scan>
+</div>
 
+<script src="https://apis.google.com/js/client.js">window.onload = gCal.run</script>
 <script src="lib/jquery.min.js"></script>
 <script src="lib/underscore.js"></script>
 <script src="lib/prettysize.js"></script>
 
-<!--TODO: separately load client.js then call checkAuth-->
-<!--<script src="https://apis.google.com/js/client.js?onload=gCal.checkAuth()"></script>-->
-
-<script src="http://maps.google.com/maps/api/js"></script>
 <script src="js/dsu.js"></script>
 <script src="js/locationcalendar.js"></script>
 
+<script src="http://maps.google.com/maps/api/js"></script>
 
 </body>
 </html>
