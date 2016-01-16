@@ -1,48 +1,76 @@
 <html>
 <head>
+    <title>student lifemaps</title>
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 
 <div id="welcome-div" style="display: block">
-    <h2>Welcome to Student LifeMaps</h2>
+    <h2>Welcome to <br>Student LifeMaps</h2>
 </div>
 
-<div id="authorize-div" style="display: none">
-    <h2>Authorize Calendar API</h2>
-    <input type="button" value="Authorize" onclick="gCal.handleAuthClick(event)">
-</div>
+<div>
+    <div>
+        <div>
+            <div id="authorize-div" style="display: none">
+                <h2>Authorize Calendar API</h2>
+                <input type="button" value="Authorize" onclick="gCal.handleAuthClick(event)">
+            </div>
 
-<div id="source-div" style="display: none">
-    <scan id="sourceStatus"></scan>
-    <h2>Is your location data downloaded from Google Services?</h2>
-    <input name="source" type="radio" value="yes">Yes
-    <input name="source" type="radio" value="no">No<br>
-    <input type="button" value="Next" id="nextButton" onclick="ui.run()"><br>
-</div>
+            <div id="source-div" style="display: none">
+                <scan id="sourceStatus"></scan>
+                <h2>Is your location data downloaded from <br>
+                    Google Takeout Services?</h2>
+                <input name="source" type="radio" value="yes" class="addMargin">Yes
+                <input name="source" type="radio" value="no" class="addMargin">No<br>
+                <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.run()"><br>
+            </div>
 
-<div id="upload-div" style="display: none">
-    <h2>Upload Location Data</h2>
-    <input name="file" type="file" id="file"><br>
-    <scan id="fileStatus"></scan>
-</div>
+            <div id="upload-div" style="display: none">
+                <h2>Upload Location Data</h2>
+                <input name="file" type="file" id="file" class="btn"><br>
+                <scan id="fileStatus"></scan>
+            </div>
 
-<div id="mobility-div" style="display: none">
-    <h2>Mobility data coming soon...</h2>
-</div>
+            <div id="mobility-div" style="display: none">
+                <h2>Mobility data coming soon...</h2>
+            </div>
 
-<div id="address-div" style="display: none">
-    <h2>Enter Location Address</h2>
-    Home Address: <input type="text" id="homeAddress" value="sample home"><br>
-    Work Address: <input type="text" id="workAddress" value="sample work"><br>
-    Hobby Address: <input type="text" id="hobbyAddress" value="sample hobby"><br>
-    Days Count: <input type="text" value="7" id="daysCount"><br>
-    <input type="button" value="continue" id="btnAddress"><br>
-    <scan id="addressStatus"></scan>
-</div>
+            <div id="address-div" style="display: none">
 
-<div id="calendar-div" style="display: none">
-    <h2>Preparing calendar view...</h2>
-    <scan id="output"></scan>
+                <h2>Enter Location Address</h2>
+                <div class="formLayout">
+                    <label>
+                        Home Address:
+                    </label>
+                    <input type="text" id="homeAddress" value="sample home">
+
+                    <label>
+                        Work Address:
+                    </label>
+                    <input type="text" id="workAddress" value="sample work">
+
+                    <label>
+                        Hobby Address:
+                    </label>
+                    <input type="text" id="hobbyaddress" value="sample hobby">
+
+                    <label>
+                        No of Days:
+                    </label>
+                    <input type="text" value="7" id="daysCount">
+                </div> <br>
+                <label id="addressStatus"></label> <br>
+                <input type="button" value="continue" id="btnAddress" class="btn"><br>
+
+            </div>
+
+            <div id="calendar-div" style="display: none">
+                <h2>Preparing calendar view...</h2>
+                <scan id="output"></scan>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://apis.google.com/js/client.js">window.onload = gCal.run</script>

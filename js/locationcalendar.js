@@ -11,15 +11,14 @@ var
         SCOPES: ["https://www.googleapis.com/auth/calendar"],
 
         run: function () {
-            if (!workOffline) {
-                gCal.checkAuth();
-            }
+            gCal.checkAuth();
         },
 
         /**
          * Check if current user has authorized this application.
          */
         checkAuth: function () {
+            console.log("checkAuth called.");
             gapi.auth.authorize(
                 {
                     'client_id': gCal.CLIENT_ID,
@@ -34,7 +33,6 @@ var
          * @param {Object} authResult Authorization result.
          */
         handleAuthResult: function (authResult) {
-
             var authorizeDiv = document.getElementById('authorize-div');
             if (authResult && !authResult.error) {
                 // Hide auth UI, then load client library.
@@ -295,7 +293,6 @@ var
 
                             // reduce data to only last N days
                             // for testing purposes you can override input with custom noOfDays
-                            //noOfDays = 30;
                             dateOfLastDay = new Date(data[data.length - 1].timestampMs);
                             lastDayTimestamp = dateOfLastDay.getTime();
                             nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
@@ -607,6 +604,10 @@ var
                                                 }
                                                 timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
                                                 latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
+
+                                                if (firstItem.locationLabel === 'other')
+                                                    continue;
+
                                                 locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
                                                     " (~ " + timeDiff + " hours)" +
                                                     " [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
@@ -769,7 +770,7 @@ var
 
         modifyDiv: function (div, action) {
             var divElement = document.getElementById(div);
-            (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'block';
+            (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'inline';
         },
 
         assert: function (condition, message) {
