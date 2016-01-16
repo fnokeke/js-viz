@@ -2,6 +2,16 @@ body {
     text-align: center;
 }
 
+html, body {
+    height: 100%;
+    width: 100%;
+    font-size: 25px;
+}
+
+body.working {
+    cursor: progress;
+}
+
 input[type="text"] {
     height: 40px;
     text-align: center;
@@ -48,14 +58,23 @@ br
     clear: left;
 }
 
-html, body {
-    height: 100%;
-    width: 100%;
-    font-size: 25px;
+.btn {
+    margin-top: 10px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    font-family: Courier New;
+    font-size: 15px;
+    padding: 10px 15px 10px 15px;
+    text-decoration: none;
 }
 
-body.working {
-	cursor: progress;
+.btn:hover {
+    background-image: -webkit-linear-gradient(top, grey, grey);
+    background-image: -moz-linear-gradient(top, grey, grey);
+    background-image: -ms-linear-gradient(top, grey, grey);
+    background-image: -o-linear-gradient(top, grey, grey);
+    background-image: linear-gradient(to bottom, grey, grey);;
+    text-decoration: none;
 }
 
 .map-active .container {
@@ -96,58 +115,6 @@ body.working {
 
 .map-active #controls {
   bottom: -145px;
-}
-
-#controls:hover {
-  bottom: 0px;
-  left: 0px;
-  height: auto;
-  background-color: rgba(255,255,255,0.9);
-}
-
-#controls:hover .title span {
-  opacity: 0;
-}
-
-#controls .title {
-  text-align: center;
-  font-weight: bold;
-  line-height: 1.4;
-  font-size: 13px;
-  padding-bottom: 3px;
-}
-
-#controls .title span {
-  display: block;
-  line-height: 0.9;
-  font-weight: lighter;
-  font-size: 11px;
-  transition: all 0.5s ease-in-out;
-}
-
-#controls .control-block {
-    clear: both;
-}
-
-#controls .control-block input {
-  float: right;
-  margin-left: 10px;
-}
-
-#controls .actions {
-  text-align: center;
-}
-
-#controls .support {
-  border-top: 1px dashed black;
-  margin-top: 10px;
-  padding-top: 10px;
-  font-size: 0.8em;
-  text-align: center;
-}
-
-#controls .support div {
-  padding-bottom: 5px;
 }
 
 /* http://tobiasahlin.com/spinkit/ */
@@ -195,23 +162,4 @@ body.working {
     transform: scale(1.0);
     -webkit-transform: scale(1.0);
   }
-}
-
-.btn {
-  margin-top: 10px;
-  -moz-border-radius: 15px;
-  border-radius: 15px;
-  font-family: Courier New;
-  font-size: 15px;
-  padding: 10px 15px 10px 15px;
-  text-decoration: none;
-}
-
-.btn:hover {
-  background-image: -webkit-linear-gradient(top, grey, grey);
-  background-image: -moz-linear-gradient(top, grey, grey);
-  background-image: -ms-linear-gradient(top, grey, grey);
-  background-image: -o-linear-gradient(top, grey, grey);
-  background-image: linear-gradient(to bottom, grey, grey);;
-  text-decoration: none;
 }
