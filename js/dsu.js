@@ -34,7 +34,7 @@ var dsu =
                 headers: {
                     "Authorization": "Bearer " + dsu.token
                 },
-                url: dsu_url + "dataPoints",
+                url: dsu.dsu_url + "dataPoints",
                 data: {
                     schema_namespace: "cornell",
                     schema_name: "mobility-daily-summary",
