@@ -1,79 +1,86 @@
 <html>
 <head>
-    <title>student lifemaps</title>
+    <title>Student Lifemaps</title>
     <link rel="stylesheet" href="css/index.css">
 </head>
-<body>
+<body class="centerDiv">
 
-<div id="welcome-div" style="display: block">
+<div id="welcome-div" style="display: block" class="centerDiv">
     <h2>Welcome to <br>Student LifeMaps</h2>
+
+    <div id="authorize-div" style="display: block">
+        <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
+    </div>
+
 </div>
 
 <div>
-    <div>
-        <div>
-            <div id="authorize-div" style="display: none">
-                <h2>Authorize Calendar API</h2>
-                <input type="button" value="Authorize" onclick="gCal.handleAuthClick(event)">
-            </div>
+    <div id="source-div" style="display: none">
+        <scan id="sourceStatus"></scan>
+        <h2>Is your location data downloaded from <br>
+            Google Takeout Services?</h2>
+        <input name="source" type="radio" value="yes" class="addMargin">Yes
+        <input name="source" type="radio" value="no" class="addMargin">No<br>
+        <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.run()"><br>
+    </div>
 
-            <div id="source-div" style="display: none">
-                <scan id="sourceStatus"></scan>
-                <h2>Is your location data downloaded from <br>
-                    Google Takeout Services?</h2>
-                <input name="source" type="radio" value="yes" class="addMargin">Yes
-                <input name="source" type="radio" value="no" class="addMargin">No<br>
-                <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.run()"><br>
-            </div>
+    <div id="upload-div" style="display: none">
+        <h2>Upload Location Data</h2>
+        <input name="file" type="file" id="file" class="btn"><br>
+        <scan id="fileStatus"></scan>
 
-            <div id="upload-div" style="display: none">
-                <h2>Upload Location Data</h2>
-                <input name="file" type="file" id="file" class="btn"><br>
-                <scan id="fileStatus"></scan>
-            </div>
+    </div>
 
-            <div id="mobility-div" style="display: none">
-                <h2>Mobility data coming soon...</h2>
-            </div>
+    <div id="calendar-div" style="display: none">
+        <h2>Preparing calendar view...</h2>
+        <scan id="output"></scan>
+    </div>
 
-            <div id="address-div" style="display: none">
-
-                <h2>Enter Location Address</h2>
-                <div class="formLayout">
-                    <label>
-                        Home Address:
-                    </label>
-                    <input type="text" id="homeAddress" value="sample home">
-
-                    <label>
-                        Work Address:
-                    </label>
-                    <input type="text" id="workAddress" value="sample work">
-
-                    <label>
-                        Hobby Address:
-                    </label>
-                    <input type="text" id="hobbyaddress" value="sample hobby">
-
-                    <label>
-                        No of Days:
-                    </label>
-                    <input type="text" value="7" id="daysCount">
-                </div> <br>
-                <label id="addressStatus"></label> <br>
-                <input type="button" value="continue" id="btnAddress" class="btn"><br>
-
-            </div>
-
-            <div id="calendar-div" style="display: none">
-                <h2>Preparing calendar view...</h2>
-                <scan id="output"></scan>
-            </div>
+    <div id="working" style="display: none">
+        <h2>Uploading data...</h2>
+        <div class="spinner">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
         </div>
     </div>
+
+    <div class="extraSpace"></div>
+    <div id="mobility-div" style="display: none">
+        <h2>Mobility data coming soon...</h2>
+    </div>
+
+    <div id="address-div" style="display: none">
+        <h2>Enter Location Address</h2>
+        <div class="formLayout">
+            <label>
+                Home Address:
+            </label>
+            <input type="text" id="homeAddress" value="308 University Ave, Ithaca, NY, 14850">
+
+            <label>
+                Work Address:
+            </label>
+            <input type="text" id="workAddress" value="Bill and Melinda Gates Hall, Ithaca, NY 14853">
+
+            <label>
+                Third Strand Address:
+            </label>
+            <input type="text" id="hobbyAddress" value="415 College Ave, Ithaca, NY 14850">
+
+            <label>
+                No of Days:
+            </label>
+            <input type="text" value="7" id="daysCount">
+        </div>
+        <br>
+        <label id="addressStatus"></label> <br>
+        <input type="button" value="continue" id="btnAddress" class="btn"><br>
+
+    </div>
+
 </div>
 
-<script src="https://apis.google.com/js/client.js">window.onload = gCal.run</script>
 <script src="lib/jquery.min.js"></script>
 <script src="lib/underscore.js"></script>
 <script src="lib/prettysize.js"></script>
@@ -83,5 +90,15 @@
 
 <script src="http://maps.google.com/maps/api/js"></script>
 
+<script src="https://apis.google.com/js/client.js">
+    window.onload = gCal.run
+</script>
+
+<script>
+    //    window.addEventListener ?
+    //            window.addEventListener("load", gCal.run, false) :
+    //    window.attachEvent && window.attachEvent("onload", gCal.run);
+
+</script>
 </body>
 </html>

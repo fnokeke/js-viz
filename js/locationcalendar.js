@@ -10,6 +10,7 @@ var
         CLIENT_ID: '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com',
         SCOPES: ["https://www.googleapis.com/auth/calendar"],
 
+
         run: function () {
             gCal.checkAuth();
         },
@@ -18,7 +19,6 @@ var
          * Check if current user has authorized this application.
          */
         checkAuth: function () {
-            console.log("checkAuth called.");
             gapi.auth.authorize(
                 {
                     'client_id': gCal.CLIENT_ID,
@@ -62,7 +62,7 @@ var
          */
         loadCalendarApi: function () {
             gapi.client.load('calendar', 'v3', function () {
-                // prepare for next stage
+                utility.modifyDiv("welcome-div", 'hide');
                 utility.modifyDiv("source-div", 'show');
                 $('#sourceStatus').text('Calendar authorization successful!');
                 $('#sourceStatus').css('color', 'green');
@@ -89,6 +89,7 @@ var
             utility.modifyDiv('source-div', 'hide');
 
             // users have to upload their data if using Google Location Data
+            // otherwise mobility data is fetched online using the public api
             // hide field when data uploaded
             if (locSource === 'yes') {
                 utility.modifyDiv('upload-div', 'show');
@@ -97,9 +98,22 @@ var
                 });
             } else {
                 utility.modifyDiv('mobility-div', 'show');
-                dsuAnalysis.processDSU(function (data) {
-                    console.log("dsu data:", data);
-                });
+
+                // use today as end date if custom end date is not provided
+                var
+                    nDays = 3,
+                    endDate = '2015-12-20',
+                    todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
+                    dsuDates = [];
+
+                for (var i = 0; i < nDays; i++) {
+                    var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+                    tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+                    dsuDates.push(tmpDate);
+                }
+
+                console.log("dsuDates:", dsuDates);
+                dsuAnalysis.fetchDataForDate(dsuDates);
             }
         },
 
@@ -107,6 +121,7 @@ var
 
             $('#file').change(function () {
                 if (!this.files[0]) return;
+                utility.modifyDiv('working', 'show');
 
                 var file = this.files[0];
                 var fileSize = prettySize(file.size);
@@ -129,7 +144,7 @@ var
 
                 reader.onprogress = function (e) {
                     var percentLoaded = Math.round(( e.loaded / e.total ) * 100);
-                    status(percentLoaded + '% of ' + fileSize + ' loaded...', 'grey');
+                    status(percentLoaded + '% of ' + fileSize + ' loaded.', 'grey');
                 };
 
                 reader.onload = function (e) {
@@ -138,6 +153,7 @@ var
                         data = getLocationDataFromJson(e.target.result);
                         status('File loaded successfully! (' + fileSize + ')', 'green');
                     } catch (ex) {
+                        utility.modifyDiv('working', 'hide');
                         status('Something went wrong generating your location entries. Ensure you\'re uploading a ' +
                             'Google Takeout JSON file that contains location data and try again. ' +
                             '(error: ' + ex.message + ')', 'red');
@@ -147,6 +163,7 @@ var
                 };
 
                 reader.onerror = function () {
+                    utility.modifyDiv('working', 'hide');
                     status('Something went wrong reading your JSON file. ' +
                         'Ensure you\'re uploading a "direct-from-Google" JSON file and try again. ' +
                         '(error: ' + reader.error + ')', 'red');
@@ -158,6 +175,7 @@ var
 
         processUploadedData: function (uploadedData) {
 
+            utility.modifyDiv('working', 'hide');
             utility.modifyDiv('address-div', 'show');
 
             $('#btnAddress').click(useInputProvided);
@@ -185,12 +203,13 @@ var
                     utility.modifyDiv('upload-div', 'hide');
                     utility.modifyDiv('address-div', 'hide');
                     utility.modifyDiv('calendar-div', 'show');
+                    utility.modifyDiv('working', 'show');
 
                     // for test purposes, override entries with fixed addresses
                     allMappedAddresses = {
-                        "home": "308 University Ave, Ithaca, NY, 14850",
-                        "work": "Bill and Melinda Gates Hall, Ithaca, NY 14853",
-                        "hobby": "65 Woodcrest Ave, Ithaca, NY 14850",
+                        "home": home,
+                        "work": work,
+                        "hobby": hobby
                     };
 
                     // convert full addresses to lat,lon
@@ -355,25 +374,9 @@ var
                              */
                             createdCalendarSummary = 'My Location Calendar';
                             if (localStorage.createdCalendarId === undefined) {
-                                if (gapi) {
-                                    console.log("indeed gapi exists");
-                                    if (gapi.client) {
-                                        console.log("indeed gapi.client exists");
-                                        if (gapi.client.calendar)
-                                            console.log("indeed gapi.client.calendar exists");
-                                        else
-                                            console.log("sorry no gapi.client.calendar exists");
-                                    } else {
-                                        console.log("unfortunately no gapi.client");
-                                    }
-                                }
-                                else {
-                                    console.log("unfortunately no gapi");
-
-                                }
                                 createCalendar(createdCalendarSummary).then(function (result) {
                                     console.log("create calendar response:", result);
-                                    showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                    resetThenInsertNewEvents(localStorage.createdCalendarId, data);
                                 });
                             } else {
                                 var request = gapi.client.calendar.calendars.get({
@@ -385,11 +388,11 @@ var
                                         console.log("404: CalendarId not found. Creating one...");
                                         createCalendar(createdCalendarSummary).then(function (result) {
                                             console.log(result);
-                                            showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                            resetThenInsertNewEvents(localStorage.createdCalendarId, data);
                                         });
                                     } else {
                                         console.log("Calendar exists and everything is fine.");
-                                        showClearThenBatchInsertEvents(localStorage.createdCalendarId, data);
+                                        resetThenInsertNewEvents(localStorage.createdCalendarId, data);
                                     }
                                 });
                             }
@@ -418,55 +421,9 @@ var
                                 });
                             }
 
-                            function showClearThenBatchInsertEvents(calendarId, givenData) {
+                            function resetThenInsertNewEvents(calendarId, givenData) {
 
-                                var
-                                    events,
-                                    event,
-                                    text,
-                                    when,
-                                    deleteAllEvents,
-                                    appendPre;
-
-
-                                /*
-                                 * show all events
-                                 */
-                                //TODO: print events after delete
-                                appendPre = function (message) {
-                                    var pre = document.getElementById('output');
-                                    pre.innerHTML += message;
-                                }
-
-                                var request = gapi.client.calendar.events.list({
-                                    'calendarId': localStorage.createdCalendarId,
-                                    'showDeleted': false,
-                                    'singleEvents': true,
-                                    'orderBy': 'startTime'
-                                });
-                                request.execute(function (resp) {
-                                    events = resp.result.items;
-                                    text = "All Events Before Resetting " + localStorage.createdCalendarSummary;
-                                    appendPre('<h2>' + text + '</h2>');
-
-                                    if (events.length > 0) {
-                                        for (var i = 0; i < events.length; i++) {
-                                            event = events[i];
-                                            when = event.start.dateTime;
-                                            if (!when) {
-                                                when = event.start.date;
-                                            }
-                                            appendPre(event.summary + ' (' + when + ')' + '<br/>');
-                                        }
-                                    } else {
-                                        appendPre('No upcoming events found.');
-                                    }
-                                });
-
-                                /*
-                                 * TODO: write appropriate comment here
-                                 */
-                                deleteAllEvents = function (calendarId) {
+                                var deleteAllEvents = function (calendarId) {
 
                                     return new Promise(function (resolve) {
                                         var request = gapi.client.calendar.events.list({
@@ -524,7 +481,6 @@ var
                                         getAllDwellTime;
 
                                     console.log(response);
-
                                     groupedByDayData = _.groupBy(givenData, 'date');
 
                                     // get the full reverse address of where each event occurred using their lat,lng
@@ -533,34 +489,38 @@ var
                                         var urlRequest = "http://api.geonames.org/findNearestAddressJSON?lat=" +
                                             ev.location.lat + "&lng=" + ev.location.lng + "&username=fnokeke";
 
-                                        $.getJSON(urlRequest, function (result) {
-                                            var
-                                                address,
-                                                reversedAddress,
-                                                insertRequest;
+                                        if (ev.location === 'home' || ev.location === 'work' || ev.location === 'hobby') {
+                                        }
+                                        else {
+                                            $.getJSON(urlRequest, function (result) {
+                                                var
+                                                    address,
+                                                    reversedAddress,
+                                                    insertRequest;
 
-                                            if (result.address !== undefined) {
-                                                result = result.address;
-                                                address = [
-                                                    result.streetNumber + " " + result.street,
-                                                    result.placename,
-                                                    result.adminCode1,
-                                                    result.postalcode
-                                                ];
-                                                reversedAddress = address.join(", ");
-                                                ev.location = reversedAddress;
-                                            } else if (result.status.message === "invalid username") {
-                                                console.log("invalid username");
-                                            } else {
-                                                console.log("uknown error:", result);
-                                            }
+                                                if (result.address !== undefined) {
+                                                    result = result.address;
+                                                    address = [
+                                                        result.streetNumber + " " + result.street,
+                                                        result.placename,
+                                                        result.adminCode1,
+                                                        result.postalcode
+                                                    ];
+                                                    reversedAddress = address.join(", ");
+                                                    ev.location = reversedAddress;
+                                                } else if (result.status.message === "invalid username") {
+                                                    console.log("invalid username");
+                                                } else {
+                                                    console.log("uknown error:", result);
+                                                }
 
-                                            insertRequest = gapi.client.calendar.events.insert({
-                                                'calendarId': localStorage.createdCalendarId,
-                                                'resource': ev
+                                                insertRequest = gapi.client.calendar.events.insert({
+                                                    'calendarId': localStorage.createdCalendarId,
+                                                    'resource': ev
+                                                });
+                                                insertRequest.execute();
                                             });
-                                            insertRequest.execute();
-                                        });
+                                        }
                                     }
 
                                     getAllDwellTime = function (dayData) {
@@ -609,8 +569,8 @@ var
                                                     continue;
 
                                                 locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
-                                                    " (~ " + timeDiff + " hours)" +
-                                                    " [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
+                                                    " (~ " + timeDiff + " hours)";
+                                                    //" [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
 
                                                 if (firstItem.locationLabel == "home")
                                                     colorId = "10"; //green
@@ -685,10 +645,8 @@ var
             // TODO: batch events
             // TODO: add timezone to calendar
             // TODO: clear calendar then reload event
-            //TODO: make sure that calendar exists before you check its events
             //TODO: set calendar timezone
             //TODO: remove locations where user was moving or not stationary
-            //TODO: add colors to calendar events
         },
 
     },
@@ -699,12 +657,10 @@ var
             dsuAnalysis.runOffline();
 
             if (!workOffline) {
-                dsuAnalysis.fetchDataForDate([]);
             }
         },
 
         processDSU: function (callback) {
-            dsuAnalysis.runOffline();
             callback("random data coming soon");
         },
 
