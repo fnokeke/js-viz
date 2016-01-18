@@ -242,6 +242,7 @@ var
                                 label;
 
                             geocoder = new google.maps.Geocoder();
+                            console.log("geocoder:", geocoder);
                             geocoder.geocode({'address': address}, function (results, status) {
 
                                 if (status == google.maps.GeocoderStatus.OK) {
@@ -443,6 +444,8 @@ var
                                                 deleteRequest,
                                                 msg;
 
+                                            if (!resp.result) return;
+
                                             events = resp.result.items;
                                             deleteRequest = function (eventId) {
                                                 return gapi.client.calendar.events.delete({
@@ -486,41 +489,42 @@ var
                                     // get the full reverse address of where each event occurred using their lat,lng
                                     // then insert the event with retrieved address
                                     insertEventWithFullAddress = function (ev) {
-                                        var urlRequest = "http://api.geonames.org/findNearestAddressJSON?lat=" +
+                                        var urlRequest = "//api.geonames.org/findNearestAddressJSON?lat=" +
                                             ev.location.lat + "&lng=" + ev.location.lng + "&username=fnokeke";
 
-                                        if (ev.location === 'home' || ev.location === 'work' || ev.location === 'hobby') {
-                                        }
-                                        else {
-                                            $.getJSON(urlRequest, function (result) {
-                                                var
-                                                    address,
-                                                    reversedAddress,
-                                                    insertRequest;
+                                        /*if (ev.location === 'home' || ev.location === 'work' || ev.location === 'hobby') {
+                                         }
+                                         else {
+                                         $.getJSON(urlRequest, function (result) {
+                                         var
+                                         address,
+                                         reversedAddress,
+                                         insertRequest;
 
-                                                if (result.address !== undefined) {
-                                                    result = result.address;
-                                                    address = [
-                                                        result.streetNumber + " " + result.street,
-                                                        result.placename,
-                                                        result.adminCode1,
-                                                        result.postalcode
-                                                    ];
-                                                    reversedAddress = address.join(", ");
-                                                    ev.location = reversedAddress;
-                                                } else if (result.status.message === "invalid username") {
-                                                    console.log("invalid username");
-                                                } else {
-                                                    console.log("uknown error:", result);
-                                                }
+                                         if (result.address !== undefined) {
+                                         result = result.address;
+                                         address = [
+                                         result.streetNumber + " " + result.street,
+                                         result.placename,
+                                         result.adminCode1,
+                                         result.postalcode
+                                         ];
+                                         reversedAddress = address.join(", ");
+                                         ev.location = reversedAddress;
+                                         } else if (result.status.message === "invalid username") {
+                                         console.log("invalid username");
+                                         } else {
+                                         console.log("uknown error:", result);
+                                         }
 
-                                                insertRequest = gapi.client.calendar.events.insert({
-                                                    'calendarId': localStorage.createdCalendarId,
-                                                    'resource': ev
-                                                });
-                                                insertRequest.execute();
-                                            });
-                                        }
+                                         });
+                                         } */
+
+                                        var insertRequest = gapi.client.calendar.events.insert({
+                                            'calendarId': localStorage.createdCalendarId,
+                                            'resource': ev
+                                        });
+                                        insertRequest.execute();
                                     }
 
                                     getAllDwellTime = function (dayData) {
@@ -570,7 +574,7 @@ var
 
                                                 locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
                                                     " (~ " + timeDiff + " hours)";
-                                                    //" [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
+                                                //" [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
 
                                                 if (firstItem.locationLabel == "home")
                                                     colorId = "10"; //green
@@ -629,7 +633,7 @@ var
                                     dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
 
                                     var url =
-                                        "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=week";
+                                        "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
                                     window.location.href = url;
                                 });
                             }
