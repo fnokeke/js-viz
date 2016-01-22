@@ -343,12 +343,13 @@ var
             HOBBY = addresses.hobby;
             WORK = addresses.work;
 
+            // center of city is half-way between home and work
             city = [
               0.5 * (HOME[0] + WORK[0]),
               0.5 * (HOME[1] + WORK[1]),
             ];
 
-            cityLatMargin = 0.1;
+            cityLatMargin = 1.0;
             cityLonMargin = 1.0;
 
             /*
