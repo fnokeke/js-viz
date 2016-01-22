@@ -386,20 +386,6 @@ var
              * but make sure the calendar id exists on Google Server
              * store new calendar id in localStorage
              */
-
-            //createdCalendarSummary = 'My Location Calendar';
-            //checkCalendarExists(createdCalendarSummary, function (status) {
-            //  if (status === -1) {
-            //    createCalendar(createdCalendarSummary).then(function (result) {
-            //      console.log("create calendar response:", result);
-            //      resetThenInsertNewEvents(localStorage.createdCalendarId, data);
-            //    });
-            //  } else if (status === 200) {
-            //    resetThenInsertNewEvents(localStorage.createdCalendarId, data);
-            //    console.log("status 200 localStorageId should be same as last print:", localStorage.createdCalendarId);
-            //  }
-            //});
-
             function checkCalendarExists(calSummary, callback) {
 
               var
@@ -433,7 +419,7 @@ var
             createdCalendarSummary = 'My Location Calendar';
             checkCalendarExists(createdCalendarSummary, function (status) {
               if (status === -1) {
-                createCalendarCallback(createdCalendarSummary, function (resp) {
+                createCalendar(createdCalendarSummary, function (resp) {
                   if (resp === -1) { console.log("calendar error") }
                   else { resetThenInsertNewEvents(localStorage.createdCalendarId, data); }
                 });
@@ -441,32 +427,7 @@ var
               else if (status === 200) { resetThenInsertNewEvents(localStorage.createdCalendarId, data); }
             });
 
-            //if (localStorage.createdCalendarId === undefined) {
-            //  createCalendar(createdCalendarSummary).then(function (result) {
-            //    console.log("create calendar response:", result);
-            //    resetThenInsertNewEvents(localStorage.createdCalendarId, data);
-            //  });
-            //} else {
-            //  var request = gapi.client.calendar.calendars.get({
-            //    'calendarId': localStorage.createdCalendarId
-            //  });
-            //  request.execute(function (resp) {
-            //
-            //    if (resp.code === 404) {
-            //      console.log("404: CalendarId not found. Creating one...");
-            //      createCalendar(createdCalendarSummary).then(function (result) {
-            //        console.log(result);
-            //        resetThenInsertNewEvents(localStorage.createdCalendarId, data);
-            //      });
-            //    } else {
-            //      console.log("Calendar exists and everything is fine.");
-            //      resetThenInsertNewEvents(localStorage.createdCalendarId, data);
-            //    }
-            //  });
-            //}
-            //TODO: fix bug for newly created calendar
-
-            function createCalendarCallback(calendarSummary, callback) {
+            function createCalendar(calendarSummary, callback) {
               var request = gapi.client.calendar.calendars.insert({
                 'summary': calendarSummary
               });
@@ -482,29 +443,6 @@ var
                 }
               });
             }
-
-            //function createCalendar(calendarSummary) {
-            //  var request;
-            //
-            //  return new Promise(function (resolve, reject) {
-            //    utility.assert(gapi.client.calendar !== undefined, "create new calendar test.");
-            //    request = gapi.client.calendar.calendars.insert({
-            //      'summary': calendarSummary
-            //    });
-            //
-            //    request.execute(function (resp) {
-            //      if (resp === undefined) {
-            //        var msg = "error making calendar: " + resp;
-            //        reject(msg);
-            //      } else {
-            //        var msg = "Successful in creating calendar: " + createdCalendarSummary;
-            //        resolve(msg);
-            //        localStorage.createdCalendarId = resp.result.id;
-            //        localStorage.createdCalendarSummary = calendarSummary;
-            //      }
-            //    });
-            //  });
-            //}
 
             function resetThenInsertNewEvents(calendarId, givenData) {
 
@@ -574,8 +512,8 @@ var
                 // get the full reverse address of where each event occurred using their lat,lng
                 // then insert the event with retrieved address
                 insertEventWithFullAddress = function (ev) {
-                  var urlRequest = "//api.geonames.org/findNearestAddressJSON?lat=" +
-                    ev.location.lat + "&lng=" + ev.location.lng + "&username=fnokeke";
+                  //var urlRequest = "//api.geonames.org/findNearestAddressJSON?lat=" +
+                  //  ev.location.lat + "&lng=" + ev.location.lng + "&username=fnokeke";
 
                   /*if (ev.location === 'home' || ev.location === 'work' || ev.location === 'hobby') {
                    }
