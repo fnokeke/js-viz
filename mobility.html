@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mobility Signin</title>
+</head>
+<body>
+
+<script>
+  var url = window.location.href;
+  localStorage.token = url.match(/\#(?:access_token)\=([\S\s]*?)\&/)[1];
+  window.location.href = 'http://localhost:63342/js-viz/index.html?token=' + localStorage.token;
+</script>
+
+</body>
+</html>
