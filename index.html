@@ -1,105 +1,127 @@
 <html>
-    <head>
-        <title>Student Lifemaps</title>
-    </head>
-    <body class="centerDiv">
+<head>
+  <title>Student Lifemaps</title>
+</head>
+<body class="centerDiv">
 
-        <div id="welcome-div" style="display: block" class="centerDiv">
-            <h2>Welcome to <br>Student LifeMaps</h2>
 
-            <div id="authorize-div" style="display: block">
-                <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
-            </div>
+<!--<div>-->
+  <!--<p class="note">-->
+    <!--All processing and visualization happens directly on your computer, so rest assured that nobody is able to-->
+    <!--access-->
+    <!--your Location History but you... and Google, of course. ^.^-->
+  <!--</p>-->
 
-        </div>
+  <!--<p>-->
+    <!--To start off, you'll need to go to Google Takeout to download your Location History data: on that page, deselect-->
+    <!--everything except Location History by clicking "Select none" and then reselecting "Location History". Then hit-->
+    <!--"Next" and, finally, click "Create archive". Once the archive has been created, click "Download". Unzip the-->
+    <!--downloaded file, and open the "Location History" folder within. Then, drag and drop LocationHistory.json from-->
+    <!--inside-->
+    <!--that folder onto this page. Let the visualization begin!-->
+  <!--</p>-->
 
-        <div>
-            <div id="source-div" style="display: none">
-                <scan id="sourceStatus"></scan>
-                <h2>Is your location data downloaded from <br>
-                    Google Takeout Services?</h2>
-                <input name="source" type="radio" value="yes" class="addMargin">Yes
-                <input name="source" type="radio" value="no" class="addMargin">No<br>
-                <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.run()"><br>
-            </div>
+<!--</div>-->
 
-            <div id="upload-div" style="display: none">
-                <h2>Upload Location Data</h2>
-                <input name="file" type="file" id="file" class="btn"><br>
-                <scan id="fileStatus"></scan>
+<div id="welcome-div" style="display: block" class="centerDiv">
+  <h2>Welcome to <br>Student LifeMaps</h2>
 
-            </div>
 
-            <div id="calendar-div" style="display: none">
-                <h2>Preparing calendar view...</h2>
-                <scan id="output"></scan>
-            </div>
+  <div id="authorize-div" style="display: block">
+    <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
+  </div>
 
-            <div id="working" style="display: none">
-                <h2>Uploading data...</h2>
-                <div class="spinner">
-                    <div class="bounce1"></div>
-                    <div class="bounce2"></div>
-                    <div class="bounce3"></div>
-                </div>
-            </div>
+</div>
 
-            <div class="extraSpace"></div>
-            <div id="mobility-div" style="display: none">
-                <h2>Mobility data coming soon...</h2>
-            </div>
+<div>
+  <scan id="sourceStatus"></scan>
+</div>
 
-            <div id="address-div" style="display: none">
-                <h2>Enter Location Address</h2>
-                <div class="formLayout">
-                    <label>
-                        Home Address:
-                    </label>
-                    <input type="text" id="homeAddress" value="308 University Ave, Ithaca, NY, 14850">
+<div>
+  <div id="source-div" style="display: none">
+    <h2>Is your location data downloaded from <br>
+      Google Takeout Services?</h2>
+    <input name="source" type="radio" value="yes" class="addMargin">Yes
+    <input name="source" type="radio" value="no" class="addMargin">No<br>
+    <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.processSourceResponse()"><br>
+  </div>
 
-                    <label>
-                        Work Address:
-                    </label>
-                    <input type="text" id="workAddress" value="Bill and Melinda Gates Hall, Ithaca, NY 14853">
+  <div id="upload-div" style="display: none">
+    <h2>Upload Location Data</h2>
+    <input name="file" type="file" id="file" class="btn"><br>
+    <scan id="fileStatus"></scan>
 
-                    <label>
-                        Third Strand Address:
-                    </label>
-                    <input type="text" id="hobbyAddress" value="415 College Ave, Ithaca, NY 14850">
+  </div>
 
-                    <label>
-                        No of Days:
-                    </label>
-                    <input type="text" value="7" id="daysCount">
-                </div>
-                <br>
-                <label id="addressStatus"></label> <br>
-                <input type="button" value="continue" id="btnAddress" class="btn"><br>
+  <div id="uploadingData-div" style="display: none">
+    <h2>Uploading data...</h2>
+  </div>
 
-            </div>
+  <div id="calendar-div" style="display: none">
+    <h2>Preparing calendar view...</h2>
+    <scan id="output"></scan>
+  </div>
 
-        </div>
-        <link rel="stylesheet" href="css/index.css">
-        <script src="https://maps.googleapis.com/maps/api/js"></script>
+  <div id="working-div" style="display: none">
+    <div class="spinner">
+      <div class="bounce1"></div>
+      <div class="bounce2"></div>
+      <div class="bounce3"></div>
+    </div>
+  </div>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
+  <div class="extraSpace"></div>
+  <div id="mobility-div" style="display: none">
+    <h2>Mobility data coming soon...</h2>
+  </div>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+  <div id="address-div" style="display: none">
+    <h2>Enter Location Address</h2>
+    <div class="formLayout">
+      <label>
+        Home Address:
+      </label>
+      <input type="text" id="homeAddress" value="308 University Ave, Ithaca, NY, 14850">
 
-        <script src="lib/prettysize.js"></script>
+      <label>
+        Work Address:
+      </label>
+      <input type="text" id="workAddress" value="Bill and Melinda Gates Hall, Ithaca, NY 14853">
 
-        <script src="js/dsu.js"></script>
-        <script src="js/locationcalendar.js"></script>
+      <label>
+        Third Strand Address:
+      </label>
+      <input type="text" id="hobbyAddress" value="415 College Ave, Ithaca, NY 14850">
 
-        <script src="https://apis.google.com/js/client.js">
-            window.onload = gCal.run
-        </script>
+      <label>
+        No of Days:
+      </label>
+      <input type="text" value="7" id="daysCount">
+    </div>
+    <br>
+    <label id="addressStatus"></label> <br>
+    <input type="button" value="continue" id="btnAddress" class="btn" onclick="ui.useInputProvided()"><br>
 
-        <script>
-            //    window.addEventListener ?
-            //            window.addEventListener("load", gCal.run, false) :
-            //    window.attachEvent && window.attachEvent("onload", gCal.run);
+  </div>
 
-        </script>
-    </body>
+</div>
+
+<link rel="stylesheet" href="css/index.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.17.0/URI.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+
+<script src="lib/prettysize.js"></script>
+
+<script src="js/dsu.js"></script>
+<script src="js/locationcalendar.js"></script>
+
+<script src="https://apis.google.com/js/client.js">
+  window.onload = gCal.run
+</script>
+
+</body>
 </html>
