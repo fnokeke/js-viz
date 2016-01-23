@@ -6,7 +6,7 @@ html, body {
     height: 100%;
     width: 100%;
     font-size: 25px;
-    margin: 0 auto;
+    /*margin: 0 auto;*/
 }
 
 body.working {
@@ -34,6 +34,7 @@ input[type="text"] {
 #welcome-div {
     font-size: 35px;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin-top: 150px;
     /*margin-bottom: 100px;*/
 
 }
@@ -93,6 +94,16 @@ br
     background-image: -o-linear-gradient(top, grey, grey);
     background-image: linear-gradient(to bottom, grey, grey);;
     text-decoration: none;
+}
+
+img {
+   width: 50%;
+}
+
+li {
+    margin-top: 50px;
+    margin-bottom: 100px;
+    text-align: left;
 }
 
 .map-active .container {

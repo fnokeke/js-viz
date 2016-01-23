@@ -4,24 +4,11 @@
 </head>
 <body class="centerDiv">
 
-
-<!--<div>-->
-  <!--<p class="note">-->
-    <!--All processing and visualization happens directly on your computer, so rest assured that nobody is able to-->
-    <!--access-->
-    <!--your Location History but you... and Google, of course. ^.^-->
-  <!--</p>-->
-
-  <!--<p>-->
-    <!--To start off, you'll need to go to Google Takeout to download your Location History data: on that page, deselect-->
-    <!--everything except Location History by clicking "Select none" and then reselecting "Location History". Then hit-->
-    <!--"Next" and, finally, click "Create archive". Once the archive has been created, click "Download". Unzip the-->
-    <!--downloaded file, and open the "Location History" folder within. Then, drag and drop LocationHistory.json from-->
-    <!--inside-->
-    <!--that folder onto this page. Let the visualization begin!-->
-  <!--</p>-->
-
-<!--</div>-->
+<div id="note-div" style="display: none">
+  <p class="note">
+    All data processing happens directly on your computer, so nobody is able to access your Location History but you.
+  </p>
+</div>
 
 <div id="welcome-div" style="display: block" class="centerDiv">
   <h2>Welcome to <br>Student LifeMaps</h2>
@@ -42,7 +29,8 @@
     <h2>Is your location data downloaded from <br>
       Google Takeout Services?</h2>
     <input name="source" type="radio" value="yes" class="addMargin">Yes
-    <input name="source" type="radio" value="no" class="addMargin">No<br>
+    <input name="source" type="radio" value="no" class="addMargin">No
+    <input name="source" type="radio" value="download" class="addMargin">Download data<br>
     <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.processSourceResponse()"><br>
   </div>
 
@@ -59,8 +47,9 @@
 
   <div id="calendar-div" style="display: none">
     <h2>Preparing calendar view...</h2>
-    <scan id="output"></scan>
+    <scan id="date-output"></scan>
   </div>
+
 
   <div id="working-div" style="display: none">
     <div class="spinner">
@@ -72,7 +61,7 @@
 
   <div class="extraSpace"></div>
   <div id="mobility-div" style="display: none">
-    <h2>Mobility data coming soon...</h2>
+    <h2>Mobility integration coming soon...</h2>
   </div>
 
   <div id="address-div" style="display: none">
@@ -81,17 +70,17 @@
       <label>
         Home Address:
       </label>
-      <input type="text" id="homeAddress" value="308 University Ave, Ithaca, NY, 14850">
+      <input type="text" id="homeAddress">
 
       <label>
         Work Address:
       </label>
-      <input type="text" id="workAddress" value="Bill and Melinda Gates Hall, Ithaca, NY 14853">
+      <input type="text" id="workAddress">
 
       <label>
         Third Strand Address:
       </label>
-      <input type="text" id="hobbyAddress" value="415 College Ave, Ithaca, NY 14850">
+      <input type="text" id="hobbyAddress">
 
       <label>
         No of Days:
