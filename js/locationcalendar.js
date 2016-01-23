@@ -95,7 +95,7 @@ var
         utility.modifyDiv('mobility-div', 'show');
         ui.processMobilityLocation();
       } else if (locSource === 'download') {
-       window.location.href = 'http://localhost:63342/js-viz/download.html'
+        window.location.href = 'http://localhost:63342/js-viz/download.html'
       }
     },
 
@@ -337,8 +337,8 @@ var
             });
 
             var text =
-                "Data for (" + noOfDays + "days):\n" +
-                new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
+              "Data for (" + noOfDays + "days):\n" +
+              new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
             $('#date-output').text(text);
 
             /*
@@ -404,8 +404,10 @@ var
                 calendarList = [];
 
               request = gapi.client.calendar.calendarList.list();
-              request.execute(function(resp) {
-                if (resp === undefined) { callback(-1); }
+              request.execute(function (resp) {
+                if (resp === undefined) {
+                  callback(-1);
+                }
                 else {
                   calendarList = resp.items;
                   utility.assert(resp.items !== undefined, "calendarList test.");
@@ -420,7 +422,9 @@ var
                     }
                   }
 
-                  if (index >= calendarList.length) { callback(-1); }
+                  if (index >= calendarList.length) {
+                    callback(-1);
+                  }
                 }
               });
             }
@@ -429,11 +433,17 @@ var
             checkCalendarExists(createdCalendarSummary, function (status) {
               if (status === -1) {
                 createCalendar(createdCalendarSummary, function (resp) {
-                  if (resp === -1) { console.log("calendar error") }
-                  else { resetThenInsertNewEvents(localStorage.createdCalendarId, data); }
+                  if (resp === -1) {
+                    console.log("calendar error")
+                  }
+                  else {
+                    resetThenInsertNewEvents(localStorage.createdCalendarId, data);
+                  }
                 });
               }
-              else if (status === 200) { resetThenInsertNewEvents(localStorage.createdCalendarId, data); }
+              else if (status === 200) {
+                resetThenInsertNewEvents(localStorage.createdCalendarId, data);
+              }
             });
 
             function createCalendar(calendarSummary, callback) {
@@ -457,7 +467,7 @@ var
 
               var deleteAllEvents = function (calendarId) {
 
-                return new Promise(function(resolve) {
+                return new Promise(function (resolve) {
                   var request = gapi.client.calendar.events.list({
                     'calendarId': calendarId,
                     'showDeleted': false,
@@ -465,7 +475,7 @@ var
                     'orderBy': 'startTime'
                   });
 
-                  request.execute(function(resp) {
+                  request.execute(function (resp) {
 
                     var
                       events,
@@ -664,15 +674,14 @@ var
                 dateStr = extractDate(dateStr);
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
 
-                //setTimeout(openUrl, 5000);
-                //function openUrl(){
-                //  var url =
-                //    "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
-                //  window.location.href = url;
-                //}
+                setTimeout(function () {
+                  var url =
+                    "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
+                  window.location.href = url;
+                }, 5000);
+
               });
             }
-
 
           }
           doCalendarOperations(geocodedAddresses, uploadedData, ui.daysCount);
