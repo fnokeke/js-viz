@@ -337,7 +337,7 @@ var
             });
 
             var text =
-              "Data for (" + noOfDays + "days):\n" +
+              "Data for (" + noOfDays + " days):\n" +
               new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
             $('#date-output').text(text);
 
@@ -670,14 +670,15 @@ var
                 console.log("Total events inserted:", insertCounter);
 
                 // calendar operations all done so open main calendar view for inserted events
-                var dateStr = new Date(lastDayTimestamp);
+                var dateStr = new Date(nDaysAgoTimestamp);
                 dateStr = extractDate(dateStr);
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
 
                 setTimeout(function () {
-                  var url =
-                    "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
-                  window.location.href = url;
+                  var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
+                  window.open(url, '_blank');
+                  utility.modifyDiv('working-div', 'hide');
+                  utility.modifyDiv('complete-div', 'show');
                 }, 5000);
 
               });
