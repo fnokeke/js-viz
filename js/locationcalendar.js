@@ -87,16 +87,20 @@ var
 
       if (locSource === 'yes') {
         utility.modifyDiv('upload-div', 'show');
+        utility.modifyDiv('note-div', 'show');
         ui.getUploadedData(function (data) {
           ui.processGoogleLocation(data);
         });
-      } else {
+      } else if (locSource === 'no') {
         utility.modifyDiv('mobility-div', 'show');
         ui.processMobilityLocation();
+      } else if (locSource === 'download') {
+       window.location.href = 'http://localhost:63342/js-viz/download.html'
       }
     },
 
     processMobilityLocation: function () {
+      return;
 
       var
         endDate = '2015-12-20',
@@ -194,12 +198,11 @@ var
       daysCount = $('#daysCount').val();
 
       if (home === '' || work === '' || hobby === '' || daysCount === '') {
-        $('#addressStatus').text('Please complete all fields.');
-        $('#addressStatus').css('color', 'red');
+        $('#sourceStatus').text('Please complete all fields.');
+        $('#sourceStatus').css('color', 'red');
+        return;
       } else {
-
         $('#sourceStatus').text('');
-
         ui.allMappedAddresses = {
           "home": home,
           "work": work,
@@ -217,6 +220,7 @@ var
 
       utility.modifyDiv('address-div', 'hide');
       utility.modifyDiv('upload-div', 'hide');
+      utility.modifyDiv('note-div', 'hide');
       utility.modifyDiv('uploadingData-div', 'hide');
       utility.modifyDiv('calendar-div', 'show');
 
@@ -271,7 +275,6 @@ var
 
       getLatLng(ui.allMappedAddresses, function (geocodedAddresses) {
           console.log("Geocoded addresses:", geocodedAddresses);
-
 
           var doCalendarOperations = function (addresses, uploadedData, noOfDays) {
 
@@ -328,9 +331,11 @@ var
               return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
             });
 
-            console.log(
-              "Extract data for (", noOfDays, "days):\n",
-              new Date(nDaysAgoTimestamp), "-", new Date(lastDayTimestamp));
+            var text =
+                "Data for (" + noOfDays + "days):\n" +
+                new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
+            $('#date-output').text(text);
+            alert(text);
 
             /*
              * ignore locations with accuracy over 1000m
@@ -657,7 +662,7 @@ var
 
                 var url =
                   "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
-                //window.location.href = url;
+                window.location.href = url;
               });
             }
 
@@ -680,7 +685,7 @@ var
 
         // use today as end date if custom end date is not provided
         var
-          endDate = '2015-12-20',
+          endDate = '',
           todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
           dsuDates = [];
 
@@ -747,5 +752,3 @@ var
 // TODO: clear calendar then reload event
 //TODO: set calendar timezone
 //TODO: remove locations where user was moving or not stationary
-
-
