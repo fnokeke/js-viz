@@ -674,7 +674,7 @@ var
                 dateStr = extractDate(dateStr);
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
 
-                setTimeout(function () {
+                setTimeout(function() {
                   var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
                   window.open(url, '_blank');
                   utility.modifyDiv('working-div', 'hide');
