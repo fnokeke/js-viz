@@ -203,13 +203,18 @@ var
         return;
       } else {
         $('#sourceStatus').text('');
+
         ui.allMappedAddresses = {
           "home": home,
           "work": work,
           "hobby": hobby
         };
-
         ui.daysCount = daysCount;
+
+        localStorage.home = home;
+        localStorage.work = work;
+        localStorage.hobby = hobby;
+        localStorage.daysCount = daysCount;
       }
 
       utility.modifyDiv('address-div', 'hide');
@@ -335,7 +340,6 @@ var
                 "Data for (" + noOfDays + "days):\n" +
                 new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
             $('#date-output').text(text);
-            alert(text);
 
             /*
              * ignore locations with accuracy over 1000m
@@ -660,9 +664,12 @@ var
                 dateStr = extractDate(dateStr);
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
 
-                var url =
-                  "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
-                window.location.href = url;
+                //setTimeout(openUrl, 5000);
+                //function openUrl(){
+                //  var url =
+                //    "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=agenda";
+                //  window.location.href = url;
+                //}
               });
             }
 

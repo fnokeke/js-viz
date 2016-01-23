@@ -95,6 +95,7 @@
 
 </div>
 
+
 <link rel="stylesheet" href="css/index.css">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.17.0/URI.min.js"></script>
@@ -110,6 +111,18 @@
 
 <script src="https://apis.google.com/js/client.js">
   window.onload = gCal.run
+</script>
+
+<script>
+  // auto populate fields with last entries
+  if (localStorage.home)
+    $("#homeAddress").val(localStorage.home);
+  if (localStorage.work)
+    $("#workAddress").val(localStorage.work);
+  if (localStorage.hobby)
+    $("#hobbyAddress").val(localStorage.hobby);
+  if (localStorage.daysCount)
+    $("#daysCount").val(localStorage.daysCount);
 </script>
 
 </body>
