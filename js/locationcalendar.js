@@ -71,6 +71,9 @@ var
   ui = {
 
     // ui values are set using user input
+    host: window.location.hostname === 'localhost' ?
+      'http://localhost:63342/js-viz/' :
+      'https://eaf.smalldata.io/partner/slm/',
     allMappedAddresses: {},
     daysCount: 0,
 
@@ -95,7 +98,7 @@ var
         utility.modifyDiv('mobility-div', 'show');
         ui.processMobilityLocation();
       } else if (locSource === 'download') {
-        window.location.href = 'http://localhost:63342/js-viz/download.html'
+        window.location.href = ui.host + 'download.html';
       }
     },
 
@@ -674,7 +677,7 @@ var
                 dateStr = extractDate(dateStr);
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
 
-                setTimeout(function() {
+                setTimeout(function () {
                   var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
                   window.open(url, '_blank');
                   utility.modifyDiv('working-div', 'hide');
