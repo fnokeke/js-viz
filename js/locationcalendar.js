@@ -346,7 +346,7 @@ var
             });
 
             var text =
-              "Data for (" + noOfDays + " days):\n" +
+              "\n\nData for (" + noOfDays + " days):\n" +
               new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
             $('#date-output').text(text);
 
