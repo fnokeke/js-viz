@@ -680,7 +680,7 @@ var
                   window.open(url, '_blank');
                   utility.modifyDiv('working-div', 'hide');
                   utility.modifyDiv('complete-div', 'show');
-                }, 5000);
+                }, 2000);
 
               });
             }
