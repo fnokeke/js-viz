@@ -241,50 +241,42 @@ var
       // convert full addresses to lat,lon
       var getLatLng = function (allMappedAddresses, callback) {
 
-        var coords,
+        var
+          addressLength,
           counter,
-          addresses,
-          getKey;
+          coords,
+          geocoder,
+          lat,
+          lng;
 
         coords = {};
         counter = 0;
-        addresses = _.values(allMappedAddresses);
+        addressLength = _.size(allMappedAddresses);
+        geocoder = new google.maps.Geocoder();
 
-        getKey = function (obj, value) {
-          for (var key in obj) {
-            if (obj[key] === value)
-              return key;
-          }
-          return "error getting key";
-        }
+        for (var label in allMappedAddresses) {
 
-        addresses.forEach(function (address) {
-          counter++;
+          (function (label, address) {
+            geocoder.geocode({'address': address}, function (results, status) {
 
-          var geocoder,
-            lat,
-            lng,
-            label;
+              if (status == google.maps.GeocoderStatus.OK) {
+                lat = results[0].geometry.location.lat();
+                lng = results[0].geometry.location.lng();
+                coords[label] = [lat, lng];
+              } else {
+                console.log("error geocoding:", address);
+                callback(status);
+              }
 
-          geocoder = new google.maps.Geocoder();
-          geocoder.geocode({'address': address}, function (results, status) {
-
-            if (status == google.maps.GeocoderStatus.OK) {
-              lat = results[0].geometry.location.lat();
-              lng = results[0].geometry.location.lng();
-              label = getKey(allMappedAddresses, address);
-              coords[label] = [lat, lng];
-
-              // all addresses have been processed
-              if (_.size(coords) === addresses.length) {
+              counter++;
+              if (counter === addressLength) {
                 callback(coords);
               }
-            }
-            else {
-              callback(status);
-            }
-          });
-        });
+            });
+
+          }(label, allMappedAddresses[label]));
+        }
+
       }
 
       getLatLng(ui.allMappedAddresses, function (geocodedAddresses) {
@@ -780,5 +772,9 @@ var
 //TODO: remove locations where user was moving or not stationary
 
 
-
 //TODO: let users know that they have to be patient because the archive download could actually be slow
+//TODO: handle Geocoded addresses: ZERO_RESULTS
+//TODO: change naming of 3rd strand to something more understandable
+//TODO: fix bug for having same addresses in google location api
+//TODO: people don't know what to view or expect when the calendar finally pops up
+//TODO: guys may have to enable popup or just get rid of that and directly link to the calendar page
