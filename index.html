@@ -47,6 +47,12 @@
 
   <div id="calendar-div" style="display: none">
     <h2>Preparing calendar view...</h2>
+    <p>Calendar opens with agenda view but you can change this to week, day or month.</p>
+    <p>Calendar events will typically show one or all of these: 'Time spent at HOME', 'Time spent at WORK', 'Time spent
+      at HOBBY'.</p>
+    <p>Location events in calendar will only be for the window of dates shown below so you can always scroll through
+      valid dates.</p>
+    <i>NB: you may have to enable pop-ups for calendar view to show.</i>
     <scan id="date-output"></scan>
   </div>
 
@@ -113,8 +119,9 @@
 <script src="js/dsu.js"></script>
 <script src="js/locationcalendar.js"></script>
 
-<script src="https://apis.google.com/js/client.js">
-  window.onload = gCal.run
+<!--window.onload = gCal.run-->
+
+<script src="https://apis.google.com/js/client.js?onload=startGCal">
 </script>
 
 <script>

@@ -2,6 +2,11 @@
  * Created by fnokeke on 1/9/16.
  */
 
+// minor tweak to make sure google calendar client actually runs
+function startGCal() {
+  gCal.run()
+}
+
 var
 
   gCal = {
@@ -10,6 +15,7 @@ var
     SCOPES: ["https://www.googleapis.com/auth/calendar"],
 
     run: function () {
+      console.log("google calendar client loaded.");
       gCal.checkAuth();
     },
 
@@ -772,3 +778,7 @@ var
 // TODO: clear calendar then reload event
 //TODO: set calendar timezone
 //TODO: remove locations where user was moving or not stationary
+
+
+
+//TODO: let users know that they have to be patient because the archive download could actually be slow
