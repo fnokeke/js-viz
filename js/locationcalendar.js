@@ -286,17 +286,12 @@ var
 
             var
               data,
-              city,
-              cityLatMargin,
-              cityLonMargin,
               dateOfLastDay,
               lastDayTimestamp,
               nDaysAgoTimestamp,
               HOME,
               HOBBY,
               WORK,
-              latMargin,
-              lngMargin,
               createdCalendarSummary,
               extractDate;
 
@@ -353,43 +348,26 @@ var
             HOBBY = addresses.hobby;
             WORK = addresses.work;
 
-            // center of city is half-way between home and work
-            city = [
-              0.5 * (HOME[0] + WORK[0]),
-              0.5 * (HOME[1] + WORK[1]),
-            ];
+            var distance = function(lat1, lon1, lat2, lon2) {
+              var p = 0.017453292519943295;    // Math.PI / 180
+              var c = Math.cos;
+              var a = 0.5 - c((lat2 - lat1) * p)/2 +
+                c(lat1 * p) * c(lat2 * p) *
+                (1 - c((lon2 - lon1) * p))/2;
 
-            cityLatMargin = 1.0;
-            cityLonMargin = 1.0;
+              return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+            }
 
-            /*
-             * ignore all locations outside city
-             */
-            //data = data.filter(function (row) {
-            //  return Math.abs(row.latitudeE7 - city[0]) <= cityLatMargin &&
-            //    Math.abs(row.longitudeE7 - city[1]) <= cityLonMargin
-            //});
-
-            // determine if location falls into specific place label such as home, work, etc
-            latMargin = 0.00052;
-            lngMargin = 0.0052;
-
-            //latMargin = 0.001;
-            //lngMargin = 0.002;
-
+            var marginError = 100;
             data.forEach(function (row) {
-              if (Math.abs(row.latitudeE7 - HOME[0]) < latMargin &&
-                Math.abs(row.longitudeE7 - HOME[1]) < lngMargin) {
+              if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError)
                 row.locationLabel = 'home';
-              } else if (Math.abs(row.latitudeE7 - WORK[0]) < latMargin &&
-                Math.abs(row.longitudeE7 - WORK[1]) < lngMargin) {
+              else if (distance(WORK[0], WORK[1], row.latitudeE7, row.longitudeE7) <= marginError)
                 row.locationLabel = 'work';
-              } else if (Math.abs(row.latitudeE7 - HOBBY[0]) < latMargin &&
-                Math.abs(row.longitudeE7 - HOBBY[1]) < lngMargin) {
+              else if (distance(HOBBY[0], HOBBY[1], row.latitudeE7, row.longitudeE7) <= marginError)
                 row.locationLabel = 'hobby';
-              } else {
+              else
                 row.locationLabel = 'other';
-              }
             });
 
 
