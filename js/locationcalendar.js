@@ -15,7 +15,6 @@ var
     SCOPES: ["https://www.googleapis.com/auth/calendar"],
 
     run: function () {
-      console.log("google calendar client loaded.");
       gCal.checkAuth();
     },
 
@@ -240,6 +239,7 @@ var
 
       // convert full addresses to lat,lon
       var getLatLng = function (allMappedAddresses, callback) {
+        console.log("ui addresses:", allMappedAddresses);
 
         var
           addressLength,
@@ -365,14 +365,17 @@ var
             /*
              * ignore all locations outside city
              */
-            data = data.filter(function (row) {
-              return Math.abs(row.latitudeE7 - city[0]) <= cityLatMargin &&
-                Math.abs(row.longitudeE7 - city[1]) <= cityLonMargin
-            });
+            //data = data.filter(function (row) {
+            //  return Math.abs(row.latitudeE7 - city[0]) <= cityLatMargin &&
+            //    Math.abs(row.longitudeE7 - city[1]) <= cityLonMargin
+            //});
 
             // determine if location falls into specific place label such as home, work, etc
             latMargin = 0.00052;
             lngMargin = 0.0052;
+
+            //latMargin = 0.001;
+            //lngMargin = 0.002;
 
             data.forEach(function (row) {
               if (Math.abs(row.latitudeE7 - HOME[0]) < latMargin &&
@@ -384,8 +387,7 @@ var
               } else if (Math.abs(row.latitudeE7 - HOBBY[0]) < latMargin &&
                 Math.abs(row.longitudeE7 - HOBBY[1]) < lngMargin) {
                 row.locationLabel = 'hobby';
-              }
-              else {
+              } else {
                 row.locationLabel = 'other';
               }
             });
@@ -529,45 +531,51 @@ var
                 console.log(response);
                 groupedByDayData = _.groupBy(givenData, 'date');
 
-                // get the full reverse address of where each event occurred using their lat,lng
-                // then insert the event with retrieved address
                 insertEventWithFullAddress = function (ev) {
-                  //var urlRequest = "//api.geonames.org/findNearestAddressJSON?lat=" +
-                  //  ev.location.lat + "&lng=" + ev.location.lng + "&username=fnokeke";
+                  if (ev.summary.indexOf('HOME') === -1 && ev.summary.indexOf('WORK') === -1 &&
+                    ev.summary.indexOf('HOBBY') === -1) {
 
-                  /*if (ev.location === 'home' || ev.location === 'work' || ev.location === 'hobby') {
-                   }
-                   else {
-                   $.getJSON(urlRequest, function (result) {
-                   var
-                   address,
-                   reversedAddress,
-                   insertRequest;
-
-                   if (result.address !== undefined) {
-                   result = result.address;
-                   address = [
-                   result.streetNumber + " " + result.street,
-                   result.placename,
-                   result.adminCode1,
-                   result.postalcode
-                   ];
-                   reversedAddress = address.join(", ");
-                   ev.location = reversedAddress;
-                   } else if (result.status.message === "invalid username") {
-                   console.log("invalid username");
-                   } else {
-                   console.log("uknown error:", result);
-                   }
-
-                   });
-                   } */
+                    ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
+                  }
 
                   var insertRequest = gapi.client.calendar.events.insert({
                     'calendarId': localStorage.createdCalendarId,
                     'resource': ev
                   });
                   insertRequest.execute();
+
+                  // get the full reverse address of where each event occurred using their lat,lng
+                  // then insert the event with retrieved address
+
+                  //var urlRequest = "//api.geonames.org/findNearestAddressJSON?lat=" +
+                  //  ev.location.lat + "&lng=" + ev.location.lng + "&username=fnokeke";
+
+                  //$.getJSON(urlRequest, function (result) {
+                  //  var
+                  //    address,
+                  //    reversedAddress;
+                  //
+                  //  if (result.address !== undefined) {
+                  //    result = result.address;
+                  //    address = [
+                  //      result.streetNumber + " " + result.street,
+                  //      result.placename,
+                  //      result.adminCode1,
+                  //      result.postalcode
+                  //    ];
+                  //
+                  //    reversedAddress = address.join(", ");
+                  //    ev.location = reversedAddress;
+                  //    console.log("Address set as:", reversedAddress);
+                  //    makeInsertRequest(ev);
+                  //
+                  //  } else if (result.status.message === "invalid username") {
+                  //    console.log("invalid username");
+                  //  } else {
+                  //    console.log("unknown error:", result);
+                  //  }
+                  //});
+
                 }
 
                 getAllDwellTime = function (dayData) {
@@ -611,9 +619,6 @@ var
                       }
                       timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
                       latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-
-                      if (firstItem.locationLabel === 'other')
-                        continue;
 
                       locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
                         " (~ " + timeDiff + " hours)";
@@ -677,7 +682,7 @@ var
 
                 setTimeout(function () {
                   var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
-                  window.open(url, '_blank');
+                  //window.open(url, '_blank');
                   utility.modifyDiv('working-div', 'hide');
                   utility.modifyDiv('complete-div', 'show');
                 }, 2000);
@@ -774,7 +779,5 @@ var
 
 //TODO: let users know that they have to be patient because the archive download could actually be slow
 //TODO: handle Geocoded addresses: ZERO_RESULTS
-//TODO: change naming of 3rd strand to something more understandable
-//TODO: fix bug for having same addresses in google location api
 //TODO: people don't know what to view or expect when the calendar finally pops up
 //TODO: guys may have to enable popup or just get rid of that and directly link to the calendar page
