@@ -10,9 +10,10 @@
   </p>
 </div>
 
+
+
 <div id="welcome-div" style="display: block" class="centerDiv">
   <h2>Welcome to <br>Student LifeMaps</h2>
-
 
   <div id="authorize-div" style="display: block">
     <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
@@ -29,15 +30,15 @@
     <h2>Is your location data downloaded from <br>
       Google Takeout Services?</h2>
     <input name="source" type="radio" value="yes" class="addMargin">Yes
-    <input name="source" type="radio" value="no" class="addMargin">No
-    <input name="source" type="radio" value="download" class="addMargin">Download data<br>
+    <input name="source" type="radio" value="no" class="addMargin">No<br>
+    <!--<input name="source" type="radio" value="download" class="addMargin">Download data<br>-->
     <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.processSourceResponse()"><br>
   </div>
 
+  <scan id="fileStatus"></scan>
   <div id="upload-div" style="display: none">
     <h2>Upload LocationHistory.json file</h2>
     <input name="file" type="file" id="file" class="btn"><br>
-    <scan id="fileStatus"></scan>
 
   </div>
 
@@ -47,12 +48,6 @@
 
   <div id="calendar-div" style="display: none">
     <h2>Preparing calendar view...</h2>
-    <!--<p>Calendar opens with agenda view but you can change this to week, day or month.</p>-->
-    <!--<p>Calendar events will typically show one or all of these: 'Time spent at HOME', 'Time spent at WORK', 'Time spent-->
-      <!--at HOBBY'.</p>-->
-    <!--<p>Location events in calendar will only be for the window of dates shown below so you can always scroll through-->
-      <!--valid dates.</p>-->
-    <!--<i>NB: you may have to enable pop-ups for calendar view to show.</i>-->
     <p id="date-output"></p>
   </div>
 
