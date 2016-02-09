@@ -77,6 +77,10 @@ br
     margin-top: 100px;
 }
 
+.btn-small {
+    color: green;
+}
+
 .btn {
     -moz-border-radius: 15px;
     border-radius: 15px;

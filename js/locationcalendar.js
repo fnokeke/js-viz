@@ -81,6 +81,31 @@ var
       'https://eaf.smalldata.io/partner/slm/',
     allMappedAddresses: {},
     daysCount: 0,
+    workCounter: 1,
+    hobbyCounter: 1,
+
+    createTextfield: function(label) {
+      if (label === 'work') {
+        $('<input/>').attr(
+          {
+            type:'text',
+            id:'text'+ ui.workCounter,
+            value: 'workAddress' + ui.workCounter
+          }
+        ).appendTo('#addressForm');
+        ui.workCounter++;
+      }
+      else if (label === 'hobby') {
+        $('<input/>').attr(
+          {
+            type:'text',
+            id:'text'+ ui.hobbyCounter,
+            value: 'hobbyAddress' + ui.hobbyCounter
+          }
+        ).appendTo('#addressForm');
+        ui.hobbyCounter++;
+      }
+    },
 
     // find out if user's location data is from mobility or Google Takeout
     processSourceResponse: function () {
