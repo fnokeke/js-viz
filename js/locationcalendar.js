@@ -79,32 +79,48 @@ var
     host: window.location.hostname === 'localhost' ?
       'http://localhost:63342/js-viz/' :
       'https://eaf.smalldata.io/partner/slm/',
+
     allMappedAddresses: {},
     daysCount: 0,
     workCounter: 1,
     hobbyCounter: 1,
 
-    createTextfield: function(label) {
-      if (label === 'work') {
-        $('<input/>').attr(
-          {
-            type:'text',
-            id:'text'+ ui.workCounter,
-            value: 'workAddress' + ui.workCounter
-          }
-        ).appendTo('#addressForm');
-        ui.workCounter++;
-      }
-      else if (label === 'hobby') {
-        $('<input/>').attr(
-          {
-            type:'text',
-            id:'text'+ ui.hobbyCounter,
-            value: 'hobbyAddress' + ui.hobbyCounter
-          }
-        ).appendTo('#addressForm');
-        ui.hobbyCounter++;
-      }
+    addTextWithRemoveButton: function(inputName, inputValue) {
+
+      var removeButtonName = 'remove' + inputName;
+      inputValue = inputValue || '';
+
+      $('<input/>').attr(
+        {
+          type: 'text',
+          name: inputName,
+          id: inputName,
+          value: inputValue
+        }
+      ).appendTo('#addressForm');
+
+      $('<input/>').attr(
+        {
+          type: 'button',
+          name: removeButtonName,
+          id: removeButtonName,
+          value: removeButtonName,
+          class: 'btn',
+        }
+      ).appendTo('#addressForm');
+
+      $('#' + removeButtonName).click(function() {
+        $('#' + inputName).remove();
+        $('#' + removeButtonName).remove();
+        delete localStorage[inputName];
+      });
+
+    },
+
+    createTextfield: function (label) {
+      var counter = label === 'work' ? ui.workCounter++ : ui.hobbyCounter++;
+      var inputName = label + 'Address' + counter;
+      ui.addTextWithRemoveButton(inputName);
     },
 
     // find out if user's location data is from mobility or Google Takeout
@@ -125,9 +141,6 @@ var
           ui.processGoogleLocation(data);
         });
       } else if (locSource === 'no') {
-        utility.modifyDiv('mobility-div', 'show');
-        ui.processMobilityLocation();
-      } else if (locSource === 'download') {
         window.location.href = ui.host + 'download.html';
       }
     },
@@ -290,38 +303,90 @@ var
     useInputProvided: function () {
 
       var
+        obj,
         home,
         work,
         hobby,
+        hasValidHome,
+        hasValidWork,
+        hasValidHobby,
         daysCount;
 
-      home = $('#homeAddress').val();
-      work = $('#workAddress').val();
-      hobby = $('#hobbyAddress').val();
-      daysCount = $('#daysCount').val();
 
-      if (home === '' || work === '' || hobby === '' || daysCount === '') {
+      home = [], work = [], hobby = [];
+      var formResults = $("#addressForm").serializeArray();
+
+      for (var i = 0; i < formResults.length; i++) {
+        obj = formResults[i];
+        if (obj.name.indexOf('homeAddress') !== -1)
+          home.push(obj.value);
+        else if (obj.name.indexOf('workAddress') !== -1)
+          work.push(obj.value);
+        else if (obj.name.indexOf('hobbyAddress') !== -1)
+          hobby.push(obj.value);
+        else if (obj.name === 'daysCount')
+          daysCount = obj.value;
+      }
+
+      hasValidHome = false, hasValidWork = false, hasValidHobby = false;
+
+      for (var i = 0; i < home.length; i++) {
+        if (home[i] !== '') {
+          hasValidHome = true;
+          break;
+        }
+      }
+
+      for (var i = 0; i < work.length; i++) {
+        if (work[i] !== '') {
+          hasValidWork = true;
+          break;
+        }
+      }
+
+      for (var i = 0; i < hobby.length; i++) {
+        if (hobby[i] !== '') {
+          hasValidHobby = true;
+          break;
+        }
+      }
+
+      if (!(hasValidHome && hasValidWork && hasValidHobby && daysCount !== '')) {
         $('#sourceStatus').text('Please complete all fields.');
         $('#sourceStatus').css('color', 'red');
         return;
       } else {
-        $('#sourceStatus').text('');
+        $('#sourceStatus').text('All entries completed!');
+        $('#sourceStatus').css('color', 'green');
+
+        var
+          createdCalendarId = localStorage.createdCalendarId,
+          createdCalendarSummary = localStorage.createdCalendarSummary,
+          token = localStorage.token;
+
+        localStorage.clear();
+        localStorage.createdCalendarId = createdCalendarId;
+        localStorage.createdCalendarSummary = createdCalendarSummary;
+        localStorage.token = token;
+
+        for (var i = 0; i < formResults.length; i++) {
+          obj = formResults[i];
+          if (obj.value !== '')
+            localStorage[obj.name] = obj.value;
+        }
+        return;
 
         ui.allMappedAddresses = {
           "home": home,
           "work": work,
           "hobby": hobby
         };
-        ui.daysCount = daysCount;
 
-        localStorage.home = home;
-        localStorage.work = work;
-        localStorage.hobby = hobby;
-        localStorage.daysCount = daysCount;
+        ui.daysCount = daysCount;
       }
 
-      utility.modifyDiv('address-div', 'hide');
-      utility.modifyDiv('source-div', 'show');
+      //utility.modifyDiv('address-div', 'hide');
+      //utility.modifyDiv('source-div', 'show');
     },
 
     processGoogleLocation: function (uploadedData) {
