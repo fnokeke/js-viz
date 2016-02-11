@@ -65,10 +65,9 @@ var
      */
     loadCalendarApi: function () {
       gapi.client.load('calendar', 'v3', function () {
-        $('#sourceStatus').text('Calendar authorization successful!');
-        $('#sourceStatus').css('color', 'green');
-        utility.modifyDiv("welcome-div", 'hide');
-        utility.modifyDiv('address-div', 'show');
+        $('#status').text('Calendar authorization successful!');
+        $('#status').css('color', 'green');
+        window.location.href = ui.host + '#address';
       });
     }
   },
@@ -126,22 +125,13 @@ var
     // find out if user's location data is from mobility or Google Takeout
     processSourceResponse: function () {
       var locSource = $('input:radio[name=source]:checked').val();
-      if (locSource === undefined) {
-        $('#sourceStatus').text('You need to select an option.');
-        $('#sourceStatus').css('color', 'red');
-        return;
-      }
-      utility.modifyDiv('source-div', 'hide');
-      utility.modifyDiv('address-div', 'hide');
-
       if (locSource === 'yes') {
-        utility.modifyDiv('upload-div', 'show');
-        utility.modifyDiv('note-div', 'show');
-        ui.getUploadedData(function (data) {
+        window.location.href = ui.host + '#upload';
+        ui.getUploadedData(function(data) {
           ui.processGoogleLocation(data);
         });
       } else if (locSource === 'no') {
-        window.location.href = ui.host + 'download.html';
+        window.location.href = ui.host + '#download';
       }
     },
 
@@ -174,10 +164,11 @@ var
       });
     },
 
-    getUploadedData: function (callback) {
+    getUploadedData: function(callback) {
 
       $('#file').change(function () {
         if (!this.files[0]) return;
+
         utility.modifyDiv('uploadingData-div', 'show');
         utility.modifyDiv('working-div', 'show');
 
@@ -186,9 +177,9 @@ var
         var reader = new FileReader();
 
         function status(message, color) {
-          $('#fileStatus').text(message);
+          $('#uploadStatus').text(message);
           if (color)
-            $('#fileStatus').css('color', color);
+            $('#uploadStatus').css('color', color);
         }
 
         function getLocationDataFromJson(data) {
@@ -214,7 +205,7 @@ var
             callback(data);
           } catch (ex) {
             utility.modifyDiv('working-div', 'hide');
-            status('(error: ' + ex.message + ')', 'red');
+            status('(Make sure you upload location history file that ends in ".json" Error: ' + ex.message + ')', 'red');
             callback(-1);
             return;
           }
@@ -222,6 +213,8 @@ var
 
         reader.onloadend = function (e) {
           console.log("onloadend: ", _.size(e.target.result));
+          utility.modifyDiv('uploadingData-div', 'hide');
+          utility.modifyDiv('calendar-div', 'show');
         }
 
         reader.onerror = function () {
@@ -352,12 +345,13 @@ var
       }
 
       if (!(hasValidHome && hasValidWork && hasValidHobby && daysCount !== '')) {
-        $('#sourceStatus').text('Please complete all fields.');
-        $('#sourceStatus').css('color', 'red');
+        window.location.href = ui.host + '#address';
+        $('#addressStatus').text('Please complete all fields.');
+        $('#addressStatus').css('color', 'red');
         return;
       } else {
-        $('#sourceStatus').text('All entries completed!');
-        $('#sourceStatus').css('color', 'green');
+        $('#addressStatus').text('Fields successfully completed!');
+        $('#addressStatus').css('color', 'green');
 
         var
           createdCalendarId = localStorage.createdCalendarId,
@@ -374,28 +368,22 @@ var
           if (obj.value !== '')
             localStorage[obj.name] = obj.value;
         }
-        return;
-
-        ui.allMappedAddresses = {
-          "home": home,
-          "work": work,
-          "hobby": hobby
-        };
 
         ui.daysCount = daysCount;
+        ui.allMappedAddresses = {
+          "home": home[0],
+          "work": work[0],
+          "hobby": hobby[0]
+        };
+
+        window.location.href = ui.host + '#source';
       }
 
-      //utility.modifyDiv('address-div', 'hide');
-      //utility.modifyDiv('source-div', 'show');
     },
 
     processGoogleLocation: function (uploadedData) {
 
-      utility.modifyDiv('address-div', 'hide');
-      utility.modifyDiv('upload-div', 'hide');
-      utility.modifyDiv('note-div', 'hide');
-      utility.modifyDiv('uploadingData-div', 'hide');
-      utility.modifyDiv('calendar-div', 'show');
+      //window.location.href = ui.host + '#calendarView';
 
       // convert full addresses to lat,lon
       var getLatLng = function (allMappedAddresses, callback) {
@@ -813,6 +801,7 @@ var
                 }
                 console.log("Total events inserted:", insertCounter);
 
+
                 // calendar operations all done so open main calendar view for inserted events
                 var dateStr = new Date(nDaysAgoTimestamp);
                 dateStr = extractDate(dateStr);
@@ -820,10 +809,14 @@ var
 
                 setTimeout(function () {
                   var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
-                  window.open(url, '_blank');
+                  //window.open(url, '_blank');
+
+                  utility.modifyDiv('calendar-div', 'hide');
                   utility.modifyDiv('working-div', 'hide');
-                  utility.modifyDiv('complete-div', 'show');
+
+                  window.location.href = ui.host + '#processingComplete';
                 }, 500);
+
 
               });
             }

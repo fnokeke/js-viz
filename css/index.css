@@ -1,7 +1,3 @@
-body {
-    text-align: center;
-}
-
 html, body {
     height: 100%;
     width: 100%;
@@ -15,6 +11,10 @@ body.working {
 
 input[type="text"] {
     height: 40px;
+    text-align: center;
+}
+
+.center-text {
     text-align: center;
 }
 
@@ -34,12 +34,12 @@ input[type="text"] {
 #welcome-div {
     font-size: 35px;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    margin-top: 150px;
+    /*margin-top: 150px;*/
     /*margin-bottom: 100px;*/
 }
 
 .addMargin {
-    margin: 10px 10px 50px;
+    margin-bottom: 750px;
 }
 
 .formLayout
