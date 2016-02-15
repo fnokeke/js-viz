@@ -69,6 +69,7 @@ var
         $('#status').css('color', 'green');
         window.location.href = ui.host + '#address';
       });
+
     }
   },
 
@@ -84,7 +85,7 @@ var
     workCounter: 1,
     hobbyCounter: 1,
 
-    addTextWithRemoveButton: function(inputName, inputValue) {
+    addTextWithRemoveButton: function (inputName, inputValue) {
 
       var removeButtonName = 'remove' + inputName;
       inputValue = inputValue || '';
@@ -108,7 +109,7 @@ var
         }
       ).appendTo('#addressForm');
 
-      $('#' + removeButtonName).click(function() {
+      $('#' + removeButtonName).click(function () {
         $('#' + inputName).remove();
         $('#' + removeButtonName).remove();
         delete localStorage[inputName];
@@ -127,7 +128,7 @@ var
       var locSource = $('input:radio[name=source]:checked').val();
       if (locSource === 'yes') {
         window.location.href = ui.host + '#upload';
-        ui.getUploadedData(function(data) {
+        ui.getUploadedData(function (data) {
           ui.processGoogleLocation(data);
         });
       } else if (locSource === 'no') {
@@ -164,7 +165,7 @@ var
       });
     },
 
-    getUploadedData: function(callback) {
+    getUploadedData: function (callback) {
 
       $('#file').change(function () {
         if (!this.files[0]) return;
@@ -363,6 +364,18 @@ var
         localStorage.createdCalendarSummary = createdCalendarSummary;
         localStorage.token = token;
 
+        // store primary calendar Id
+        var request = gapi.client.calendar.calendars.get({
+          'calendarId': 'primary'
+        });
+        request.execute(function (resp) {
+          console.log('Retrieved primary id:', resp.id);
+          console.log('Retrieved timezone:', resp.timeZone);
+          localStorage.primaryCalendarId = resp.id;
+          localStorage.timeZone = resp.timeZone;
+        });
+
+
         for (var i = 0; i < formResults.length; i++) {
           obj = formResults[i];
           if (obj.value !== '')
@@ -481,7 +494,7 @@ var
             });
 
             var text =
-              "\n\nData for (" + noOfDays + " days):\n" +
+              "Data for (" + noOfDays + " days):\n" +
               new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
             $('#date-output').text(text);
 
@@ -558,7 +571,7 @@ var
               });
             }
 
-            createdCalendarSummary = 'My Location Calendar';
+            createdCalendarSummary = 'Location';
             checkCalendarExists(createdCalendarSummary, function (status) {
               if (status === -1) {
                 createCalendar(createdCalendarSummary, function (resp) {
@@ -802,20 +815,38 @@ var
                 console.log("Total events inserted:", insertCounter);
 
 
-                // calendar operations all done so open main calendar view for inserted events
-                var dateStr = new Date(nDaysAgoTimestamp);
-                dateStr = extractDate(dateStr);
-                dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
+                //var dateStr = new Date(nDaysAgoTimestamp);
+                //dateStr = extractDate(dateStr);
+                //dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
+                //var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
+                //window.open(url, '_blank');
 
-                setTimeout(function () {
-                  var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
-                  //window.open(url, '_blank');
 
-                  utility.modifyDiv('calendar-div', 'hide');
-                  utility.modifyDiv('working-div', 'hide');
+                // embed calendar view
+                var dateText =
+                  "<i> Data for (" + noOfDays + " days): " +
+                  new Date(nDaysAgoTimestamp).toDateString()+" - " + new Date(lastDayTimestamp).toDateString() +
+                  "</i>.";
 
-                  window.location.href = ui.host + '#processingComplete';
-                }, 500);
+                var primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId);
+                var locationCalendarId = encodeURIComponent(localStorage.createdCalendarId);
+                var timeZone = encodeURIComponent(localStorage.timeZone);
+
+                var iFrameText =
+                  '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+                  'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+                  'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+                  'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+                  'ctz=' + timeZone +
+                  'style="border-width:0" width="95%" height="95%" frameborder="0" scrolling="no"> ' +
+                  '</iframe>';
+
+                $('#date-output').html(dateText + iFrameText);
+
+                utility.modifyDiv('calendar-div', 'hide');
+                utility.modifyDiv('working-div', 'hide');
+
+                window.location.href = ui.host + '#processingComplete';
 
 
               });
