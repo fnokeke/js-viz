@@ -89,6 +89,7 @@ var
 
       var removeButtonName = 'remove' + inputName;
       inputValue = inputValue || '';
+      var inputDiv = inputName.replace(/\d+/g, '') + '-div';
 
       $('<input/>').attr(
         {
@@ -97,7 +98,7 @@ var
           id: inputName,
           value: inputValue
         }
-      ).appendTo('#addressForm');
+      ).appendTo('#' + inputDiv);
 
       $('<input/>').attr(
         {
@@ -107,7 +108,7 @@ var
           value: removeButtonName,
           class: 'btn',
         }
-      ).appendTo('#addressForm');
+      ).appendTo('#' + inputDiv);
 
       $('#' + removeButtonName).click(function () {
         $('#' + inputName).remove();
