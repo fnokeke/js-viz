@@ -67,7 +67,6 @@ var
       gapi.client.load('calendar', 'v3', function () {
         $('#status').text('Calendar authorization successful!');
         $('#status').css('color', 'green');
-        window.location.href = ui.host + '#address';
       });
 
     }
@@ -494,11 +493,6 @@ var
               return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
             });
 
-            var text =
-              "Data for (" + noOfDays + " days):\n" +
-              new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString();
-            $('#date-output').text(text);
-
             /*
              * ignore locations with accuracy over 1000m
              */
@@ -825,7 +819,7 @@ var
 
                 // embed calendar view
                 var dateText =
-                  "<i> Data for (" + noOfDays + " days): " +
+                  "<i> Data inserted for (" + noOfDays + " days): " +
                   new Date(nDaysAgoTimestamp).toDateString()+" - " + new Date(lastDayTimestamp).toDateString() +
                   "</i>.";
 
@@ -844,10 +838,13 @@ var
 
                 $('#date-output').html(dateText + iFrameText);
 
+                localStorage.dateText = dateText;
+                localStorage.iFrameText = iFrameText;
+
                 utility.modifyDiv('calendar-div', 'hide');
                 utility.modifyDiv('working-div', 'hide');
 
-                window.location.href = ui.host + '#processingComplete';
+                window.location.href = ui.host + '#calendarView';
 
 
               });

@@ -171,11 +171,19 @@
 </div>
 
 <div class="addMargin">
-  <a name="processingComplete">
+  <a name="calendarView">
     <h2>My Calendars</h2>
   </a>
 
-  <p id="date-output"></p>
+  <p id="date-output">
+    <script>
+      if (localStorage.dateText && localStorage.iFrameText) {
+        var elem = document.getElementById('date-output');
+        elem.innerHTML = localStorage.dateText + localStorage.iFrameText;
+      }
+    </script>
+  </p>
+
 
 </div>
 
