@@ -8,9 +8,9 @@
 <main class="center-text">
   <div id="content">
     <div id="welcome-div" class="cd-fixed-bg cd-bg-1">
-      <a name="welcome"></a>
       <h2>Welcome to Student LifeMaps</h2>
 
+      <a name="welcome"></a>
       <h3>Begin your journey with us and help you manage your life</h3>
 
       <div id="authorizeSuccessful-div">
@@ -23,11 +23,9 @@
     </div>
 
     <div id="address-div" class="cd-scrolling-bg cd-color-1">
-      <a name="address">
-        <!--<scan id="addressStatus"></scan>-->
-        <scan id="addressStatus"></scan>
-        <h2>Please enter full address</h2>
-      </a>
+      <a name="address"></a>
+      <h2>Please enter full address</h2>
+      <scan id="addressStatus"></scan>
 
       <form id="addressForm" class="form-element">
         <div>
@@ -58,21 +56,20 @@
 
     </div>
 
-    <a name="locationHistory"></a>
-    <div id="locationHistory-div" class="cd-fixed-bg cd-bg-2" style="text-align: center">
+    <div id="locationHistory-div" class="cd-fixed-bg cd-bg-2 bright-font">
+      <a name="locationHistory"></a>
       <h2>Have you downloaded your location history data?</h2>
       <div class="radiowrapper">
         <input name="locationHistory" type="radio" value="yes" checked="checked">Yes
-        <input name="locationHistory" type="radio" value="no">No <br>
+        <input name="locationHistory" type="radio" value="no">No
       </div>
       <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.processSourceResponse()"><br>
 
     </div>
 
-    <div id="download-div" class="cd-scrolling-bg cd-color-2">
-      <a name="download">
-        <h2>Follow these instructions to download your location data.</h2>
-      </a>
+    <div id="download-div" class="">
+      <a name="download"></a>
+      <h2>Follow these instructions to download your location data.</h2>
 
       <div id="download-content">
         <ol>
@@ -136,16 +133,14 @@
     </div>
 
     <div id="upload-div" class="cd-fixed-bg cd-bg-3">
-
-      <a name="upload">
-        <div id="note-div">
-          <h2>Upload your LocationHistory.json file</h2>
-          <p class="note">
-            All data processing happens directly on your computer,
-            <br>so nobody is able to access your Location History but you.
-          </p>
-        </div>
-      </a>
+      <a name="upload"></a>
+      <div id="note-div">
+        <h2>Upload your LocationHistory.json file</h2>
+        <p class="note">
+          All data processing happens directly on your computer,
+          <br>so nobody is able to access your Location History but you.
+        </p>
+      </div>
 
       <input name="file" type="file" id="file" class="btn"><br>
 
