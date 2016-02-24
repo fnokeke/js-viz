@@ -3,16 +3,21 @@ html, body {
     width: 100%;
     font-size: 25px;
     margin: 0;
-    /*background-color: rgb(229,229,220);*/
-    /*margin: 0 auto;*/
+    text-align: center;
+    margin: 0 auto;
 }
 
 body.working {
     cursor: progress;
 }
 
+h2 {
+    font-weight: 500;
+    padding-top: 15%;
+}
+
 .btn {
-    width: 50px;
+    width: 250px;
     height: 50px;
     -moz-border-radius: 15px;
     color: #fff;
@@ -23,6 +28,8 @@ body.working {
 }
 
 .btn.btn-sign {
+    width: 50px;
+    height: 50px;
     margin-left: -50px;
 }
 
@@ -33,8 +40,8 @@ body.working {
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-position: center center;
-    border: 2px solid greenyellow;
 }
+
 
 .cd-fixed-bg.cd-bg-1 {
     background-image: url("../img/welcome.jpg");
@@ -94,44 +101,16 @@ body.working {
     text-align: center;
 }
 
-.form-element div input[type='button'] {
-    /*width: 50px;*/
-    /*margin-left: -50px;*/
-}
-
-h2 {
-    font-weight: lighter;
-    padding-top: 15%;
-}
-
 .radiowrapper {
     width: 70%;
-    height: 10%;
-    border: 2px solid #000;
-    margin: 10px auto;
-    border: 2px solid red;
-}
-
-.center-text {
-    text-align: center;
-}
-
-.centerDiv {
-    width: 100%;
-    height: 100px;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    /*margin: auto;*/
+    margin: 20px auto;
 }
 
 #welcome-div {
-
     width: 100%;
-    padding-top: 15%;
-    /*padding-bottom: 15%;*/
+    height: 100%;
+    padding-top: 5%;
+    padding-bottom: 5%;
     color: #fff;
     font-family: "Century Gothic", Helvetica, Arial, sans-serif;
     /*margin-top: 150px;*/
@@ -160,39 +139,12 @@ h2 {
 #address-div {
     width: 100%;
     padding-bottom: 10%;
-
 }
 
-/*
-#address-div h2 {
-    padding-top: 10%;
-    font-weight: lighter;
-    margin-bottom: 40px;
-    margin-top: 0px;
-
+.bright-font {
+    color: whitesmoke;
 }
 
-#addressFormx {
-    text-align: left;
-
-}
-
-#addressContinuex {
-    width: 230px;
-    font-size: 0.8em;
-    margin: 0 auto;
-    margin-top: 20px;
-}
-
-#addressStatus labelx {
-    display: block;
-    margin: 0 auto;
-    margin-bottom: 10px;
-}
-
-/*.addMargin {
-    margin-bottom: 250px;
-}*/
 #source-div {
     width: 100%;
     padding-bottom: 10%;
@@ -279,7 +231,7 @@ input[type='radio'] {
 }
 
 .btn:hover {
-    background-image: -webkit-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83);
+    background-image: -webkit-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
     background-image: -moz-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
     background-image: -ms-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
     background-image: -o-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
@@ -300,7 +252,7 @@ li {
 
 .note {
     padding: 10px;
-    text-align: center;
+    /*text-align: center;*/
     background-color: #ffeb3b;
 }
 
@@ -327,14 +279,13 @@ br {
 .spinner {
     margin: 20px auto 0;
     width: 70px;
-    text-align: center;
+    /*text-align: center;*/
 }
 
 .spinner > div {
     width: 18px;
     height: 18px;
     background-color: #333;
-
     border-radius: 100%;
     display: inline-block;
     -webkit-animation: bouncedelay 1.4s infinite ease-in-out;
@@ -374,9 +325,10 @@ br {
     }
 }
 
-/* add borderline to everything */
-/* get rid of all these*/
+background.blur {
+    width:100px;
+    height:459px;
+    -webkit-filter: blur(3px);
+    filter: blur(3px);
+}
 
-/*
-
-*/
