@@ -2,6 +2,8 @@ html, body {
     height: 100%;
     width: 100%;
     font-size: 25px;
+    margin: 0;
+    /*background-color: rgb(229,229,220);*/
     /*margin: 0 auto;*/
 }
 
@@ -9,9 +11,105 @@ body.working {
     cursor: progress;
 }
 
-input[type="text"] {
-    height: 40px;
+.btn {
+    width: 50px;
+    height: 50px;
+    -moz-border-radius: 15px;
+    color: #fff;
+    border-style: none;
+    background-color: rgb(255, 97, 83);
+    font-size: 15px;
+    padding: 5px 15px 8.5px;
+}
+
+.btn.btn-sign {
+    margin-left: -50px;
+}
+
+.cd-fixed-bg {
+    height: 100%;
+    width: 100%;
+    background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: center center;
+    border: 2px solid greenyellow;
+}
+
+.cd-fixed-bg.cd-bg-1 {
+    background-image: url("../img/welcome.jpg");
+}
+
+.cd-fixed-bg.cd-bg-2 {
+    background-image: url("../img/2.jpg");
+}
+
+.cd-fixed-bg.cd-bg-3 {
+    background-image: url("../img/3.jpg");
+}
+
+.cd-scrolling-bg {
+    position: relative;
+    min-height: 100%;
+    padding: 1em 0;
+    line-height: 1.6;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.cd-scrolling-bg.cd-color-1 {
+    background-color: rgb(229, 229, 220);
+}
+
+.cd-scrolling-bg.cd-color-2 {
+    background-color: #f9f4ed;
+}
+
+.cd-scrolling-bg.cd-color-3 {
+    background-color: #FFEEED;
+}
+
+.form-element {
+    display: table;
     text-align: center;
+}
+
+.form-element div {
+    display: table-row;
+}
+
+.form-element label {
+    display: table-cell;
+    text-align: right;
+    width: 250px;
+}
+
+.form-element div input[type='text'] {
+    display: table-cell;
+    width: 700px;
+    height: 50px;
+    margin-left: 5px;
+    margin-bottom: 5px;
+    border: 2px solid #000;
+    text-align: center;
+}
+
+.form-element div input[type='button'] {
+    /*width: 50px;*/
+    /*margin-left: -50px;*/
+}
+
+h2 {
+    font-weight: lighter;
+    padding-top: 15%;
+}
+
+.radiowrapper {
+    width: 70%;
+    height: 10%;
+    border: 2px solid #000;
+    margin: 10px auto;
+    border: 2px solid red;
 }
 
 .center-text {
@@ -21,86 +119,172 @@ input[type="text"] {
 .centerDiv {
     width: 100%;
     height: 100px;
-
     position: absolute;
-    top:0;
+    top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-
     /*margin: auto;*/
 }
 
 #welcome-div {
-    font-size: 35px;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    /*margin-top: 150px;*/
-    /*margin-bottom: 100px;*/
-}
 
-.addMargin {
-    margin-bottom: 750px;
-}
-
-.formLayout
-{
-    padding: 10px;
     width: 100%;
-    margin: 10px auto;
+    padding-top: 15%;
+    /*padding-bottom: 15%;*/
+    color: #fff;
+    font-family: "Century Gothic", Helvetica, Arial, sans-serif;
+    /*margin-top: 150px;*/
+    margin-bottom: -60px;
 }
 
-.formLayout label, .formLayout input
-{
+#welcome-div h2 {
+    font-family: "Century Gothic", Helvetica, Arial, sans-serif;
+    font-size: 2.3em;
+    font-weight: lighter;
+    margin-top: 0px;
+}
+
+#welcome-div h3 {
+    font-size: 0.8em;
+    font-weight: lighter;
+    margin-bottom: 62px;
+    color: #E2D6D3;
+}
+
+#authorize-div {
+    font-family: "Century Gothic", Helvetica, Arial, sans-serif;
+    color: #fff;
+}
+
+#address-div {
+    width: 100%;
+    padding-bottom: 10%;
+
+}
+
+/*
+#address-div h2 {
+    padding-top: 10%;
+    font-weight: lighter;
+    margin-bottom: 40px;
+    margin-top: 0px;
+
+}
+
+#addressFormx {
+    text-align: left;
+
+}
+
+#addressContinuex {
+    width: 230px;
+    font-size: 0.8em;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+#addressStatus labelx {
     display: block;
-    width: 50%;
-    float: left;
+    margin: 0 auto;
     margin-bottom: 10px;
 }
 
-.formLayout label
-{
-    text-align: right;
-    padding-right: 20px;
+/*.addMargin {
+    margin-bottom: 250px;
+}*/
+#source-div {
+    width: 100%;
+    padding-bottom: 10%;
+
 }
 
-.formLayout input
-{
-    width: 320px;
+#source-div h2 {
+    padding-top: 15%;
+    font-weight: lighter;
+    color: #ffffff;
+    margin-top: 0px;
 }
 
-br
-{
-    clear: left;
+input[type='radio'] {
+    margin-left: 30px;
 }
 
-.extraSpace {
-    margin-top: 100px;
+#nextButton {
+    width: 200px;
+    font-size: 20px;
+    margin: 0 auto;
+    /*margin-top: 30px;*/
 }
 
-.btn-small {
-    color: green;
+#download-content {
+    text-align: left;
+    font-weight: lighter;
 }
 
-.btn {
-    -moz-border-radius: 15px;
-    border-radius: 15px;
-    font-family: Courier New;
-    font-size: 15px;
-    padding: 10px 15px 10px;
-    text-decoration: none;
+#download-content a:link {
+    color: rgb(255, 97, 83);
+
+}
+
+#download-content a:visited {
+    color: rgb(255, 97, 83);
+}
+
+#download-content li {
+    margin-left: 6%;
+    margin-right: 6%;
+    padding-bottom: 20px;
+}
+
+#upload-div {
+    width: 100%;
+
+    padding-bottom: 10%;
+
+}
+
+#upload-div h2 {
+    font-weight: lighter;
+    padding-top: 15%;
+    color: #ffffff;
+    margin-top: 0px;
+
+}
+
+#upload-div p {
+    color: #E2D6D3;
+    font-size: 1em;
+}
+
+#uploadingData-div h2 {
+    padding-top: 10%;
+    font-weight: lighter;
+
+}
+
+#calendar-div h2 {
+    padding-top: 10%;
+    font-weight: lighter;
+}
+
+#file {
+    background-color: rgb(176, 176, 176);
+    width: 230px;
+    margin-top: 10px;
+}
+
+.addMargin h2 {
+    font-weight: lighter;
 }
 
 .btn:hover {
-    background-image: -webkit-linear-gradient(top, grey, grey);
-    background-image: -moz-linear-gradient(top, grey, grey);
-    background-image: -ms-linear-gradient(top, grey, grey);
-    background-image: -o-linear-gradient(top, grey, grey);
-    background-image: linear-gradient(to bottom, grey, grey);;
+    background-image: -webkit-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83);
+    background-image: -moz-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
+    background-image: -ms-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
+    background-image: -o-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
+    background-image: linear-gradient(to bottom, rgb(255, 97, 83), rgb(255, 97, 83));;
     text-decoration: none;
-}
-
-img {
-   width: 50%;
 }
 
 li {
@@ -110,88 +294,89 @@ li {
 }
 
 .map-active .container {
-	/* so that clicks go through to the map! */
-	pointer-events: none;
+    /* so that clicks go through to the map! */
+    pointer-events: none;
 }
 
 .note {
-  padding: 10px;
-  text-align: center;
-  background-color: #ffeb3b;
+    padding: 10px;
+    text-align: center;
+    background-color: #ffeb3b;
 }
 
 #working-div {
-	text-align: center;
+    text-align: center;
+}
+
+br {
+    clear: left;
+}
+
+.extraSpace {
+    margin-top: 100px;
 }
 
 #done {
-	cursor: pointer;
-}
-
-#controls {
-  z-index: 99999;
-  position: absolute;
-  overflow: hidden;
-  bottom: -200px;
-  /* We set a specific height here so that revealing only the top part of the
-  div will always reveal the *correct* top part. When we expand it later (on hover),
-  we set height back to auto, so that all the content is shown correctly. Slightly
-  hacky, yes, but it appears to be working in all browsers. A Good Thing. */
-  height: 171px;
-  left: 0px;
-  margin: 0px 10px;
-  padding: 3px 16px 5px;
-  background-color: rgba(255,255,255,0.7);
-  transition: bottom 0.5s;
+    cursor: pointer;
 }
 
 .map-active #controls {
-  bottom: -145px;
+    bottom: -145px;
 }
 
-/* http://tobiasahlin.com/spinkit/ */
-
 .spinner {
-  margin: 20px auto 0;
-  width: 70px;
-  text-align: center;
+    margin: 20px auto 0;
+    width: 70px;
+    text-align: center;
 }
 
 .spinner > div {
-  width: 18px;
-  height: 18px;
-  background-color: #333;
+    width: 18px;
+    height: 18px;
+    background-color: #333;
 
-  border-radius: 100%;
-  display: inline-block;
-  -webkit-animation: bouncedelay 1.4s infinite ease-in-out;
-  animation: bouncedelay 1.4s infinite ease-in-out;
-  /* Prevent first frame from flickering when animation starts */
-  -webkit-animation-fill-mode: both;
-  animation-fill-mode: both;
+    border-radius: 100%;
+    display: inline-block;
+    -webkit-animation: bouncedelay 1.4s infinite ease-in-out;
+    animation: bouncedelay 1.4s infinite ease-in-out;
+    /* Prevent first frame from flickering when animation starts */
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
 }
 
 .spinner .bounce1 {
-  -webkit-animation-delay: -0.32s;
-  animation-delay: -0.32s;
+    -webkit-animation-delay: -0.32s;
+    animation-delay: -0.32s;
 }
 
 .spinner .bounce2 {
-  -webkit-animation-delay: -0.16s;
-  animation-delay: -0.16s;
+    -webkit-animation-delay: -0.16s;
+    animation-delay: -0.16s;
 }
 
 @-webkit-keyframes bouncedelay {
-  0%, 80%, 100% { -webkit-transform: scale(0.0) }
-  40% { -webkit-transform: scale(1.0) }
+    0%, 80%, 100% {
+        -webkit-transform: scale(0.0)
+    }
+    40% {
+        -webkit-transform: scale(1.0)
+    }
 }
 
 @keyframes bouncedelay {
-  0%, 80%, 100% {
-    transform: scale(0.0);
-    -webkit-transform: scale(0.0);
-  } 40% {
-    transform: scale(1.0);
-    -webkit-transform: scale(1.0);
-  }
+    0%, 80%, 100% {
+        transform: scale(0.0);
+        -webkit-transform: scale(0.0);
+    }
+    40% {
+        transform: scale(1.0);
+        -webkit-transform: scale(1.0);
+    }
 }
+
+/* add borderline to everything */
+/* get rid of all these*/
+
+/*
+
+*/

@@ -4,208 +4,200 @@
   <link rel="stylesheet" href="css/index.css">
 </head>
 
-<body class="center-text">
+<body>
+<main class="center-text">
+  <div id="content">
+    <div id="welcome-div" class="cd-fixed-bg cd-bg-1">
+      <a name="welcome"></a>
+      <h2>Welcome to Student LifeMaps</h2>
 
-<div id="welcome-div" style="display: block">
-  <a name="welcome">
-    <h2>Welcome to <br>Student LifeMaps</h2>
-  </a>
+      <h3>Begin your journey with us and help you manage your life</h3>
 
-  <div id="authorize-div" style="display: block">
-    <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
-  </div>
-</div>
+      <div id="authorizeSuccessful-div">
+        <input type="button" value="Begin Journey" class="btn" onclick="ui.goToAnchor('address')">
+      </div>
 
-<div id="address-div" style="display: block" class="addMargin">
-  <a name="address">
-    <scan id="addressStatus"></scan>
-    <h2>Please enter full address</h2>
-  </a>
-  <form id="addressForm">
-
-    <div id="homeAddress-div">
-      <label>
-        Home Address:
-      </label>
-      <input type="text" id="homeAddress0" name="homeAddress0"><br>
+      <div id="authorize-div" style="display: none">
+        <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
+      </div>
     </div>
 
-    <div id="workAddress-div">
-      <label>
-        Work Address:
-      </label>
-      <input type="text" id="workAddress0" name="workAddress0">
-      <input type="button" value="Add" class="btn btn-small" onclick="ui.createTextfield('work')"><br>
+    <div id="address-div" class="cd-scrolling-bg cd-color-1">
+      <a name="address">
+        <!--<scan id="addressStatus"></scan>-->
+        <scan id="addressStatus"></scan>
+        <h2>Please enter full address</h2>
+      </a>
+
+      <form id="addressForm" class="form-element">
+        <div>
+          <label>Home Address:</label>
+          <input type="text" id="homeAddress0" name="homeAddress0">
+        </div>
+
+        <div id="workAddress-div">
+          <label> Work Address:</label>
+          <input type="text" id="workAddress0" name="workAddress0">
+          <input type="button" value="+" class="btn btn-sign" onclick="ui.createTextInput('work')">
+        </div>
+
+        <div id="hobbyAddress-div">
+          <label> Hobby Address:</label>
+          <input type="text" id="hobbyAddress0" name="hobbyAddress0">
+          <input type="button" value="+" class="btn btn-sign" onclick="ui.createTextInput('hobby')">
+        </div>
+
+        <div>
+          <label> No of Days:</label>
+          <input type="text" value="7" id="daysCount" name="daysCount">
+        </div>
+
+      </form>
+      <input id="addressContinue" class="btn" type="button" value="Next" onclick="ui.useInputProvided()">
+
+
     </div>
 
-    <div id="hobbyAddress-div">
-      <label>
-        Hobby Address:
-      </label>
-      <input type="text" id="hobbyAddress0" name="hobbyAddress0">
-      <input type="button" value="Add" class="btn btn-small" onclick="ui.createTextfield('hobby')"><br>
+    <a name="locationHistory"></a>
+    <div id="locationHistory-div" class="cd-fixed-bg cd-bg-2" style="text-align: center">
+      <h2>Have you downloaded your location history data?</h2>
+      <div class="radiowrapper">
+        <input name="locationHistory" type="radio" value="yes" checked="checked">Yes
+        <input name="locationHistory" type="radio" value="no">No <br>
+      </div>
+      <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.processSourceResponse()"><br>
+
     </div>
 
-    <label>
-      No of Days:
-    </label>
-    <input type="text" value="7" id="daysCount" name="daysCount"><br>
-    <label id="addressStatus"></label> <br>
-  </form>
-  <input type="button" value="continue" id="btnAddress" class="btn" onclick="ui.useInputProvided()"><br>
-</div>
+    <div id="download-div" class="cd-scrolling-bg cd-color-2">
+      <a name="download">
+        <h2>Follow these instructions to download your location data.</h2>
+      </a>
 
-<div id="source-div" style="display: block" class="addMargin">
-  <a name="source">
-    <h2>Have you downloaded your location history data?</h2>
-  </a>
+      <div id="download-content">
+        <ol>
+          <li><a href="https://takeout.google.com/settings/takeout" target="_blank"> Go to Google Takeout </a></li>
 
-  <input name="source" type="radio" value="yes" checked="checked">Yes
-  <input name="source" type="radio" value="no">No<br>
-  <input type="button" value="Next" class="btn" id="nextButton" onclick="ui.processSourceResponse()"><br>
-</div>
+          <li> Select <b>None</b> to uncheck all boxes. <br><br>
+            <img src="img/select_none.png" width="700">
+          </li>
 
-<div class="addMargin">
-  <a name="download">
-    <h2>Follow these instructions to download your location data.</h2>
-  </a>
+          <li>
+            Scroll down and check <b>Location History</b>. <br>
+            <img src="img/select_location_history.png" width="700">
+          </li>
 
-  <ol>
-    <li>
-      <a href="https://takeout.google.com/settings/takeout" target="_blank"> Go to Google Takeout </a>
-    </li>
+          <li> Click <b>Next</b></li>
 
-    <li>
-      Select <b>None</b> to uncheck all boxes. <br>
-      <img src="img/select_none.png">
-    </li>
+          <li>
+            As shown below, verify that <i>File type</i> is <b>.zip</b> and <i>Delivery Method</i> is <b>Send download
+            link
+            via
+            email</b>.
+          </li>
 
-    <li>
-      Scroll down and check <b>Location History</b>. <br>
-      <img src="img/select_location_history.png">
-    </li>
+          <li>
+            Click <b>Create archive</b>.<br>
+            <img src="img/create_archive.png" width="700"><br>
+            <i>Note: Be patient with the download process as it could sometimes take up to 5 mins or more :) </i>
+          </li>
 
-    <li>
-      Click <b>Next</b>
-    </li>
+          <li>
+            When the archive progress bar is complete, <b>Download</b> the data unto your computer. <br>
+            <img src="img/download_complete.png" width="700">
+          </li>
 
-    <li>
-      As shown below, verify that <i>File type</i> is <b>.zip</b> and <i>Delivery Method</i> is <b>Send download link
-      via
-      email</b>.
-    </li>
+          <li>
+            Locate the downloaded <b>.zip</b> file on your computer and unzip it (typically double-clicking). The file
+            is usually a takout-2016**.zip</b> file unless you rename it.
+            <a href="http://www.glyphnotes.com/gn-zip.cfm" target="_blank">More details</a> about how to unzip a file.
+          </li>
 
-    <li>
-      Click <b>Create archive</b>.<br>
-      <img src="img/create_archive.png"><br>
-      <i>Note: Be patient with the download process as it could sometimes take up to 5 mins or more :) </i>
-    </li>
+          <li>
+            Location the file <b>LocationHistory.json</b> inside <b>Location History</b> folder, which is inside
+            <b>Takeout</b> folder.Your unzipped directory should have the structure shown below. <br>
+            <img src="img/zip-file-structure.png" width="800">
+          </li>
 
-    <li>
-      When the archive progress bar is complete, <b>Download</b> the data unto your computer. <br>
-      <img src="img/download_complete.png">
-    </li>
+          <li>
+            Upload <b>LocationHistory.json</b> when prompted for file upload in Student LifeMaps.
+          </li>
 
-    <li>
-      Locate the downloaded <b>.zip</b> file on your computer and unzip it (typically double-clicking). The file is
-      usually a <b>takout-2016**.zip</b>
-      file unless you rename it.
-      <a href="http://www.glyphnotes.com/gn-zip.cfm" target="_blank">More details</a> about how to unzip a file.
-    </li>
+          <li>
+            Optional: If you already went through the process of downloading Location History but never saved the data
+            to your computer, you can always click on <b>Manage archives</b> and then click <b>Download</b>.
+            <img src="img/manage_archive.png" width="800">
+          </li>
 
-    <li>
-      Location the file <b>LocationHistory.json</b> inside <b>Location History</b> folder, which is inside
-      <b>Takeout</b> folder.Your unzipped directory should have the structure shown below. <br>
-      <img src="img/zip-file-structure.png">
-    </li>
+          <li><a href="#upload"> Continue to Data Upload</a></li>
 
-    <li>
-      Upload <b>LocationHistory.json</b> when prompted for file upload in Student LifeMaps.
-    </li>
-
-    <li>
-      Optional: If you already went through the process of downloading Location History but never saved the data to
-      <br>your computer, you can always click on <b>Manage archives</b> and then click <b>Download</b>.
-      <img src="img/manage_archive.png">
-    </li>
-
-    <li>
-      <a href="#upload"> Continue to Data Upload</a>
-    </li>
-
-  </ol>
-</div>
-
-<div id="upload-div" class="addMargin">
-
-  <a name="upload">
-    <div id="note-div">
-      <p class="note">
-        All data processing happens directly on your computer, so nobody is able to access your Location History but
-        you.
-      </p>
+        </ol>
+      </div> <!-- end download-content div -->
     </div>
-  </a>
 
-  <h2>Upload your LocationHistory.json file</h2>
-  <input name="file" type="file" id="file" class="btn"><br>
+    <div id="upload-div" class="cd-fixed-bg cd-bg-3">
 
+      <a name="upload">
+        <div id="note-div">
+          <h2>Upload your LocationHistory.json file</h2>
+          <p class="note">
+            All data processing happens directly on your computer,
+            <br>so nobody is able to access your Location History but you.
+          </p>
+        </div>
+      </a>
 
-  <div id="uploadingData-div" style="display: none">
-    <h2>Uploading data...</h2>
-  </div>
+      <input name="file" type="file" id="file" class="btn"><br>
 
-  <div id="calendar-div" style="display: none">
-    <h2>Preparing calendar view...</h2>
-  </div>
+      <div id="uploadingData-div" style="display: none">
+        <h2>Uploading data...</h2>
+      </div>
 
-  <div id="working-div" style="display: none">
-    <div class="spinner">
-      <div class="bounce1"></div>
-      <div class="bounce2"></div>
-      <div class="bounce3"></div>
+      <div id="calendar-div" style="display: none">
+        <h2>Preparing calendar view...</h2>
+      </div>
+
+      <div id="working-div" style="display: none">
+        <div class="spinner">
+          <div class="bounce1"></div>
+          <div class="bounce2"></div>
+          <div class="bounce3"></div>
+        </div>
+      </div>
+
+      <scan id="uploadStatus"></scan>
     </div>
-  </div>
 
-  <scan id="uploadStatus"></scan>
-</div>
+    <div id="success-div" class="cd-scrolling-bg cd-color-3">
+      <a name="calendarView">
+        <h2>My Calendars <br>appear after processing complete.</h2>
+      </a>
 
-<div class="addMargin">
-  <a name="calendarView">
-    <h2>My Calendars</h2>
-  </a>
+      <p id="date-output"></p>
+    </div>
+  </div> <!-- end content div -->
 
-  <p id="date-output">
-    <script>
-      if (localStorage.dateText && localStorage.iFrameText) {
-        var elem = document.getElementById('date-output');
-        elem.innerHTML = localStorage.dateText + localStorage.iFrameText;
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.17.0/URI.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+  <script src="lib/prettysize.js"></script>
+  <script src="js/dsu.js"></script>
+  <script src="js/locationcalendar.js"></script>
+  <script src="https://apis.google.com/js/client.js?onload=startGCal"></script>
+
+  <script>
+    // auto populate fields with last entries
+    for (var key in localStorage) {
+      if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' && key !== 'workAddress0' && key !== 'hobbyAddress0') {
+        ui.addTextWithRemoveButton(key, localStorage[key])
+      } else {
+        $('#' + key).val(localStorage[key]);
       }
-    </script>
-  </p>
-
-
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.17.0/URI.min.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-<script src="lib/prettysize.js"></script>
-<script src="js/dsu.js"></script>
-<script src="js/locationcalendar.js"></script>
-<script src="https://apis.google.com/js/client.js?onload=startGCal"></script>
-
-<script>
-  // auto populate fields with last entries
-  for (var key in localStorage) {
-    if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' && key !== 'workAddress0' && key !== 'hobbyAddress0') {
-      ui.addTextWithRemoveButton(key, localStorage[key])
-    } else {
-      $('#' + key).val(localStorage[key]);
     }
-  }
-</script>
+  </script>
+</main>
 
 </body>
 </html>

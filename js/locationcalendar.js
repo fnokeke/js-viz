@@ -37,13 +37,14 @@ var
      */
     handleAuthResult: function (authResult) {
       var authorizeDiv = document.getElementById('authorize-div');
+      var authorizeSuccessfulDiv = document.getElementById('authorizeSuccessful-div');
       if (authResult && !authResult.error) {
         // Hide auth UI, then load client library.
+        authorizeSuccessfulDiv.style.display = 'inline';
         authorizeDiv.style.display = 'none';
         gCal.loadCalendarApi();
       } else {
-        // Show auth UI, allowing the user to initiate authorization by
-        // clicking authorize button.
+        authorizeSuccessfulDiv.style.display = 'none';
         authorizeDiv.style.display = 'inline';
       }
     },
@@ -84,18 +85,31 @@ var
     workCounter: 1,
     hobbyCounter: 1,
 
+    goToAnchor: function (anchor) {
+      var loc = document.location.toString().split('#')[0];
+      document.location = loc + '#' + anchor;
+      return false;
+    },
+
     addTextWithRemoveButton: function (inputName, inputValue) {
 
+
+    },
+
+    createTextInput: function (labelName, inputValue) {
+      var counter = labelName === 'work' ? ui.workCounter++ : ui.hobbyCounter++;
+      var inputName = labelName + 'Address' + counter;
       var removeButtonName = 'remove' + inputName;
+      var inputDiv =  inputName.replace(/\d+/g, '') + '-div';
       inputValue = inputValue || '';
-      var inputDiv = inputName.replace(/\d+/g, '') + '-div';
 
       $('<input/>').attr(
         {
           type: 'text',
           name: inputName,
           id: inputName,
-          value: inputValue
+          value: inputValue,
+          placeholder: 'enter another ' + labelName + ' address.',
         }
       ).appendTo('#' + inputDiv);
 
@@ -104,8 +118,8 @@ var
           type: 'button',
           name: removeButtonName,
           id: removeButtonName,
-          value: removeButtonName,
-          class: 'btn',
+          value: '-',
+          class: 'btn btn-sign',
         }
       ).appendTo('#' + inputDiv);
 
@@ -115,11 +129,7 @@ var
         delete localStorage[inputName];
       });
 
-    },
 
-    createTextfield: function (label) {
-      var counter = label === 'work' ? ui.workCounter++ : ui.hobbyCounter++;
-      var inputName = label + 'Address' + counter;
       ui.addTextWithRemoveButton(inputName);
     },
 
@@ -127,13 +137,13 @@ var
     processSourceResponse: function () {
       var locSource = $('input:radio[name=source]:checked').val();
       if (locSource === 'yes') {
-        window.location.href = ui.host + '#upload';
+        ui.goToAnchor('upload');
         ui.getUploadedData(function (data) {
           console.log("data got:", data.length);
           ui.processGoogleLocation(data);
         });
       } else if (locSource === 'no') {
-        window.location.href = ui.host + '#download';
+        ui.goToAnchor('download');
       }
     },
 
@@ -166,9 +176,9 @@ var
       });
     },
 
-    getUploadedData: function(callback) {
+    getUploadedData: function (callback) {
 
-      $('#file').on('change', function() {
+      $('#file').on('change', function () {
 
         if (!this.files[0]) return;
 
@@ -205,7 +215,7 @@ var
             if (e.target.result === '') throw new Error("file too large for this browser. Use Safari.");
 
             var data = getLocationDataFromJson(e.target.result);
-            status('File loaded successfully! (' + fileSize + ')', 'green');
+            status('File loaded successfully! (' + fileSize + ')', 'white');
             callback(data);
           } catch (ex) {
             utility.modifyDiv('working-div', 'hide');
@@ -392,7 +402,7 @@ var
           "hobby": hobby[0]
         };
 
-        window.location.href = ui.host + '#source';
+        ui.goToAnchor('locationHistory');
       }
 
     },
