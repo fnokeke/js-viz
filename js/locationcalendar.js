@@ -129,6 +129,7 @@ var
       if (locSource === 'yes') {
         window.location.href = ui.host + '#upload';
         ui.getUploadedData(function (data) {
+          console.log("data got:", data.length);
           ui.processGoogleLocation(data);
         });
       } else if (locSource === 'no') {
@@ -165,9 +166,10 @@ var
       });
     },
 
-    getUploadedData: function (callback) {
+    getUploadedData: function(callback) {
 
-      $('#file').change(function () {
+      $('#file').on('change', function() {
+
         if (!this.files[0]) return;
 
         utility.modifyDiv('uploadingData-div', 'show');
@@ -201,6 +203,7 @@ var
         reader.onload = function (e) {
           try {
             if (e.target.result === '') throw new Error("file too large for this browser. Use Safari.");
+
             var data = getLocationDataFromJson(e.target.result);
             status('File loaded successfully! (' + fileSize + ')', 'green');
             callback(data);
@@ -395,8 +398,6 @@ var
     },
 
     processGoogleLocation: function (uploadedData) {
-
-      //window.location.href = ui.host + '#calendarView';
 
       // convert full addresses to lat,lon
       var getLatLng = function (allMappedAddresses, callback) {
@@ -820,7 +821,7 @@ var
                 // embed calendar view
                 var dateText =
                   "<i> Data inserted for (" + noOfDays + " days): " +
-                  new Date(nDaysAgoTimestamp).toDateString()+" - " + new Date(lastDayTimestamp).toDateString() +
+                  new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
                   "</i>.";
 
                 var primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId);
@@ -833,7 +834,7 @@ var
                   'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
                   'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
                   'ctz=' + timeZone +
-                  'style="border-width:0" width="95%" height="95%" frameborder="0" scrolling="no"> ' +
+                  'style="border-width:0" width="95%" height="75%" frameborder="0" scrolling="no"> ' +
                   '</iframe>';
 
                 $('#date-output').html(dateText + iFrameText);
@@ -845,8 +846,6 @@ var
                 utility.modifyDiv('working-div', 'hide');
 
                 window.location.href = ui.host + '#calendarView';
-
-
               });
             }
 
@@ -929,15 +928,11 @@ var
   };
 
 
-//TODO: check if calendar exists before continue other operations
-// TODO: batch events
 // TODO: add timezone to calendar
 // TODO: clear calendar then reload event
 //TODO: set calendar timezone
 //TODO: remove locations where user was moving or not stationary
 
-
 //TODO: let users know that they have to be patient because the archive download could actually be slow
-//TODO: handle Geocoded addresses: ZERO_RESULTS
 //TODO: people don't know what to view or expect when the calendar finally pops up
-//TODO: guys may have to enable popup or just get rid of that and directly link to the calendar page
+
