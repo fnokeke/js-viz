@@ -175,137 +175,6 @@ var
       });
     },
 
-    getUploadedData: function (callback) {
-
-      //$('#file').on('change', function () {
-      //
-      //  if (!this.files[0]) return;
-      //
-      //  utility.modifyDiv('uploadingData-div', 'show');
-      //  utility.modifyDiv('working-div', 'show');
-      //
-      //  var file = this.files[0];
-      //  var fileSize = prettySize(file.size);
-      //  var reader = new FileReader();
-      //
-      //  function status(message, color) {
-      //    $('#uploadStatus').text(message);
-      //    if (color)
-      //      $('#uploadStatus').css('color', color);
-      //  }
-      //
-      //  function getLocationDataFromJson(data) {
-      //    utility.assert(data !== '', 'parse json test.');
-      //    var locations = JSON.parse(data).locations;
-      //
-      //    if (!locations || locations.length === 0) {
-      //      throw new ReferenceError('No location data found.');
-      //    }
-      //    return locations;
-      //  }
-      //
-      //  reader.onprogress = function (e) {
-      //    var percentLoaded = Math.round(( e.loaded / e.total ) * 100);
-      //    status(percentLoaded + '% of ' + fileSize + ' loaded.', 'grey');
-      //  };
-      //
-      //  reader.onload = function (e) {
-      //    try {
-      //      if (e.target.result === '') throw new Error("file too large for this browser. Use Safari.");
-      //
-      //      var data = getLocationDataFromJson(e.target.result);
-      //      status('File loaded successfully! (' + fileSize + ')', 'white');
-      //      callback(data);
-      //    } catch (ex) {
-      //      utility.modifyDiv('working-div', 'hide');
-      //      status('(Make sure you upload location history file that ends in ".json" Error: ' + ex.message + ')', 'red');
-      //      callback(-1);
-      //      return;
-      //    }
-      //  };
-      //
-      //  reader.onloadend = function (e) {
-      //    console.log("onloadend: ", _.size(e.target.result));
-      //    utility.modifyDiv('uploadingData-div', 'hide');
-      //    utility.modifyDiv('calendar-div', 'show');
-      //  }
-      //
-      //  reader.onerror = function () {
-      //    utility.modifyDiv('working-div', 'hide');
-      //    status('Something went wrong reading your JSON file. ' +
-      //      'Ensure you\'re uploading a "direct-from-Google" JSON file and try again. ' +
-      //      '(error: ' + reader.error + ')', 'red');
-      //    callback(-1);
-      //  };
-      //
-      //  reader.readAsText(file);
-      //
-      //  //function readBlob(file, callback) {
-      //  //  //var bigdata = '';
-      //  //  var bigdataArray = [];
-      //  //
-      //  //  var CHUNK_SIZE = 150 * 1048576;
-      //  //  var start = 0;
-      //  //  var stop = CHUNK_SIZE;
-      //  //
-      //  //  var remainder = file.size % CHUNK_SIZE;
-      //  //  var blkcount = Math.floor(file.size / CHUNK_SIZE);
-      //  //  if (remainder != 0) blkcount = blkcount + 1;
-      //  //
-      //  //  for (var i = 0; i < blkcount; i++) {
-      //  //
-      //  //    var reader = new FileReader();
-      //  //    if (i == (blkcount - 1) && remainder != 0) {
-      //  //      stop = start + remainder;
-      //  //    }
-      //  //    if (i == blkcount) {
-      //  //      stop = start;
-      //  //    }
-      //  //
-      //  //    reader.onload = function (e) {
-      //  //
-      //  //      try {
-      //  //        console.log("e.target.result type:", typeof e.target.result);
-      //  //        bigdataArray.push(e.target.result);
-      //  //
-      //  //        var len = 0;
-      //  //        bigdataArray.forEach(function(str){
-      //  //          len += str.length;
-      //  //        });
-      //  //
-      //  //        if (len === file.size) {
-      //  //          console.log("yayyy, big data completed:", len);
-      //  //          callback(bigdataArray);
-      //  //        } else {
-      //  //          console.log("uh oh big data size:", len);
-      //  //        }
-      //  //      } catch (ex) {
-      //  //        console.log("random error:", ex.message);
-      //  //      }
-      //  //    }
-      //  //
-      //  //    //Slicing the file
-      //  //    var blob = file.slice(start, stop);
-      //  //    reader.readAsText(blob);
-      //  //    start = stop;
-      //  //    stop = stop + CHUNK_SIZE;
-      //  //
-      //  //  } //End of loop
-      //  //
-      //  //} //End of readblob
-      //
-      //  //readBlob(file, function (value) {
-      //  //  //getLocationDataFromJson(value);
-      //  //  //status('File loaded successfully! (' + fileSize + ')', 'green');
-      //  //  var result = value.join("");
-      //  //  result = JSON.parse(result);
-      //  //  console.log("result length:", typeof result.locations.length);
-      //  //});
-      //
-      //
-      //});
-    },
-
     useInputProvided: function () {
 
       var
@@ -987,7 +856,7 @@ var
         if (e.target.result === '') throw new Error("file too large for this browser. Use Safari.");
 
         var data = getLocationDataFromJson(e.target.result);
-        status('File loaded successfully! (' + fileSize + ')', 'white');
+        status('File loaded successfully! (' + fileSize + ')', 'darkgrey');
         ui.processGoogleLocation(data);
       } catch (ex) {
         utility.modifyDiv('working-div', 'hide');
@@ -997,7 +866,6 @@ var
     };
 
     reader.onloadend = function (e) {
-      console.log("onloadend: ", _.size(e.target.result));
       utility.modifyDiv('uploadingData-div', 'hide');
       utility.modifyDiv('calendar-div', 'show');
     }
@@ -1010,68 +878,5 @@ var
     };
 
     reader.readAsText(file);
-
-    //function readBlob(file, callback) {
-    //  //var bigdata = '';
-    //  var bigdataArray = [];
-    //
-    //  var CHUNK_SIZE = 150 * 1048576;
-    //  var start = 0;
-    //  var stop = CHUNK_SIZE;
-    //
-    //  var remainder = file.size % CHUNK_SIZE;
-    //  var blkcount = Math.floor(file.size / CHUNK_SIZE);
-    //  if (remainder != 0) blkcount = blkcount + 1;
-    //
-    //  for (var i = 0; i < blkcount; i++) {
-    //
-    //    var reader = new FileReader();
-    //    if (i == (blkcount - 1) && remainder != 0) {
-    //      stop = start + remainder;
-    //    }
-    //    if (i == blkcount) {
-    //      stop = start;
-    //    }
-    //
-    //    reader.onload = function (e) {
-    //
-    //      try {
-    //        console.log("e.target.result type:", typeof e.target.result);
-    //        bigdataArray.push(e.target.result);
-    //
-    //        var len = 0;
-    //        bigdataArray.forEach(function(str){
-    //          len += str.length;
-    //        });
-    //
-    //        if (len === file.size) {
-    //          console.log("yayyy, big data completed:", len);
-    //          callback(bigdataArray);
-    //        } else {
-    //          console.log("uh oh big data size:", len);
-    //        }
-    //      } catch (ex) {
-    //        console.log("random error:", ex.message);
-    //      }
-    //    }
-    //
-    //    //Slicing the file
-    //    var blob = file.slice(start, stop);
-    //    reader.readAsText(blob);
-    //    start = stop;
-    //    stop = stop + CHUNK_SIZE;
-    //
-    //  } //End of loop
-    //
-    //} //End of readblob
-
-    //readBlob(file, function (value) {
-    //  //getLocationDataFromJson(value);
-    //  //status('File loaded successfully! (' + fileSize + ')', 'green');
-    //  var result = value.join("");
-    //  result = JSON.parse(result);
-    //  console.log("result length:", typeof result.locations.length);
-    //});
-
   });
 }());

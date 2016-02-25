@@ -33,6 +33,11 @@ h2 {
     margin-left: -50px;
 }
 
+.btn btn-upload {
+    width: 70px;
+}
+
+
 .cd-fixed-bg {
     height: 100%;
     width: 100%;
@@ -41,7 +46,6 @@ h2 {
     background-repeat: no-repeat;
     background-position: center center;
 }
-
 
 .cd-fixed-bg.cd-bg-1 {
     background-image: url("../img/welcome.jpg");
@@ -191,17 +195,15 @@ input[type='radio'] {
 
 #upload-div {
     width: 100%;
-
-    padding-bottom: 10%;
-
+    padding-bottom: 20%;
 }
 
 #upload-div h2 {
     font-weight: lighter;
     padding-top: 15%;
     color: #ffffff;
+    /*color: lightgrey;*/
     margin-top: 0px;
-
 }
 
 #upload-div p {
@@ -252,8 +254,8 @@ li {
 
 .note {
     padding: 10px;
-    /*text-align: center;*/
-    background-color: #ffeb3b;
+    text-align: center;
+    color: darkgrey;
 }
 
 #working-div {
