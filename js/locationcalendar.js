@@ -79,7 +79,6 @@ var
       'http://localhost:63342/js-viz/' :
       'https://eaf.smalldata.io/partner/slm/',
 
-    allMappedAddresses: {},
     daysCount: 0,
     workCounter: 1,
     hobbyCounter: 1,
@@ -88,11 +87,6 @@ var
       var loc = document.location.toString().split('#')[0];
       document.location = loc + '#' + anchor;
       return false;
-    },
-
-    addTextWithRemoveButton: function (inputName, inputValue) {
-
-
     },
 
     createTextInput: function (labelName, inputValue) {
@@ -127,23 +121,17 @@ var
         $('#' + removeButtonName).remove();
         delete localStorage[inputName];
       });
-
-
-      ui.addTextWithRemoveButton(inputName);
     },
 
     // find out if user's location data is from mobility or Google Takeout
     processSourceResponse: function () {
       var locSource = $('input:radio[name=locationHistory]:checked').val();
-      if (locSource === 'yes') {
-        ui.goToAnchor('upload');
-        //ui.getUploadedData(function(data) {
-        //  console.log("data got:", data.length);
-        //  ui.processGoogleLocation(data);
-        //});
-      } else if (locSource === 'no') {
-        ui.goToAnchor('download');
-      }
+      locSource === 'yes' ? ui.goToAnchor('upload') : ui.goToAnchor('download');
+      //if (locSource === 'yes') {
+      //  ui.goToAnchor('upload');
+      //} else if (locSource === 'no') {
+      //  ui.goToAnchor('download');
+      //}
     },
 
     processMobilityLocation: function () {
@@ -256,7 +244,7 @@ var
           localStorage.timeZone = resp.timeZone;
         });
 
-
+        // store all form data in localStorage
         for (var i = 0; i < formResults.length; i++) {
           obj = formResults[i];
           if (obj.value !== '')
@@ -264,20 +252,12 @@ var
         }
 
         ui.daysCount = daysCount;
-        ui.allMappedAddresses = {
-          "home": home[0],
-          "work": work[0],
-          "hobby": hobby[0]
-        };
-
         ui.goToAnchor('locationHistory');
       }
 
     },
 
     processGoogleLocation: function (uploadedData) {
-      console.log("so processGoogleLocation has been called.");
-
       // convert full addresses to lat,lon
       var getLatLng = function (allMappedAddresses, callback) {
         console.log("ui addresses:", allMappedAddresses);
@@ -320,7 +300,16 @@ var
 
       }
 
-      getLatLng(ui.allMappedAddresses, function (geocodedAddresses) {
+      var allMappedAddresses = {
+        home: localStorage.homeAddress0,
+        work: localStorage.workAddress0,
+        hobby: localStorage.hobbyAddress0
+      }
+
+      console.log("allMappedAddresses:", allMappedAddresses);
+      console.log("so processGoogleLocation has been called.");
+
+      getLatLng(allMappedAddresses, function (geocodedAddresses) {
           console.log("Geocoded addresses:", geocodedAddresses);
 
           var doCalendarOperations = function (addresses, uploadedData, noOfDays) {
@@ -819,7 +808,6 @@ var
 (function () {
 
   $('#file').on('change', function () {
-    console.log("file state changed!");
 
     if (!this.files[0]) return;
 
