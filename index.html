@@ -143,7 +143,9 @@
       </div>
 
       <div>
-        <input name="file" type="file" id="file" class="btn">
+        <input name="file" type="file" id="file" class="btn"> <br>
+        <scan id="uploadStatus" class="dark-font-bg"></scan>
+        <br>
       </div>
 
       <div id="uploadingData-div" style="display: none">
@@ -162,14 +164,14 @@
         </div>
       </div>
 
-      <scan id="uploadStatus"></scan>
     </div>
 
     <div id="success-div" class="cd-scrolling-bg cd-color-3">
-      <a name="calendarView">
-        <h2>My Calendars <br>appear after processing complete.</h2>
-      </a>
-
+      <a name="calendarView"> </a>
+      <h2>
+        My Calendars <br>
+        <input type="button" class='btn btn-cal' value="(Expand Calendar View)" onclick="ui.openFullCalendarView()">
+      </h2>
       <p id="date-output"></p>
     </div>
   </div> <!-- end content div -->

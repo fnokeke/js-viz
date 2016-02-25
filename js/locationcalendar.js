@@ -82,11 +82,16 @@ var
     daysCount: 0,
     workCounter: 1,
     hobbyCounter: 1,
+    fullCalendarViewURL: 'http://calendar.google.com', // URL updated later in the code with proper parameters
 
     goToAnchor: function (anchor) {
       var loc = document.location.toString().split('#')[0];
       document.location = loc + '#' + anchor;
       return false;
+    },
+
+    openFullCalendarView: function() {
+        window.location.href = ui.fullCalendarViewURL;
     },
 
     createTextInput: function (labelName, inputValue) {
@@ -678,13 +683,10 @@ var
                 }
                 console.log("Total events inserted:", insertCounter);
 
-
-                //var dateStr = new Date(nDaysAgoTimestamp);
-                //dateStr = extractDate(dateStr);
-                //dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
-                //var url = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
-                //window.open(url, '_blank');
-
+                var dateStr = new Date(nDaysAgoTimestamp);
+                dateStr = extractDate(dateStr);
+                dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
+                ui.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
 
                 // embed calendar view
                 var dateText =
@@ -845,6 +847,7 @@ var
 
         var data = getLocationDataFromJson(e.target.result);
         status('File loaded successfully! (' + fileSize + ')', 'darkgrey');
+        utility.modifyDiv('calendar-div', 'show');
         ui.processGoogleLocation(data);
       } catch (ex) {
         utility.modifyDiv('working-div', 'hide');
@@ -855,7 +858,6 @@ var
 
     reader.onloadend = function (e) {
       utility.modifyDiv('uploadingData-div', 'hide');
-      utility.modifyDiv('calendar-div', 'show');
     }
 
     reader.onerror = function () {
