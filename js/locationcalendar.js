@@ -2,6 +2,9 @@
  * Created by fnokeke on 1/9/16.
  */
 
+//TODO: integrate Moves
+// https://dev.moves-app.com/docs/api_summaries
+
 // minor tweak to make sure google calendar client actually runs
 function startGCal() {
   gCal.run()
@@ -499,6 +502,10 @@ var
                     if (!resp.result) return;
 
                     events = resp.result.items;
+                    resolve("debug time: delete removed...");
+
+
+                    /*
                     deleteRequest = function (eventId) {
                       return gapi.client.calendar.events.delete({
                         'calendarId': localStorage.createdCalendarId,
@@ -522,6 +529,8 @@ var
                       msg = "No events to delete.";
                       resolve(msg);
                     }
+                    */
+
                   });
                 });
               }
@@ -540,17 +549,20 @@ var
                 groupedByDayData = _.groupBy(givenData, 'date');
 
                 insertEventWithFullAddress = function (ev) {
+                  console.log("given event: ", ev.summary, ev.start.dateTime, ev.end.dateTime);
                   if (ev.summary.indexOf('HOME') === -1 && ev.summary.indexOf('WORK') === -1 &&
                     ev.summary.indexOf('HOBBY') === -1) {
 
                     ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
                   }
 
+                  /*
                   var insertRequest = gapi.client.calendar.events.insert({
                     'calendarId': localStorage.createdCalendarId,
                     'resource': ev
                   });
                   insertRequest.execute();
+                  */
 
                   // get the full reverse address of where each event occurred using their lat,lng
                   // then insert the event with retrieved address
