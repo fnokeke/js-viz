@@ -93,8 +93,8 @@ var
       return false;
     },
 
-    openFullCalendarView: function() {
-        window.location.href = ui.fullCalendarViewURL;
+    openFullCalendarView: function () {
+      window.location.href = ui.fullCalendarViewURL;
     },
 
     createTextInput: function (labelName, inputValue) {
@@ -506,30 +506,30 @@ var
 
 
                     /*
-                    deleteRequest = function (eventId) {
-                      return gapi.client.calendar.events.delete({
-                        'calendarId': localStorage.createdCalendarId,
-                        'eventId': eventId
-                      });
-                    }
+                     deleteRequest = function (eventId) {
+                     return gapi.client.calendar.events.delete({
+                     'calendarId': localStorage.createdCalendarId,
+                     'eventId': eventId
+                     });
+                     }
 
-                    if (events.length > 0) {
-                      batchDelete = gapi.client.newBatch();
-                      for (var i = 0; i < events.length; i++) {
-                        event = events[i];
-                        requestDeleted = deleteRequest(event.id);
-                        batchDelete.add(requestDeleted);
-                      }
-                      batchDelete.execute(function () {
-                        msg = "No of events deleted before loading new ones: " + events.length;
-                        resolve(msg);
-                      });
-                    }
-                    else {
-                      msg = "No events to delete.";
-                      resolve(msg);
-                    }
-                    */
+                     if (events.length > 0) {
+                     batchDelete = gapi.client.newBatch();
+                     for (var i = 0; i < events.length; i++) {
+                     event = events[i];
+                     requestDeleted = deleteRequest(event.id);
+                     batchDelete.add(requestDeleted);
+                     }
+                     batchDelete.execute(function () {
+                     msg = "No of events deleted before loading new ones: " + events.length;
+                     resolve(msg);
+                     });
+                     }
+                     else {
+                     msg = "No events to delete.";
+                     resolve(msg);
+                     }
+                     */
 
                   });
                 });
@@ -557,12 +557,12 @@ var
                   }
 
                   /*
-                  var insertRequest = gapi.client.calendar.events.insert({
-                    'calendarId': localStorage.createdCalendarId,
-                    'resource': ev
-                  });
-                  insertRequest.execute();
-                  */
+                   var insertRequest = gapi.client.calendar.events.insert({
+                   'calendarId': localStorage.createdCalendarId,
+                   'resource': ev
+                   });
+                   insertRequest.execute();
+                   */
 
                   // get the full reverse address of where each event occurred using their lat,lng
                   // then insert the event with retrieved address
@@ -638,6 +638,7 @@ var
                         continue; //minor tweak to temporary avoid bug
                       }
                       timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
+
                       latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
 
                       locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
@@ -653,7 +654,7 @@ var
                       else if (firstItem.locationLabel == "other")
                         colorId = "8"; //grey
 
-                      createResource = function (startTime, endTime, summary, location, colorId) {
+                      createResource = function (startTime, endTime, summary, location, colorId, tdiff, label) {
                         return {
                           "summary": summary || 'no summary',
                           "location": location || 'empty location',
@@ -663,13 +664,17 @@ var
                           },
                           "end": {
                             "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
-                          }
+                          },
+                          "timediff": tdiff,
+                          "label": label,
                         };
                       }
+
                       resource = createResource(
                         new Date(firstItem.timestampMs),
                         new Date(lastItem.timestampMs),
-                        locLabel, latlng, colorId);
+                        locLabel, latlng, colorId, timeDiff, firstItem.locationLabel);
+
                       allResourcesForDay.push(resource);
 
                       // reset tmpStore to store next location
@@ -680,11 +685,75 @@ var
                   return allResourcesForDay;
                 }
 
+                var compressAndFilter = function (allEv) {
+                  if (allEv.length < 1) {
+                    console.log("error: length should be at least 1");
+                    return;
+                  }
+
+                  var
+                    smallerArr = [],
+                    lastEntry,
+                    currEv,
+                    ignoreCounter = 0;
+
+                  smallerArr.push(allEv[0]);
+
+                  for (var i = 1; i < allEv.length; i++) {
+                    lastEntry = smallerArr[smallerArr.length - 1];
+                    currEv = allEv[i];
+
+                    if (lastEntry.label === currEv.label) {
+                      lastEntry.end = currEv.end
+                    }
+                    else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
+                      ignoreCounter += 1;
+                      console.log("ignore counter:", ignoreCounter);
+                      console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
+
+                      if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
+                        if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
+                          smallerArr.push(currEv)
+                          console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
+                        }
+                        else if (allEv[i + 2]) {
+                          if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
+                            smallerArr.push(currEv)
+                            console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
+                          }
+                        }
+                      }
+                    }
+                    else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
+                      if (allEv[i + 1]) {
+                        if (allEv[i + 1].label === lastEntry.label) {
+                          lastEntry.end = currEv.end
+                          console.log("extending with label from OTHER");
+                        }
+                      }
+                    }
+                    else {
+                      smallerArr.push(currEv)
+                    }
+                  }
+
+
+                  //delete irrelevant fields
+                  for (var i = 1; i < smallerArr.length; i++) {
+                    delete smallerArr[i].label;
+                    delete smallerArr[i].timediff;
+                  }
+                  return smallerArr;
+                };
+
                 insertCounter = 0;
                 for (var selectedDay in groupedByDayData) {
 
                   dataForDay = groupedByDayData[selectedDay];
                   allEventsForDay = getAllDwellTime(dataForDay);
+                  console.log("Before compress, length=", allEventsForDay.length);
+                  allEventsForDay = compressAndFilter(allEventsForDay);
+                  console.log("after compress, length=", allEventsForDay.length);
 
                   if (allEventsForDay.length > 0) {
                     for (var i = 0; i < allEventsForDay.length; i++) {
@@ -732,7 +801,7 @@ var
             }
 
           }
-          doCalendarOperations(geocodedAddresses, uploadedData, ui.daysCount);
+          doCalendarOperations(geocodedAddresses, uploadedData, localStorage.daysCount);
         }
       )
       ;
