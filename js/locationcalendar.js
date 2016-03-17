@@ -679,14 +679,14 @@ var
                   }
 
                   var
-                    smallerArr = [],
+                    tmpArr = [],
                     lastEntry,
                     currEv;
 
-                  smallerArr.push(allEv[0]);
+                  tmpArr.push(allEv[0]);
 
                   for (var i = 1; i < allEv.length; i++) {
-                    lastEntry = smallerArr[smallerArr.length - 1];
+                    lastEntry = tmpArr[tmpArr.length - 1];
                     currEv = allEv[i];
 
                     if (lastEntry.label === currEv.label) {
@@ -698,12 +698,12 @@ var
 
                       if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
                         if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
-                          smallerArr.push(currEv)
+                          tmpArr.push(currEv)
                           //console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
                         }
                         else if (allEv[i + 2]) {
                           if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
-                            smallerArr.push(currEv)
+                            tmpArr.push(currEv)
                             //console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
                           }
                         }
@@ -718,29 +718,30 @@ var
                       }
                     }
                     else {
-                      smallerArr.push(currEv)
+                      tmpArr.push(currEv)
                     }
                   }
                   //console.log("total ignore counter:", ignoreCounter);
 
-
-                  var roundToTwoDP = function (num) {
-                    return +(Math.round(num + "e+2") + "e-2");
-                  }
                   var
                     timediff,
-                    smallEv;
+                    ev,
+                    resultsArr = [];
 
                   //update summary and delete irrelevant fields
-                  for (var i = 0; i < smallerArr.length; i++) {
-                    smallEv = smallerArr[i];
-                    timediff = roundToTwoDP((smallEv.end.dateTime - smallEv.start.dateTime) / (1000 * 60 * 60));
-                    smallEv.summary += " (~ " + timediff + " hours)";
+                  for (var i = 0; i < tmpArr.length; i++) {
+                    ev = tmpArr[i];
+                    timediff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
 
-                    delete smallEv.label;
-                    delete smallEv.timediff;
+                    if (timediff > 0) {
+                      ev.summary += " (~ " + timediff.toFixed(1) + " hours)";
+                      delete ev.label;
+                      delete ev.timediff;
+                      resultsArr.push(ev);
+                    }
+
                   }
-                  return smallerArr;
+                  return resultsArr;
                 };
 
                 insertCounter = 0;
