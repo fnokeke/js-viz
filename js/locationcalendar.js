@@ -314,9 +314,6 @@ var
         hobby: localStorage.hobbyAddress0
       }
 
-      console.log("allMappedAddresses:", allMappedAddresses);
-      console.log("so processGoogleLocation has been called.");
-
       getLatLng(allMappedAddresses, function (geocodedAddresses) {
           console.log("Geocoded addresses:", geocodedAddresses);
 
@@ -391,7 +388,7 @@ var
               return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
             }
 
-            var marginError = 100;
+            var marginError = 300;
             data.forEach(function (row) {
               if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError)
                 row.locationLabel = 'home';
@@ -545,7 +542,7 @@ var
                 groupedByDayData = _.groupBy(givenData, 'date');
 
                 insertEventWithFullAddress = function (ev) {
-                  console.log("given event: ", ev.summary, ev.start.dateTime, ev.end.dateTime);
+                  //console.log("given event: ", ev.summary, ev.start.dateTime, ev.end.dateTime);
                   if (ev.summary.indexOf('HOME') === -1 && ev.summary.indexOf('WORK') === -1 &&
                     ev.summary.indexOf('HOBBY') === -1) {
 
@@ -631,13 +628,10 @@ var
                         counter++;
                         continue; //minor tweak to temporary avoid bug
                       }
+
                       timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
-
                       latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-
-                      locLabel = "Time spent at " + firstItem.locationLabel.toUpperCase() +
-                        " (~ " + timeDiff + " hours)";
-                      //" [" + firstItem.latitudeE7 + "," + firstItem.longitudeE7 + "]";
+                      locLabel = firstItem.locationLabel.toUpperCase();
 
                       if (firstItem.locationLabel == "home")
                         colorId = "10"; //green
@@ -681,15 +675,13 @@ var
 
                 var compressAndFilter = function (allEv) {
                   if (allEv.length < 1) {
-                    console.log("error: length should be at least 1");
-                    return;
+                    return [];
                   }
 
                   var
                     smallerArr = [],
                     lastEntry,
-                    currEv,
-                    ignoreCounter = 0;
+                    currEv;
 
                   smallerArr.push(allEv[0]);
 
@@ -701,19 +693,18 @@ var
                       lastEntry.end = currEv.end
                     }
                     else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
-                      ignoreCounter += 1;
-                      console.log("ignore counter:", ignoreCounter);
-                      console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
+                      //console.log("ignore counter:", ignoreCounter);
+                      //console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
 
                       if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
                         if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
                           smallerArr.push(currEv)
-                          console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
+                          //console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
                         }
                         else if (allEv[i + 2]) {
                           if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
                             smallerArr.push(currEv)
-                            console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
+                            //console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
                           }
                         }
                       }
@@ -722,7 +713,7 @@ var
                       if (allEv[i + 1]) {
                         if (allEv[i + 1].label === lastEntry.label) {
                           lastEntry.end = currEv.end
-                          console.log("extending with label from OTHER");
+                          //console.log("extending with label from OTHER");
                         }
                       }
                     }
@@ -730,12 +721,24 @@ var
                       smallerArr.push(currEv)
                     }
                   }
+                  //console.log("total ignore counter:", ignoreCounter);
 
 
-                  //delete irrelevant fields
+                  var roundToTwoDP = function (num) {
+                    return +(Math.round(num + "e+2") + "e-2");
+                  }
+                  var
+                    timediff,
+                    smallEv;
+
+                  //update summary and delete irrelevant fields
                   for (var i = 0; i < smallerArr.length; i++) {
-                    delete smallerArr[i].label;
-                    delete smallerArr[i].timediff;
+                    smallEv = smallerArr[i];
+                    timediff = roundToTwoDP((smallEv.end.dateTime - smallEv.start.dateTime) / (1000 * 60 * 60));
+                    smallEv.summary += " (~ " + timediff + " hours)";
+
+                    delete smallEv.label;
+                    delete smallEv.timediff;
                   }
                   return smallerArr;
                 };
@@ -745,9 +748,7 @@ var
 
                   dataForDay = groupedByDayData[selectedDay];
                   allEventsForDay = getAllDwellTime(dataForDay);
-                  console.log("Before compress, length=", allEventsForDay.length);
                   allEventsForDay = compressAndFilter(allEventsForDay);
-                  console.log("after compress, length=", allEventsForDay.length);
 
                   if (allEventsForDay.length > 0) {
                     for (var i = 0; i < allEventsForDay.length; i++) {
