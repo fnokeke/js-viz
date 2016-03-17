@@ -502,34 +502,30 @@ var
                     if (!resp.result) return;
 
                     events = resp.result.items;
-                    resolve("debug time: delete removed...");
 
+                    deleteRequest = function (eventId) {
+                      return gapi.client.calendar.events.delete({
+                        'calendarId': localStorage.createdCalendarId,
+                        'eventId': eventId
+                      });
+                    }
 
-                    /*
-                     deleteRequest = function (eventId) {
-                     return gapi.client.calendar.events.delete({
-                     'calendarId': localStorage.createdCalendarId,
-                     'eventId': eventId
-                     });
-                     }
-
-                     if (events.length > 0) {
-                     batchDelete = gapi.client.newBatch();
-                     for (var i = 0; i < events.length; i++) {
-                     event = events[i];
-                     requestDeleted = deleteRequest(event.id);
-                     batchDelete.add(requestDeleted);
-                     }
-                     batchDelete.execute(function () {
-                     msg = "No of events deleted before loading new ones: " + events.length;
-                     resolve(msg);
-                     });
-                     }
-                     else {
-                     msg = "No events to delete.";
-                     resolve(msg);
-                     }
-                     */
+                    if (events.length > 0) {
+                      batchDelete = gapi.client.newBatch();
+                      for (var i = 0; i < events.length; i++) {
+                        event = events[i];
+                        requestDeleted = deleteRequest(event.id);
+                        batchDelete.add(requestDeleted);
+                      }
+                      batchDelete.execute(function () {
+                        msg = "No of events deleted before loading new ones: " + events.length;
+                        resolve(msg);
+                      });
+                    }
+                    else {
+                      msg = "No events to delete.";
+                      resolve(msg);
+                    }
 
                   });
                 });
@@ -556,13 +552,11 @@ var
                     ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
                   }
 
-                  /*
-                   var insertRequest = gapi.client.calendar.events.insert({
-                   'calendarId': localStorage.createdCalendarId,
-                   'resource': ev
-                   });
-                   insertRequest.execute();
-                   */
+                  var insertRequest = gapi.client.calendar.events.insert({
+                    'calendarId': localStorage.createdCalendarId,
+                    'resource': ev
+                  });
+                  insertRequest.execute();
 
                   // get the full reverse address of where each event occurred using their lat,lng
                   // then insert the event with retrieved address
@@ -739,7 +733,7 @@ var
 
 
                   //delete irrelevant fields
-                  for (var i = 1; i < smallerArr.length; i++) {
+                  for (var i = 0; i < smallerArr.length; i++) {
                     delete smallerArr[i].label;
                     delete smallerArr[i].timediff;
                   }
