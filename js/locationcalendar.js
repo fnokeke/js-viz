@@ -549,11 +549,12 @@ var
                     ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
                   }
 
-                  var insertRequest = gapi.client.calendar.events.insert({
-                    'calendarId': localStorage.createdCalendarId,
-                    'resource': ev
-                  });
-                  insertRequest.execute();
+                  //var insertRequest = gapi.client.calendar.events.insert({
+                  //  'calendarId': localStorage.createdCalendarId,
+                  //  'resource': ev
+                  //});
+                  //insertRequest.execute();
+
 
                   // get the full reverse address of where each event occurred using their lat,lng
                   // then insert the event with retrieved address
@@ -744,18 +745,38 @@ var
                   return resultsArr;
                 };
 
+                var
+                  batchInsert,
+                  requestToInsert,
+                  insertRequest;
+
+                insertRequest = function (ev) {
+                  if (ev.summary.indexOf('OTHER') >= 0) {
+                    ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
+                  }
+
+                  return gapi.client.calendar.events.insert({
+                    'calendarId': localStorage.createdCalendarId,
+                    'resource': ev
+                  });
+                };
+
                 insertCounter = 0;
                 for (var selectedDay in groupedByDayData) {
-
                   dataForDay = groupedByDayData[selectedDay];
                   allEventsForDay = getAllDwellTime(dataForDay);
                   allEventsForDay = compressAndFilter(allEventsForDay);
 
                   if (allEventsForDay.length > 0) {
+                    batchInsert = gapi.client.newBatch();
                     for (var i = 0; i < allEventsForDay.length; i++) {
-                      insertEventWithFullAddress(allEventsForDay[i]);
+                      requestToInsert = insertRequest(allEventsForDay[i]);
+                      batchInsert.add(requestToInsert);
                       insertCounter++;
                     }
+
+                    batchInsert.execute(function () {
+                    });
                   }
                 }
                 console.log("Total events inserted:", insertCounter);
@@ -766,23 +787,23 @@ var
                 ui.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
 
                 // embed calendar view
-                var dateText =
-                  "<i> Data inserted for (" + noOfDays + " days): " +
-                  new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
-                  "</i>.";
 
-                var primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId);
-                var locationCalendarId = encodeURIComponent(localStorage.createdCalendarId);
-                var timeZone = encodeURIComponent(localStorage.timeZone);
-
-                var iFrameText =
-                  '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
-                  'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
-                  'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
-                  'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
-                  'ctz=' + timeZone +
-                  'style="border-width:0" width="95%" height="75%" frameborder="0" scrolling="no"> ' +
-                  '</iframe>';
+                var
+                  primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
+                  locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
+                  timeZone = encodeURIComponent(localStorage.timeZone),
+                  dateText =
+                    "<i> Data inserted for (" + noOfDays + " days): " +
+                    new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
+                    "</i>.",
+                  iFrameText =
+                    '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+                    'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+                    'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+                    'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+                    'ctz=' + timeZone +
+                    'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
+                    '</iframe>';
 
                 $('#date-output').html(dateText + iFrameText);
 
@@ -792,7 +813,7 @@ var
                 utility.modifyDiv('calendar-div', 'hide');
                 utility.modifyDiv('working-div', 'hide');
 
-                ui.goToAnchor('calendarView');
+                ui.goToAnchor('calendar');
               });
             }
 
@@ -866,7 +887,7 @@ var
 
     modifyDiv: function (div, action) {
       var divElement = document.getElementById(div);
-      (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'inline';
+      (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'block';
     },
 
     assert: function (condition, message) {
@@ -920,15 +941,27 @@ var
 
     reader.onload = function (e) {
       try {
-        if (e.target.result === '') throw new Error("file too large for this browser. Use Safari.");
+        if (e.target.result === '') throw new RangeError();
 
         var data = getLocationDataFromJson(e.target.result);
         status('File loaded successfully! (' + fileSize + ')', 'darkgrey');
         utility.modifyDiv('calendar-div', 'show');
         ui.processGoogleLocation(data);
-      } catch (ex) {
+      } catch (err) {
         utility.modifyDiv('working-div', 'hide');
-        status('(Make sure you upload location history file that ends in ".json" Error: ' + ex.message + ')', 'red');
+        console.log("err:", err);
+        if (err instanceof SyntaxError) {
+          status('Wrong file uploaded. Your file should end in ".json"', 'red');
+        }
+        else if (err instanceof RangeError) {
+          status('Your data is too large for this browser. Please use Safari.', 'red');
+        }
+        else if (err instanceof ReferenceError) {
+          status("Uh oh. That doesn't look like your location data. Check and try again.", 'red');
+        }
+        else {
+          status('Uh oh :/ Something weird happened. Please contact admin.', 'red');
+        }
         return;
       }
     };

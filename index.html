@@ -56,7 +56,7 @@
 
     </div>
 
-    <div id="locationHistory-div" class="cd-fixed-bg cd-bg-2 bright-font">
+    <div id="locationHistory-div" class="cd-fixed-bg cd-bg-2">
       <a name="locationHistory"></a>
       <h2>Have you downloaded your location history data?</h2>
       <div class="radiowrapper">
@@ -164,12 +164,9 @@
 
     </div>
 
-    <div id="success-div" class="cd-scrolling-bg cd-color-3">
-      <a name="calendarView"> </a>
-      <h2>
-        My Calendars <br>
-        <input type="button" class='btn btn-cal' value="click to open full view" onclick="ui.openFullCalendarView()">
-      </h2>
+    <div class="">
+      <a name="calendar"> </a>
+      <input type="button" class='btn btn-cal' value="Click to launch Google Cal" onclick="ui.openFullCalendarView()">
       <p id="date-output"></p>
     </div>
   </div> <!-- end content div -->
@@ -194,6 +191,25 @@
       }
     }
   </script>
+
+  <script>
+    // show default calendar
+    var
+        primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
+        locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
+        timeZone = encodeURIComponent(localStorage.timeZone),
+        iFrameText =
+            '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+            'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+            'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+            'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+            'ctz=' + timeZone +
+            'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
+            '</iframe>';
+
+    $('#date-output').html(iFrameText);
+  </script>
+
 </main>
 
 </body>

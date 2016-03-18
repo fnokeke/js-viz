@@ -64,6 +64,8 @@ body.working {
 }
 
 .cd-fixed-bg.cd-bg-2 {
+    padding-top: 15%;
+    color: #ffffff;
     background-image: url("../img/2.jpg");
 }
 
@@ -246,12 +248,14 @@ li {
     padding: 5px;
 }
 
-#upload-div h2 {
-    font-weight: lighter;
+#upload-div h2 , #locationHistory-div h2{
     padding-top: 15%;
     color: #ffffff;
     margin-top: 0px;
     margin-bottom: 0px;
+}
+
+#locationHistory-div h2 {
 }
 
 #upload-div p {
@@ -262,6 +266,11 @@ li {
 #uploadingData-div h2, #calendar-div h2 {
     padding: 1%;
     font-weight: lighter;
+}
+
+#calendar-div {
+    margin: 0;
+
 }
 
 #working-div {
