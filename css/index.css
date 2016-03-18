@@ -11,10 +11,6 @@ body.working {
     cursor: progress;
 }
 
-h2 {
-    font-weight: 500;
-}
-
 .btn {
     width: 250px;
     height: 50px;
@@ -24,6 +20,7 @@ h2 {
     background-color: rgb(255, 97, 83);
     font-size: 15px;
     padding: 5px 15px 8.5px;
+    margin-bottom: 5px;
 }
 
 .btn.btn-sign {
@@ -38,6 +35,15 @@ h2 {
     padding: 2px;
 }
 
+.btn:hover {
+    background-image: -webkit-linear-gradient(top, indianred, indianred);
+    background-image: -moz-linear-gradient(top, indianred, indianred);
+    background-image: -ms-linear-gradient(top,  indianred, indianred);
+    background-image: -o-linear-gradient(top,  indianred, indianred);
+    background-image: linear-gradient(to bottom, indianred, indianred);
+    text-decoration: none;
+}
+
 .cd-fixed-bg {
     height: 100%;
     width: 100%;
@@ -47,8 +53,14 @@ h2 {
     background-position: center center;
 }
 
+.fixed-bg.cd-bg-1 {
+    background-image: url("../img/welcome.jpg");
+    background-size: cover;
+}
+
 .cd-fixed-bg.cd-bg-1 {
     background-image: url("../img/welcome.jpg");
+    background-size: cover;
 }
 
 .cd-fixed-bg.cd-bg-2 {
@@ -78,6 +90,11 @@ h2 {
 
 .cd-scrolling-bg.cd-color-3 {
     background-color: #FFEEED;
+}
+
+#file {
+    background-color: rgb(176, 176, 176);
+    width: 230px;
 }
 
 .form-element {
@@ -113,12 +130,11 @@ h2 {
 #welcome-div {
     width: 100%;
     height: 100%;
-    padding-top: 5%;
-    padding-bottom: 5%;
+    padding-top: 15%;
+    padding-bottom: 25%;
     color: #fff;
     font-family: "Century Gothic", Helvetica, Arial, sans-serif;
-    /*margin-top: 150px;*/
-    margin-bottom: -60px;
+    margin-bottom: -5px;
 }
 
 #welcome-div h2 {
@@ -131,8 +147,9 @@ h2 {
 #welcome-div h3 {
     font-size: 0.8em;
     font-weight: lighter;
-    margin-bottom: 62px;
+    /*margin-bottom: 62px;*/
     color: #E2D6D3;
+    margin-top: 0px;
 }
 
 #authorize-div {
@@ -154,30 +171,6 @@ h2 {
     color: white;
 }
 
-#source-div {
-    width: 100%;
-    padding-bottom: 10%;
-
-}
-
-#source-div h2 {
-    padding-top: 15%;
-    font-weight: lighter;
-    color: #ffffff;
-    margin-top: 0px;
-}
-
-input[type='radio'] {
-    margin-left: 30px;
-}
-
-#nextButton {
-    width: 200px;
-    font-size: 20px;
-    margin: 0 auto;
-    /*margin-top: 30px;*/
-}
-
 #download-content {
     text-align: left;
     font-weight: lighter;
@@ -185,7 +178,6 @@ input[type='radio'] {
 
 #download-content a:link {
     color: rgb(255, 97, 83);
-
 }
 
 #download-content a:visited {
@@ -198,51 +190,8 @@ input[type='radio'] {
     padding-bottom: 20px;
 }
 
-#upload-div {
-    width: 100%;
-    padding-bottom: 20%;
-}
-
-#upload-div h2 {
-    font-weight: lighter;
-    padding-top: 15%;
-    color: #ffffff;
-    /*color: lightgrey;*/
-    margin-top: 0px;
-}
-
-#upload-div p {
-    color: #E2D6D3;
-    font-size: 1em;
-}
-
-#uploadingData-div h2 {
-    padding-top: 10%;
-    font-weight: lighter;
-
-}
-
-#calendar-div h2 {
-    font-weight: lighter;
-}
-
-#file {
-    background-color: rgb(176, 176, 176);
-    width: 230px;
-    margin-top: 10px;
-}
-
-.addMargin h2 {
-    font-weight: lighter;
-}
-
-.btn:hover {
-    background-image: -webkit-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
-    background-image: -moz-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
-    background-image: -ms-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
-    background-image: -o-linear-gradient(top, rgb(255, 97, 83), rgb(255, 97, 83));
-    background-image: linear-gradient(to bottom, rgb(255, 97, 83), rgb(255, 97, 83));;
-    text-decoration: none;
+input[type='radio'] {
+    margin-left: 30px;
 }
 
 li {
@@ -251,35 +200,16 @@ li {
     text-align: left;
 }
 
-.map-active .container {
-    /* so that clicks go through to the map! */
-    pointer-events: none;
-}
-
 .note {
-    padding: 10px;
     text-align: center;
     color: darkgrey;
 }
 
-#working-div {
-    text-align: center;
-}
-
-br {
-    clear: left;
-}
-
-.extraSpace {
-    margin-top: 100px;
-}
-
-#done {
-    cursor: pointer;
-}
-
-.map-active #controls {
-    bottom: -145px;
+#nextButton {
+    width: 200px;
+    font-size: 20px;
+    margin: 0 auto;
+    /*margin-top: 30px;*/
 }
 
 .spinner {
@@ -291,7 +221,7 @@ br {
 .spinner > div {
     width: 18px;
     height: 18px;
-    background-color: #333;
+    background-color: darkgrey;
     border-radius: 100%;
     display: inline-block;
     -webkit-animation: bouncedelay 1.4s infinite ease-in-out;
@@ -309,6 +239,33 @@ br {
 .spinner .bounce2 {
     -webkit-animation-delay: -0.16s;
     animation-delay: -0.16s;
+}
+
+#upload-div {
+    width: 100%;
+    padding: 5px;
+}
+
+#upload-div h2 {
+    font-weight: lighter;
+    padding-top: 15%;
+    color: #ffffff;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+#upload-div p {
+    color: #E2D6D3;
+    font-size: 1em;
+}
+
+#uploadingData-div h2, #calendar-div h2 {
+    padding: 1%;
+    font-weight: lighter;
+}
+
+#working-div {
+    text-align: center;
 }
 
 @-webkit-keyframes bouncedelay {
@@ -330,11 +287,3 @@ br {
         -webkit-transform: scale(1.0);
     }
 }
-
-background.blur {
-    width:100px;
-    height:459px;
-    -webkit-filter: blur(3px);
-    filter: blur(3px);
-}
-

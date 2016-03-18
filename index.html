@@ -11,7 +11,7 @@
       <h2>Welcome to Student LifeMaps</h2>
 
       <a name="welcome"></a>
-      <h3>Begin your journey with us and help you manage your life</h3>
+      <h3>Begin your journey with a human coach to help you manage your time.</h3>
 
       <div id="authorizeSuccessful-div">
         <input type="button" value="Begin Journey" class="btn" onclick="ui.goToAnchor('address')">
@@ -111,7 +111,7 @@
           </li>
 
           <li>
-            Location the file <b>LocationHistory.json</b> inside <b>Location History</b> folder, which is inside
+            Locate the file <b>LocationHistory.json</b> inside <b>Location History</b> folder, which is inside
             <b>Takeout</b> folder.Your unzipped directory should have the structure shown below. <br>
             <img src="img/zip-file-structure.png" width="800">
           </li>
@@ -134,13 +134,11 @@
 
     <div id="upload-div" class="cd-fixed-bg cd-bg-3">
       <a name="upload"></a>
-      <div id="note-div">
-        <h2>Upload your LocationHistory.json file</h2>
-        <p class="note">
-          All data processing happens directly on your computer,
-          <br>so nobody is able to access your Location History but you.
-        </p>
-      </div>
+      <h2>Upload your LocationHistory.json file</h2>
+      <p class="note">
+        All data processing happens directly on your computer,
+        <br>so nobody is able to access your Location History but you.
+      </p>
 
       <div>
         <input name="file" type="file" id="file" class="btn"> <br>
@@ -170,7 +168,7 @@
       <a name="calendarView"> </a>
       <h2>
         My Calendars <br>
-        <input type="button" class='btn btn-cal' value="(Expand Calendar View)" onclick="ui.openFullCalendarView()">
+        <input type="button" class='btn btn-cal' value="click to open full view" onclick="ui.openFullCalendarView()">
       </h2>
       <p id="date-output"></p>
     </div>
