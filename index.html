@@ -13,12 +13,13 @@
       <a name="welcome"></a>
       <h3>Begin your journey with a human coach to help you manage your time.</h3>
 
-      <div id="authorizeSuccessful-div">
+      <div id="begin-div">
         <input type="button" value="Begin Journey" class="btn" onclick="ui.goToAnchor('address')">
       </div>
 
       <div id="authorize-div" style="display: none">
-        <input type="button" value="Authorize Google Calendar API" class="btn" onclick="gCal.handleAuthClick(event)">
+        <!--<input type="button" value="Authorize Google Calendar API" id="authorizeButton" class="btn" onclick="handleAuthClick(event)">-->
+        <input type="button" value="Authorize Google Calendar API" id="authorizeButton" class="btn">
       </div>
     </div>
 
@@ -174,12 +175,15 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.17.0/URI.min.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.min.js"></script>
+
+  <!--<script src="https://apis.google.com/js/client.js?onload=startGCal"></script>-->
+  <script src="https://apis.google.com/js/client.js"></script>
   <script src="lib/prettysize.js"></script>
   <script src="js/dsu.js"></script>
   <script src="js/locationcalendar.js"></script>
-  <script src="https://apis.google.com/js/client.js?onload=startGCal"></script>
 
   <script>
     // auto populate fields with last entries

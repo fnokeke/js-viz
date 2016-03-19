@@ -3,74 +3,76 @@
  */
 
 // minor tweak to make sure google calendar client actually runs
-function startGCal() {
-    gCal.run()
-}
+
+//function startGCal() {
+//    gCal.run()
+//}
 
 var
 
     gCal = {
 
-        CLIENT_ID: '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com',
-        SCOPES: ["https://www.googleapis.com/auth/calendar"],
-
-        run: function () {
-            gCal.checkAuth();
-        },
+        //CLIENT_ID: '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com',
+        //SCOPES: ["https://www.googleapis.com/auth/calendar"],
+        //
+        //run: function () {
+        //    gCal.checkAuth();
+        //},
 
         /**
          * Check if current user has authorized this application.
          */
-        checkAuth: function () {
-            gapi.auth.authorize(
-                {
-                    'client_id': gCal.CLIENT_ID,
-                    'scope': gCal.SCOPES.join(' '),
-                    'immediate': true
-                }, gCal.handleAuthResult);
-        },
+        //checkAuth: function () {
+        //    console.log("just called checkAuth");
+        //    gapi.auth.authorize({
+        //        'client_id': gCal.CLIENT_ID,
+        //        'scope': gCal.SCOPES.join(' '),
+        //        'immediate': true
+        //    }, gCal.handleAuthResult);
+        //    console.log("ran just fine.");
+        //},
 
         /**
          * Handle response from authorization server.
          *
          * @param {Object} authResult Authorization result.
          */
-        handleAuthResult: function (authResult) {
-            var authorizeDiv = document.getElementById('authorize-div');
-            var authorizeSuccessfulDiv = document.getElementById('authorizeSuccessful-div');
-            if (authResult && !authResult.error) {
-                // Hide auth UI, then load client library.
-                authorizeSuccessfulDiv.style.display = 'inline';
-                authorizeDiv.style.display = 'none';
-                gCal.loadCalendarApi();
-            } else {
-                authorizeSuccessfulDiv.style.display = 'none';
-                authorizeDiv.style.display = 'inline';
-            }
-        },
+        //handleAuthResult: function (authResult) {
+        //    var authorizeDiv = document.getElementById('authorize-div');
+        //    var authorizeSuccessfulDiv = document.getElementById('authorizeSuccessful-div');
+        //    if (authResult && !authResult.error) {
+        //        // Hide auth UI, then load client library.
+        //        authorizeSuccessfulDiv.style.display = 'inline';
+        //        authorizeDiv.style.display = 'none';
+        //        gCal.loadCalendarApi();
+        //    } else {
+        //        authorizeSuccessfulDiv.style.display = 'none';
+        //        authorizeDiv.style.display = 'inline';
+        //    }
+        //},
 
         /**
          * Initiate auth flow in response to user clicking authorize button.
          *
          * @param {Event} event Button click event.
          */
-        handleAuthClick: function (event) {
-            gapi.auth.authorize(
-                {client_id: gCal.CLIENT_ID, scope: gCal.SCOPES, immediate: false},
-                gCal.handleAuthResult);
-            return false;
-        },
+        //handleAuthClick: function (event) {
+        //    gapi.auth.authorize(
+        //        {client_id: gCal.CLIENT_ID, scope: gCal.SCOPES, immediate: false},
+        //        gCal.handleAuthResult);
+        //    return false;
+        //},
 
         /**
          * Load Google Calendar client library.
          */
-        loadCalendarApi: function () {
-            gapi.client.load('calendar', 'v3', function () {
-                $('#status').text('Calendar authorization successful!');
-                $('#status').css('color', 'green');
-            });
-
-        }
+        //loadCalendarApi: function () {
+        //    gapi.client.load('calendar', 'v3', function () {
+        //        $('#status').text('Calendar authorization successful!');
+        //        $('#status').css('color', 'green');
+        //    });
+        //
+        //}
     },
 
     ui = {
@@ -947,3 +949,78 @@ var
         reader.readAsText(file);
     });
 }());
+
+
+//Code Refactoring
+
+
+(function (gapi, $, prettySize, _) {
+    'use strict';
+
+    stageOne();
+
+    function stageOne() {
+
+        var CLIENT_ID = '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com',
+            SCOPES = ["https://www.googleapis.com/auth/calendar"];
+
+        window.onload = function () {
+            checkAuth();
+        };
+
+        //Check if current user has authorized this application.
+        function checkAuth() {
+            gapi.auth.authorize({
+                'client_id': CLIENT_ID,
+                'scope': SCOPES.join(' '),
+                'immediate': true
+            }, handleAuthResult);
+        }
+
+        //Handle response from authorization server.
+        function handleAuthResult(authResult) {
+            var authorizeDiv = document.getElementById('authorize-div');
+            var beginDiv = document.getElementById('begin-div');
+            if (authResult && !authResult.error) {
+                beginDiv.style.display = 'inline';
+                authorizeDiv.style.display = 'none';
+                loadCalendarApi();
+            } else {
+                beginDiv.style.display = 'none';
+                authorizeDiv.style.display = 'inline';
+            }
+        }
+
+         // Initiate auth flow in response to user clicking authorize button.
+        $('#authorizeButton').click(function () {
+            gapi.auth.authorize({
+                client_id: CLIENT_ID, scope: SCOPES, immediate: false
+            }, handleAuthResult);
+            return false;
+        });
+
+         // Load Google Calendar client library.
+        function loadCalendarApi() {
+            gapi.client.load('calendar', 'v3', function () {
+                stageTwo();
+            });
+        }
+    } // stageOne
+
+    function stageTwo() {
+        console.log("stage two launched.");
+
+    }
+
+
+    console.log('g', gapi);
+    console.log('jquery', $);
+    console.log('prettySize', prettySize);
+    console.log('underscore', _);
+
+}(gapi, jQuery, prettySize, _));
+
+
+
+
+
