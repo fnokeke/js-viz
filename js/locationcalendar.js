@@ -991,7 +991,7 @@ var
             }
         }
 
-         // Initiate auth flow in response to user clicking authorize button.
+        // Initiate auth flow in response to user clicking authorize button.
         $('#authorizeButton').click(function () {
             gapi.auth.authorize({
                 client_id: CLIENT_ID, scope: SCOPES, immediate: false
@@ -999,12 +999,43 @@ var
             return false;
         });
 
-         // Load Google Calendar client library.
+        // Load Google Calendar client library.
         function loadCalendarApi() {
             gapi.client.load('calendar', 'v3', function () {
                 stageTwo();
             });
         }
+
+        populateView();
+
+        function populateView() {
+            // auto populate address fields with last entries
+            for (var key in localStorage) {
+                if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' &&
+                    key !== 'workAddress0' && key !== 'hobbyAddress0') {
+                    ui.addTextWithRemoveButton(key, localStorage[key])
+                } else {
+                    $('#' + key).val(localStorage[key]);
+                }
+            }
+
+            // show default iFrame calendar
+            var
+                primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
+                locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
+                timeZone = encodeURIComponent(localStorage.timeZone),
+                iFrameText =
+                    '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+                    'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+                    'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+                    'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+                    'ctz=' + timeZone +
+                    'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
+                    '</iframe>';
+
+            $('#date-output').html(iFrameText);
+        }
+
     } // stageOne
 
     function stageTwo() {

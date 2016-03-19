@@ -187,31 +187,31 @@
 
   <script>
     // auto populate fields with last entries
-    for (var key in localStorage) {
-      if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' && key !== 'workAddress0' && key !== 'hobbyAddress0') {
-        ui.addTextWithRemoveButton(key, localStorage[key])
-      } else {
-        $('#' + key).val(localStorage[key]);
-      }
-    }
+//    for (var key in localStorage) {
+//      if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' && key !== 'workAddress0' && key !== 'hobbyAddress0') {
+//        ui.addTextWithRemoveButton(key, localStorage[key])
+//      } else {
+//        $('#' + key).val(localStorage[key]);
+//      }
+//    }
   </script>
 
   <script>
     // show default calendar
-    var
-        primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
-        locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
-        timeZone = encodeURIComponent(localStorage.timeZone),
-        iFrameText =
-            '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
-            'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
-            'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
-            'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
-            'ctz=' + timeZone +
-            'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
-            '</iframe>';
-
-    $('#date-output').html(iFrameText);
+//    var
+//        primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
+//        locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
+//        timeZone = encodeURIComponent(localStorage.timeZone),
+//        iFrameText =
+//            '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+//            'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+//            'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+//            'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+//            'ctz=' + timeZone +
+//            'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
+//            '</iframe>';
+//
+//    $('#date-output').html(iFrameText);
   </script>
 
 </main>
