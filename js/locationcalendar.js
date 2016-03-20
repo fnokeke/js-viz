@@ -2,86 +2,13 @@
  * Created by fnokeke on 1/9/16.
  */
 
-// minor tweak to make sure google calendar client actually runs
-
-//function startGCal() {
-//    gCal.run()
-//}
-
 var
-
-    gCal = {
-
-        //CLIENT_ID: '176049196616-koqftr6rrmlk91m5ssqdnbbe2cfdgsul.apps.googleusercontent.com',
-        //SCOPES: ["https://www.googleapis.com/auth/calendar"],
-        //
-        //run: function () {
-        //    gCal.checkAuth();
-        //},
-
-        /**
-         * Check if current user has authorized this application.
-         */
-        //checkAuth: function () {
-        //    console.log("just called checkAuth");
-        //    gapi.auth.authorize({
-        //        'client_id': gCal.CLIENT_ID,
-        //        'scope': gCal.SCOPES.join(' '),
-        //        'immediate': true
-        //    }, gCal.handleAuthResult);
-        //    console.log("ran just fine.");
-        //},
-
-        /**
-         * Handle response from authorization server.
-         *
-         * @param {Object} authResult Authorization result.
-         */
-        //handleAuthResult: function (authResult) {
-        //    var authorizeDiv = document.getElementById('authorize-div');
-        //    var authorizeSuccessfulDiv = document.getElementById('authorizeSuccessful-div');
-        //    if (authResult && !authResult.error) {
-        //        // Hide auth UI, then load client library.
-        //        authorizeSuccessfulDiv.style.display = 'inline';
-        //        authorizeDiv.style.display = 'none';
-        //        gCal.loadCalendarApi();
-        //    } else {
-        //        authorizeSuccessfulDiv.style.display = 'none';
-        //        authorizeDiv.style.display = 'inline';
-        //    }
-        //},
-
-        /**
-         * Initiate auth flow in response to user clicking authorize button.
-         *
-         * @param {Event} event Button click event.
-         */
-        //handleAuthClick: function (event) {
-        //    gapi.auth.authorize(
-        //        {client_id: gCal.CLIENT_ID, scope: gCal.SCOPES, immediate: false},
-        //        gCal.handleAuthResult);
-        //    return false;
-        //},
-
-        /**
-         * Load Google Calendar client library.
-         */
-        //loadCalendarApi: function () {
-        //    gapi.client.load('calendar', 'v3', function () {
-        //        $('#status').text('Calendar authorization successful!');
-        //        $('#status').css('color', 'green');
-        //    });
-        //
-        //}
-    },
-
     ui = {
 
         host: window.location.hostname === 'localhost' ?
             'http://localhost:63342/js-viz/' :
             'https://eaf.smalldata.io/partner/slm/',
 
-        daysCount: 0,
         workCounter: 1,
         hobbyCounter: 1,
         fullCalendarViewURL: 'http://calendar.google.com', // URL updated later in the code with proper parameters
@@ -136,128 +63,128 @@ var
             locSource === 'yes' ? ui.goToAnchor('upload') : ui.goToAnchor('download');
         },
 
-        processMobilityLocation: function () {
-            return;
+        //processMobilityLocation: function () {
+        //    return;
+        //
+        //    var
+        //        endDate = '2015-12-20',
+        //        todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
+        //        mobilityDates = [];
+        //
+        //    for (var i = 0; i < ui.daysCount; i++) {
+        //        var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+        //        tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+        //        mobilityDates.push(tmpDate);
+        //    }
+        //
+        //    console.log("mobilityDates:", mobilityDates);
+        //    mobilityDates.forEach(function (date) {
+        //        dsu.query({
+        //            "date": date,
+        //            "device": "android",
+        //            "success": function (result) {
+        //                console.log("callback success:", result);
+        //            },
+        //            "error": function (result) {
+        //                console.log(date + " not found. Error code = " + result);
+        //            },
+        //        });
+        //    });
+        //},
 
-            var
-                endDate = '2015-12-20',
-                todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
-                mobilityDates = [];
-
-            for (var i = 0; i < ui.daysCount; i++) {
-                var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
-                tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
-                mobilityDates.push(tmpDate);
-            }
-
-            console.log("mobilityDates:", mobilityDates);
-            mobilityDates.forEach(function (date) {
-                dsu.query({
-                    "date": date,
-                    "device": "android",
-                    "success": function (result) {
-                        console.log("callback success:", result);
-                    },
-                    "error": function (result) {
-                        console.log(date + " not found. Error code = " + result);
-                    },
-                });
-            });
-        },
-
-        useInputProvided: function () {
-
-            var
-                obj,
-                home,
-                work,
-                hobby,
-                hasValidHome,
-                hasValidWork,
-                hasValidHobby,
-                daysCount;
-
-
-            home = [], work = [], hobby = [];
-            var formResults = $("#addressForm").serializeArray();
-
-            for (var i = 0; i < formResults.length; i++) {
-                obj = formResults[i];
-                if (obj.name.indexOf('homeAddress') !== -1)
-                    home.push(obj.value);
-                else if (obj.name.indexOf('workAddress') !== -1)
-                    work.push(obj.value);
-                else if (obj.name.indexOf('hobbyAddress') !== -1)
-                    hobby.push(obj.value);
-                else if (obj.name === 'daysCount')
-                    daysCount = obj.value;
-            }
-
-            hasValidHome = false, hasValidWork = false, hasValidHobby = false;
-
-            for (var i = 0; i < home.length; i++) {
-                if (home[i] !== '') {
-                    hasValidHome = true;
-                    break;
-                }
-            }
-
-            for (var i = 0; i < work.length; i++) {
-                if (work[i] !== '') {
-                    hasValidWork = true;
-                    break;
-                }
-            }
-
-            for (var i = 0; i < hobby.length; i++) {
-                if (hobby[i] !== '') {
-                    hasValidHobby = true;
-                    break;
-                }
-            }
-
-            if (!(hasValidHome && hasValidWork && hasValidHobby && daysCount !== '')) {
-                ui.goToAnchor('address');
-                $('#addressStatus').text('Please complete all fields.');
-                $('#addressStatus').css('color', 'red');
-                return;
-            } else {
-                $('#addressStatus').text('Fields successfully completed!');
-                $('#addressStatus').css('color', 'green');
-
-                var
-                    createdCalendarId = localStorage.createdCalendarId,
-                    createdCalendarSummary = localStorage.createdCalendarSummary,
-                    token = localStorage.token;
-
-                localStorage.clear();
-                localStorage.createdCalendarId = createdCalendarId;
-                localStorage.createdCalendarSummary = createdCalendarSummary;
-                localStorage.token = token;
-
-                // store primary calendar Id
-                var request = gapi.client.calendar.calendars.get({
-                    'calendarId': 'primary'
-                });
-                request.execute(function (resp) {
-                    console.log('Retrieved primary id:', resp.id);
-                    console.log('Retrieved timezone:', resp.timeZone);
-                    localStorage.primaryCalendarId = resp.id;
-                    localStorage.timeZone = resp.timeZone;
-                });
-
-                // store all form data in localStorage
-                for (var i = 0; i < formResults.length; i++) {
-                    obj = formResults[i];
-                    if (obj.value !== '')
-                        localStorage[obj.name] = obj.value;
-                }
-
-                ui.daysCount = daysCount;
-                ui.goToAnchor('locationHistory');
-            }
-
-        },
+        //useInputProvided: function () {
+        //
+        //    var
+        //        obj,
+        //        home,
+        //        work,
+        //        hobby,
+        //        hasValidHome,
+        //        hasValidWork,
+        //        hasValidHobby,
+        //        daysCount;
+        //
+        //
+        //    home = [], work = [], hobby = [];
+        //    var formResults = $("#addressForm").serializeArray();
+        //
+        //    for (var i = 0; i < formResults.length; i++) {
+        //        obj = formResults[i];
+        //        if (obj.name.indexOf('homeAddress') !== -1)
+        //            home.push(obj.value);
+        //        else if (obj.name.indexOf('workAddress') !== -1)
+        //            work.push(obj.value);
+        //        else if (obj.name.indexOf('hobbyAddress') !== -1)
+        //            hobby.push(obj.value);
+        //        else if (obj.name === 'daysCount')
+        //            daysCount = obj.value;
+        //    }
+        //
+        //    hasValidHome = false, hasValidWork = false, hasValidHobby = false;
+        //
+        //    for (var i = 0; i < home.length; i++) {
+        //        if (home[i] !== '') {
+        //            hasValidHome = true;
+        //            break;
+        //        }
+        //    }
+        //
+        //    for (var i = 0; i < work.length; i++) {
+        //        if (work[i] !== '') {
+        //            hasValidWork = true;
+        //            break;
+        //        }
+        //    }
+        //
+        //    for (var i = 0; i < hobby.length; i++) {
+        //        if (hobby[i] !== '') {
+        //            hasValidHobby = true;
+        //            break;
+        //        }
+        //    }
+        //
+        //    if (!(hasValidHome && hasValidWork && hasValidHobby && daysCount !== '')) {
+        //        ui.goToAnchor('address');
+        //        $('#addressStatus').text('Please complete all fields.');
+        //        $('#addressStatus').css('color', 'red');
+        //        return;
+        //    } else {
+        //        $('#addressStatus').text('Fields successfully completed!');
+        //        $('#addressStatus').css('color', 'green');
+        //
+        //        var
+        //            createdCalendarId = localStorage.createdCalendarId,
+        //            createdCalendarSummary = localStorage.createdCalendarSummary,
+        //            token = localStorage.token;
+        //
+        //        localStorage.clear();
+        //        localStorage.createdCalendarId = createdCalendarId;
+        //        localStorage.createdCalendarSummary = createdCalendarSummary;
+        //        localStorage.token = token;
+        //
+        //        // store primary calendar Id
+        //        var request = gapi.client.calendar.calendars.get({
+        //            'calendarId': 'primary'
+        //        });
+        //        request.execute(function (resp) {
+        //            console.log('Retrieved primary id:', resp.id);
+        //            console.log('Retrieved timezone:', resp.timeZone);
+        //            localStorage.primaryCalendarId = resp.id;
+        //            localStorage.timeZone = resp.timeZone;
+        //        });
+        //
+        //        // store all form data in localStorage
+        //        for (var i = 0; i < formResults.length; i++) {
+        //            obj = formResults[i];
+        //            if (obj.value !== '')
+        //                localStorage[obj.name] = obj.value;
+        //        }
+        //
+        //        ui.daysCount = daysCount;
+        //        ui.goToAnchor('locationHistory');
+        //    }
+        //
+        //},
 
         processGoogleLocation: function (uploadedData) {
             // convert full addresses to lat,lon
@@ -756,7 +683,6 @@ var
                                 ui.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
 
                                 // embed calendar view
-
                                 var
                                     primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
                                     locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
@@ -808,7 +734,7 @@ var
                     todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
                     dsuDates = [];
 
-                for (var i = 0; i < ui.daysCount; i++) {
+                for (var i = 0; i < localStorage.daysCount; i++) {
                     var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
                     tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
                     dsuDates.push(tmpDate);
@@ -957,6 +883,31 @@ var
 (function (gapi, $, prettySize, _) {
     'use strict';
 
+    var helper = {
+
+        assert: function (condition, message) {
+            if (!condition) throw new Error(message)
+        },
+
+        modifyDiv: function (div, action) {
+            var divElement = document.getElementById(div);
+            (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'block';
+        },
+
+        goToAnchor: function (anchor) {
+            var loc = document.location.toString().split('#')[0];
+            document.location = loc + '#' + anchor;
+            return false;
+        },
+
+        updateDiv: function (div, message, msgType) {
+            $(div).text(message);
+            msgType === 'error'
+                ? $(div).css('color', 'red')
+                : $(div).css('color', 'green');
+        }
+    };
+
     stageOne();
 
     function stageOne() {
@@ -999,59 +950,222 @@ var
             return false;
         });
 
+        $('#beginButton').click(function () {
+            helper.goToAnchor('address');
+        });
+
         // Load Google Calendar client library.
         function loadCalendarApi() {
             gapi.client.load('calendar', 'v3', function () {
-                stageTwo();
             });
         }
+
+    } // stageOne
+
+    stageTwo();
+
+    function stageTwo() {
+
+        $('#addWorkButton').click(function () {
+            createAddressField('work');
+        });
+
+        $('#addHobbyButton').click(function () {
+            createAddressField('hobby');
+        });
+
+        $('#saveInputButton').click(function () {
+            saveInput();
+        });
 
         populateView();
 
         function populateView() {
+            var primaryCalendarId,
+                locationCalendarId,
+                timeZone,
+                iFrameText;
+
             // auto populate address fields with last entries
             for (var key in localStorage) {
                 if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' &&
                     key !== 'workAddress0' && key !== 'hobbyAddress0') {
-                    ui.addTextWithRemoveButton(key, localStorage[key])
+                    createAddressField(key, localStorage[key], true);
                 } else {
                     $('#' + key).val(localStorage[key]);
                 }
             }
 
             // show default iFrame calendar
-            var
-                primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
-                locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
-                timeZone = encodeURIComponent(localStorage.timeZone),
-                iFrameText =
-                    '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
-                    'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
-                    'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
-                    'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
-                    'ctz=' + timeZone +
-                    'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
-                    '</iframe>';
+            primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId);
+            locationCalendarId = encodeURIComponent(localStorage.createdCalendarId);
+            timeZone = encodeURIComponent(localStorage.timeZone);
+            iFrameText =
+                '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+                'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+                'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+                'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+                'ctz=' + timeZone +
+                'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
+                '</iframe>';
 
             $('#date-output').html(iFrameText);
         }
 
-    } // stageOne
 
-    function stageTwo() {
-        console.log("stage two launched.");
+        // create additional text fields when button is clicked
+        function createAddressField(labelName, inputValue, isPopulating) {
+            var counter,
+                inputName,
+                inputDiv,
+                removeButtonName;
 
+            if (!isPopulating) {
+                if (labelName === 'work') {
+                    localStorage.workId = 1 + parseInt(localStorage.workId || 0);
+                    counter = localStorage.workId;
+                } else if (labelName === 'hobby') {
+                    localStorage.hobbyId = 1 + parseInt(localStorage.hobbyId || 0);
+                    counter = localStorage.hobbyId;
+                }
+                inputName = labelName + 'Address' + counter;
+            } else {
+                inputName = labelName;
+            }
+
+            removeButtonName = 'remove' + inputName;
+            inputDiv = inputName.replace(/\d+/g, '') + '-div';
+            inputValue = inputValue || '';
+
+            $('<input/>').attr(
+                {
+                    type: 'text',
+                    name: inputName,
+                    id: inputName,
+                    value: inputValue,
+                    placeholder: 'enter another ' + labelName + ' address.',
+                }
+            ).appendTo('#' + inputDiv);
+
+            $('<input/>').attr({
+                type: 'button',
+                name: removeButtonName,
+                id: removeButtonName,
+                value: '-',
+                class: 'btn btn-sign',
+            }).appendTo('#' + inputDiv);
+
+            $('#' + removeButtonName).click(function () {
+                $('#' + inputName).remove();
+                $('#' + removeButtonName).remove();
+                delete localStorage[inputName];
+            });
+        }
+
+        // save input from user
+        function saveInput() {
+
+            var home,
+                work,
+                hobby,
+                hasValidHome,
+                hasValidWork,
+                hasValidHobby,
+                formEntry,
+                $formResults,
+                daysCount,
+                createdCalendarId,
+                createdCalendarSummary,
+                token;
+
+
+            home = [], work = [], hobby = [];
+            $formResults = $("#addressForm").serializeArray();
+
+            for (var i = 0; i < $formResults.length; i++) {
+                formEntry = $formResults[i];
+                if (formEntry.name.indexOf('homeAddress') !== -1)
+                    home.push(formEntry.value);
+                else if (formEntry.name.indexOf('workAddress') !== -1)
+                    work.push(formEntry.value);
+                else if (formEntry.name.indexOf('hobbyAddress') !== -1)
+                    hobby.push(formEntry.value);
+                else if (formEntry.name === 'daysCount')
+                    daysCount = formEntry.value;
+            }
+
+            hasValidHome = false, hasValidWork = false, hasValidHobby = false;
+
+            for (var i = 0; i < home.length; i++) {
+                if (home[i] !== '') {
+                    hasValidHome = true;
+                    break;
+                }
+            }
+
+            for (var i = 0; i < work.length; i++) {
+                if (work[i] !== '') {
+                    hasValidWork = true;
+                    break;
+                }
+            }
+
+            for (var i = 0; i < hobby.length; i++) {
+                if (hobby[i] !== '') {
+                    hasValidHobby = true;
+                    break;
+                }
+            }
+
+            if (!(hasValidHome && hasValidWork && hasValidHobby && daysCount !== '')) {
+                helper.goToAnchor('address');
+                helper.updateDiv('#addressStatus', 'Please complete all fields.', 'error');
+                return;
+            } else {
+                helper.updateDiv('#addressStatus', 'Fields successfully completed!', 'success');
+
+                createdCalendarId = localStorage.createdCalendarId;
+                createdCalendarSummary = localStorage.createdCalendarSummary;
+                token = localStorage.token;
+
+                localStorage.clear();
+                localStorage.createdCalendarId = createdCalendarId;
+                localStorage.createdCalendarSummary = createdCalendarSummary;
+                localStorage.token = token;
+                localStorage.daysCount = daysCount;
+
+                // store primary calendar Id
+                var request = gapi.client.calendar.calendars.get({
+                    'calendarId': 'primary'
+                });
+                request.execute(function (resp) {
+                    console.log('Retrieved primary id:', resp.id);
+                    console.log('Retrieved timezone:', resp.timeZone);
+                    localStorage.primaryCalendarId = resp.id;
+                    localStorage.timeZone = resp.timeZone;
+                });
+
+                // store all form data in localStorage
+                for (var i = 0; i < $formResults.length; i++) {
+                    formEntry = $formResults[i];
+                    if (formEntry.value !== '') {
+                        localStorage[formEntry.name] = formEntry.value;
+
+                        //if (formEntry.name.indexOf("workAddress") >= 0 && formEntry.name !== 'workAddress0') {
+                        //    wc++;
+                        //    console.log("work address counter increased to: ", wc);
+                        //} else if (formEntry.name.indexOf("hobbyAddress") >= 0 && formEntry.name !== 'hobbyAddress0') {
+                        //    hc++;
+                        //    console.log("hobby address counter increased to: ", hc);
+                        //}
+                    }
+                }
+
+                helper.goToAnchor('locationHistory');
+            }
+
+        }
     }
 
 
-    console.log('g', gapi);
-    console.log('jquery', $);
-    console.log('prettySize', prettySize);
-    console.log('underscore', _);
-
 }(gapi, jQuery, prettySize, _));
-
-
-
-
-
