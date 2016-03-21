@@ -27,7 +27,7 @@
 
     // show default iFrame calendar
     if (localStorage.iFrameText) {
-      $('#date-output').html(localStorage.iFrameText);
+      // $('#date-output').html(localStorage.iFrameText);
     }
   }
 
@@ -92,7 +92,6 @@
         request.execute(function (resp) {
           localStorage.primaryCalendarId = resp.id;
           localStorage.timeZone = resp.timeZone;
-          console.log("resp was:", resp);
         });
 
         // create new calendar if non exists
@@ -120,6 +119,10 @@
 
     $('#addHobbyButton').click(function () {
       createAddressField('hobby');
+    });
+    
+    $('#openCalendar').click(function () {
+      helper.openFullCalendarView();
     });
 
     $('#saveInputButton').click(function () {
@@ -711,7 +714,7 @@
                         'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
                         '</iframe>';
 
-                $('#date-output').html(dateText + iFrameText);
+                // $('#date-output').html(dateText + iFrameText);
                 localStorage.iFrameText = iFrameText;
 
                 helper.modifyDiv('calendar-div', 'hide');
@@ -1178,33 +1181,48 @@
 
 }(gapi, jQuery, prettySize, _));
 
+// processMobilityLocation();
+// $.ajax({
+//   method: "GET",
+//   headers: {
+//     "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
+//   },
+//   url: "https://ohmage-omh.smalldata.io/dsu/dataPoints",
+//   data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
+//   success: function (result) {
+//     console.log(result);
+//   },
+//   error: function (e, status, error) {
+//     console.log(e);
+//   }
+// });
 
 function processMobilityLocation() {
   "use strict";
 
-   var endDate = '2015-12-20',
-       todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
-       mobilityDates = [];
+  var endDate = '2015-12-20',
+      todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
+      mobilityDates = [];
 
-   for (var i = 0; i < 1; i++) {
-       var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
-       tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
-       mobilityDates.push(tmpDate);
-   }
+  for (var i = 0; i < 1; i++) {
+    var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+    tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+    mobilityDates.push(tmpDate);
+  }
 
-   console.log("mobilityDates:", mobilityDates);
-   mobilityDates.forEach(function (date) {
-       dsu.query({
-           "date": date,
-           "device": "android",
-           "success": function (result) {
-               console.log("callback success:", result);
-           },
-           "error": function (result) {
-               console.log(date + " not found. Error code = " + result);
-           },
-       });
-   });
+  console.log("mobilityDates:", mobilityDates);
+  mobilityDates.forEach(function (date) {
+    dsu.query({
+      "date": date,
+      "device": "android",
+      "success": function (result) {
+        console.log("callback success:", result);
+      },
+      "error": function (result) {
+        console.log(date + " not found. Error code = " + result);
+      },
+    });
+  });
 }
 
 
