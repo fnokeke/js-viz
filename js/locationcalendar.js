@@ -120,7 +120,7 @@
     $('#addHobbyButton').click(function () {
       createAddressField('hobby');
     });
-    
+
     $('#openCalendar').click(function () {
       helper.openFullCalendarView();
     });
@@ -714,6 +714,8 @@
                         'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
                         '</iframe>';
 
+                $('#date-output').html(dateText);
+                
                 // $('#date-output').html(dateText + iFrameText);
                 localStorage.iFrameText = iFrameText;
 
