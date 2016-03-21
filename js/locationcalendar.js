@@ -707,7 +707,7 @@
                         'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
 
                         'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
-                        'ctz=' + timeZone +
+                        // 'ctz=' + timeZone +
                         'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
                         '</iframe>';
 
@@ -1179,7 +1179,6 @@
 }(gapi, jQuery, prettySize, _));
 
 
-processMobilityLocation();
 function processMobilityLocation() {
   "use strict";
 
