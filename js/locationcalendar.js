@@ -1183,21 +1183,21 @@
 
 }(gapi, jQuery, prettySize, _));
 
-// processMobilityLocation();
-// $.ajax({
-//   method: "GET",
-//   headers: {
-//     "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
-//   },
-//   url: "https://ohmage-omh.smalldata.io/dsu/dataPoints",
-//   data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
-//   success: function (result) {
-//     console.log(result);
-//   },
-//   error: function (e, status, error) {
-//     console.log(e);
-//   }
-// });
+processMobilityLocation();
+$.ajax({
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
+  },
+  url: "http://aws-qa.smalldata.io/dsu/",
+  data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
+  success: function (result) {
+    console.log(result);
+  },
+  error: function (e, status, error) {
+    console.log(e);
+  }
+});
 
 function processMobilityLocation() {
   "use strict";

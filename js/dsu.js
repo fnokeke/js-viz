@@ -1,4 +1,6 @@
 // token is set when user is redirected the first time
+document.domain = "smalldata.io";
+
 var dsu =
 {
   dsu_url: "http://aws-qa.smalldata.io/dsu/",
