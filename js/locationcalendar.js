@@ -195,12 +195,12 @@
 
         createdCalendarId = localStorage.createdCalendarId;
         createdCalendarSummary = localStorage.createdCalendarSummary;
-        token = localStorage.token;
+        token = localStorage.dsuToken;
 
         localStorage.clear();
         localStorage.createdCalendarId = createdCalendarId;
         localStorage.createdCalendarSummary = createdCalendarSummary;
-        localStorage.token = token;
+        localStorage.dsuToken = token;
         localStorage.daysCount = daysCount;
 
         // store all form data in localStorage
@@ -705,7 +705,7 @@
                     iFrameText =
                         '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
                         'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
-                        'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
+
                         'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
                         'ctz=' + timeZone +
                         'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
@@ -1179,34 +1179,34 @@
 }(gapi, jQuery, prettySize, _));
 
 
-//processMobilityLocation: function () {
-//    return;
-//
-//    var
-//        endDate = '2015-12-20',
-//        todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
-//        mobilityDates = [];
-//
-//    for (var i = 0; i < ui.daysCount; i++) {
-//        var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
-//        tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
-//        mobilityDates.push(tmpDate);
-//    }
-//
-//    console.log("mobilityDates:", mobilityDates);
-//    mobilityDates.forEach(function (date) {
-//        dsu.query({
-//            "date": date,
-//            "device": "android",
-//            "success": function (result) {
-//                console.log("callback success:", result);
-//            },
-//            "error": function (result) {
-//                console.log(date + " not found. Error code = " + result);
-//            },
-//        });
-//    });
-//},
+processMobilityLocation();
+function processMobilityLocation() {
+  "use strict";
+
+   var endDate = '2015-12-20',
+       todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
+       mobilityDates = [];
+
+   for (var i = 0; i < 1; i++) {
+       var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+       tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+       mobilityDates.push(tmpDate);
+   }
+
+   console.log("mobilityDates:", mobilityDates);
+   mobilityDates.forEach(function (date) {
+       dsu.query({
+           "date": date,
+           "device": "android",
+           "success": function (result) {
+               console.log("callback success:", result);
+           },
+           "error": function (result) {
+               console.log(date + " not found. Error code = " + result);
+           },
+       });
+   });
+}
 
 
 var dsuAnalysis = {

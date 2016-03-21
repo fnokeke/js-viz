@@ -8,12 +8,13 @@
 
 <script>
   var url = window.location.href;
-  localStorage.token = url.match(/\#(?:access_token)\=([\S\s]*?)\&/)[1];
+  localStorage.dsuToken = url.match(/\#(?:access_token)\=([\S\s]*?)\&/)[1];
+  console.log("token is:", localStorage.dsuToken);
 
   if (window.location.hostname === 'localhost')
-    window.location.href = 'http://localhost:63342/js-viz/index.html?token=' + localStorage.token;
+    window.location.href = 'http://localhost:63342/js-viz/index.html?token=' + localStorage.dsuToken;
   else
-    window.location.href = 'https://eaf.smalldata.io/partner/slm/index.html?token=' + localStorage.token;
+    window.location.href = 'https://eaf.smalldata.io/partner/slm/index.html?token=' + localStorage.dsuToken;
 </script>
 
 </body>

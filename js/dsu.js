@@ -2,7 +2,7 @@
 var dsu =
 {
   dsu_url: "http://aws-qa.smalldata.io/dsu/",
-  token: localStorage.token,
+  token: localStorage.dsuToken,
 
   _data: [],
   _skip: 0,
