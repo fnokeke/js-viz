@@ -5,88 +5,30 @@
 (function (gapi, $, prettySize, _) {
   'use strict';
 
-  var helper = {
+  initView();
 
-    assert: function (condition, message) {
-      if (!condition) {
-        throw new Error(message);
+  function initView() {
+
+    // populate address fields with last entries
+    for (var key in localStorage) {
+      if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' &&
+          key !== 'workAddress0' && key !== 'hobbyAddress0') {
+        createAddressField(key, localStorage[key], true);
+      } else {
+        $('#' + key).val(localStorage[key]);
       }
-    },
-
-    goToAnchor: function (anchor) {
-      var loc = document.location.toString().split('#')[0];
-      document.location = loc + '#' + anchor;
-      return false;
-    },
-
-    modifyDiv: function (div, action) {
-      var divElement = document.getElementById(div);
-      (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'block';
-    },
-
-    openFullCalendarView: function () {
-      window.location.href = 'http://calendar.google.com'; // URL updated later in the code with proper parameter
-    },
-
-    updateDiv: function (div, message, color) {
-      $(div).text(message);
-      $(div).css('color', color);
     }
-  };
 
-
-  /*
-   * add new calendar to calendar list but avoid creating duplicate calendar
-   * but make sure the calendar id exists on Google Server
-   * store new calendar id in localStorage
-   */
-  function checkCalendarExists(calSummary, callback) {
-
-    var
-        index,
-        request,
-        cal,
-        calendarList = [];
-
-    request = gapi.client.calendar.calendarList.list();
-    request.execute(function (resp) {
-      if (!resp) {
-        callback(-1);
-      } else {
-        calendarList = resp.items;
-        helper.assert(resp.items !== undefined, "calendarList test.");
-        for (index = 0; index < calendarList.length; index++) {
-          cal = calendarList[index];
-          if (cal.summary === calSummary) {
-            localStorage.createdCalendarId = cal.id;
-            localStorage.createdCalendarSummary = cal.summary;
-            callback(cal.id);
-            break;
-          }
-        }
-
-        if (index >= calendarList.length) {
-          callback(-1);
-        }
-      }
+    // attach autocomplete listeners to addresses
+    var addresses = ['homeAddress0', 'workAddress0', 'hobbyAddress0'];
+    addresses.forEach(function (address) {
+      addAutocompleteListener(address);
     });
-  }
 
-  function createCalendar(calendarSummary, callback) {
-    var request = gapi.client.calendar.calendars.insert({
-      'summary': calendarSummary
-    });
-    request.execute(function (resp) {
-      if (resp === undefined) {
-        callback(-1);
-      } else {
-        localStorage.createdCalendarId = resp.result.id;
-        localStorage.createdCalendarSummary = calendarSummary;
-        callback(200);
-        var msg = "Successful in creating calendar: " + createdCalendarSummary;
-        console.log(msg);
-      }
-    });
+    // show default iFrame calendar
+    if (localStorage.iFrameText) {
+      $('#date-output').html(localStorage.iFrameText);
+    }
   }
 
   stageOne();
@@ -150,6 +92,7 @@
         request.execute(function (resp) {
           localStorage.primaryCalendarId = resp.id;
           localStorage.timeZone = resp.timeZone;
+          console.log("resp was:", resp);
         });
 
         // create new calendar if non exists
@@ -167,7 +110,6 @@
     }
 
   } // stageOne
-
 
   stageTwo();
   function stageTwo() {
@@ -188,76 +130,6 @@
       var $locSource = $('input:radio[name=locationHistory]:checked').val();
       $locSource === 'yes' ? helper.goToAnchor('upload') : helper.goToAnchor('download');
     });
-
-    populateView();
-
-    function populateView() {
-
-      // populate address fields with last entries
-      for (var key in localStorage) {
-        if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' &&
-            key !== 'workAddress0' && key !== 'hobbyAddress0') {
-          createAddressField(key, localStorage[key], true);
-        } else {
-          $('#' + key).val(localStorage[key]);
-        }
-      }
-
-      // show default iFrame calendar
-      if (localStorage.iFrameText) {
-        $('#date-output').html(localStorage.iFrameText);
-      }
-    }
-
-
-    // create additional text fields when button is clicked
-    function createAddressField(labelName, inputValue, isPopulating) {
-      var counter,
-          inputName,
-          inputDiv,
-          removeButtonName;
-
-      if (!isPopulating) {
-        if (labelName === 'work') {
-          localStorage.workId = 1 + parseInt(localStorage.workId || 0);
-          counter = localStorage.workId;
-        } else if (labelName === 'hobby') {
-          localStorage.hobbyId = 1 + parseInt(localStorage.hobbyId || 0);
-          counter = localStorage.hobbyId;
-        }
-        inputName = labelName + 'Address' + counter;
-      } else {
-        inputName = labelName;
-      }
-
-      removeButtonName = 'remove' + inputName;
-      inputDiv = inputName.replace(/\d+/g, '') + '-div';
-      inputValue = inputValue || '';
-
-      $('<input/>').attr(
-          {
-            type: 'text',
-            name: inputName,
-            id: inputName,
-            value: inputValue,
-            placeholder: 'enter another ' + labelName + ' address.',
-          }
-      ).appendTo('#' + inputDiv);
-
-      $('<input/>').attr({
-        type: 'button',
-        name: removeButtonName,
-        id: removeButtonName,
-        value: '-',
-        class: 'btn btn-sign',
-      }).appendTo('#' + inputDiv);
-
-      $('#' + removeButtonName).click(function () {
-        $('#' + inputName).remove();
-        $('#' + removeButtonName).remove();
-        delete localStorage[inputName];
-      });
-    }
 
     // save input from user
     function saveInput() {
@@ -820,6 +692,7 @@
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
                 helper.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
 
+
                 // embed calendar view
                 var
                     primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
@@ -1145,6 +1018,164 @@
     }
   }
 
+
+  // ===================
+  // shared functions
+  // for all stages
+  // ===================
+
+  var helper = {
+
+    assert: function (condition, message) {
+      if (!condition) {
+        throw new Error(message);
+      }
+    },
+
+    goToAnchor: function (anchor) {
+      var loc = document.location.toString().split('#')[0];
+      document.location = loc + '#' + anchor;
+      return false;
+    },
+
+    modifyDiv: function (div, action) {
+      var divElement = document.getElementById(div);
+      (action === 'hide') ? divElement.style.display = 'none' : divElement.style.display = 'block';
+    },
+
+    openFullCalendarView: function () {
+      window.location.href = 'http://calendar.google.com'; // URL updated later in the code with proper parameter
+    },
+
+    updateDiv: function (div, message, color) {
+      $(div).text(message);
+      $(div).css('color', color);
+    }
+  };
+
+  function addAutocompleteListener(id) {
+    var address,
+        autocomplete,
+        place;
+
+    address = document.getElementById(id);
+    autocomplete = new google.maps.places.Autocomplete(address);
+    autocomplete.setTypes([]);
+
+    autocomplete.addListener('place_changed', function () {
+      place = autocomplete.getPlace();
+    });
+  }
+
+  /*
+   * add new calendar to calendar list but avoid creating duplicate calendar
+   * but make sure the calendar id exists on Google Server
+   * store new calendar id in localStorage
+   */
+  function checkCalendarExists(calSummary, callback) {
+
+    var
+        index,
+        request,
+        cal,
+        calendarList = [];
+
+    request = gapi.client.calendar.calendarList.list();
+    request.execute(function (resp) {
+      if (!resp) {
+        callback(-1);
+      } else {
+        calendarList = resp.items;
+        helper.assert(resp.items !== undefined, "calendarList test.");
+        for (index = 0; index < calendarList.length; index++) {
+          cal = calendarList[index];
+          if (cal.summary === calSummary) {
+            localStorage.createdCalendarId = cal.id;
+            localStorage.createdCalendarSummary = cal.summary;
+            callback(cal.id);
+            break;
+          }
+        }
+
+        if (index >= calendarList.length) {
+          callback(-1);
+        }
+      }
+    });
+  }
+
+  function createCalendar(calendarSummary, callback) {
+    var request = gapi.client.calendar.calendars.insert({
+      'summary': calendarSummary
+    });
+    request.execute(function (resp) {
+      if (resp === undefined) {
+        callback(-1);
+      } else {
+        localStorage.createdCalendarId = resp.result.id;
+        localStorage.createdCalendarSummary = calendarSummary;
+        callback(200);
+        var msg = "Successful in creating calendar: " + createdCalendarSummary;
+        console.log(msg);
+      }
+    });
+  }
+
+  // create additional text fields when button is clicked
+  function createAddressField(labelName, inputValue, isPopulating) {
+    var counter,
+        inputName,
+        inputDiv,
+        removeButtonName;
+
+    if (!isPopulating) {
+      if (labelName === 'work') {
+        localStorage.workId = 1 + parseInt(localStorage.workId || 0);
+        counter = localStorage.workId;
+      } else if (labelName === 'hobby') {
+        localStorage.hobbyId = 1 + parseInt(localStorage.hobbyId || 0);
+        counter = localStorage.hobbyId;
+      }
+      inputName = labelName + 'Address' + counter;
+    } else {
+      inputName = labelName;
+    }
+
+    removeButtonName = 'remove' + inputName;
+    inputDiv = inputName.replace(/\d+/g, '') + '-div';
+    inputValue = inputValue || '';
+
+    // create text field for address
+    $('<input/>').attr(
+        {
+          type: 'text',
+          name: inputName,
+          id: inputName,
+          value: inputValue,
+          placeholder: 'enter another ' + labelName + ' address.',
+        }
+    ).appendTo('#' + inputDiv);
+
+    // attach autocomplete listener
+    addAutocompleteListener(inputName);
+
+    // add remove button
+    $('<input/>').attr({
+      type: 'button',
+      name: removeButtonName,
+      id: removeButtonName,
+      value: '-',
+      class: 'btn btn-sign',
+    }).appendTo('#' + inputDiv);
+
+    $('#' + removeButtonName).click(function () {
+      $('#' + inputName).remove();
+      $('#' + removeButtonName).remove();
+      delete localStorage[inputName];
+    });
+  }
+
+
 }(gapi, jQuery, prettySize, _));
 
 
@@ -1236,7 +1267,7 @@ var dsuAnalysis = {
 
 
 //TODO: throw error when page hangs during file loading
-//TODO: check if calendar exists immediately you load api and create one if it doesn't
+//TODO: prevent continuation when user does not enter address
 //show calendar iframe
 
 //TODO: remove locations where user was moving or not stationary
