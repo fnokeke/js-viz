@@ -214,6 +214,11 @@
           }
         }
 
+        // clear previous file input if any
+        $('#file').val('');
+        helper.updateDiv('#uploadStatus', '', 'darkgrey');
+
+        // clear previously uploaded file
         helper.goToAnchor('data');
       }
 
@@ -228,6 +233,7 @@
 
       var file,
           fileSize,
+          filename,
           reader;
 
       if (!this.files[0]) return;
@@ -236,6 +242,7 @@
       helper.modifyDiv('working-div', 'show');
 
       file = this.files[0];
+      filename = file.name;
       fileSize = prettySize(file.size);
       reader = new FileReader();
 
@@ -261,7 +268,7 @@
 
           var data = getLocationDataFromJson(e.target.result);
 
-          helper.updateDiv('#uploadStatus', 'File loaded successfully! (' + fileSize + ')', 'darkgrey');
+          helper.updateDiv('#uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
           helper.modifyDiv('calendar-div', 'show');
 
           processLocationHistory(data);
@@ -674,7 +681,7 @@
                 for (var selectedDay in groupedByDayData) {
                   dataForDay = groupedByDayData[selectedDay];
                   allEventsForDay = getAllDwellTime(dataForDay);
-                  allEventsForDay = compressAndFilter(allEventsForDay);
+                  // allEventsForDay = compressAndFilter(allEventsForDay);
 
                   if (allEventsForDay.length > 0) {
                     batchInsert = gapi.client.newBatch();
@@ -716,6 +723,9 @@
 
                 $('#date-output').html(dateText);
                 
+                // reset file input to allow for another upload
+                $('#file').val('');
+
                 // $('#date-output').html(dateText + iFrameText);
                 localStorage.iFrameText = iFrameText;
 
@@ -1183,21 +1193,6 @@
 
 }(gapi, jQuery, prettySize, _));
 
-processMobilityLocation();
-$.ajax({
-  method: "GET",
-  headers: {
-    "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
-  },
-  url: "http://aws-qa.smalldata.io/dsu/",
-  data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
-  success: function (result) {
-    console.log(result);
-  },
-  error: function (e, status, error) {
-    console.log(e);
-  }
-});
 
 function processMobilityLocation() {
   "use strict";
@@ -1224,6 +1219,22 @@ function processMobilityLocation() {
         console.log(date + " not found. Error code = " + result);
       },
     });
+  });
+
+  // query pam data
+  $.ajax({
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
+    },
+    url: "http://aws-qa.smalldata.io/dsu/",
+    data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
+    success: function (result) {
+      console.log(result);
+    },
+    error: function (e, status, error) {
+      console.log(e);
+    }
   });
 }
 
