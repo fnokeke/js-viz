@@ -233,6 +233,8 @@
 
       var file,
           fileSize,
+          // startBlob,
+          // blob,
           filename,
           reader;
 
@@ -244,6 +246,10 @@
       file = this.files[0];
       filename = file.name;
       fileSize = prettySize(file.size);
+
+      // startBlob = file.size/2;
+      // blob = file.slice(startBlob, startBlob + 5000);
+
       reader = new FileReader();
 
       reader.onprogress = function (e) {
@@ -253,7 +259,9 @@
 
       function getLocationDataFromJson(data) {
         helper.assert(data !== '', 'parse json test.');
-        var locations = JSON.parse(data).locations;
+        var locations = JSON.parse(data);
+        locations = locations.locations;
+        // var locations = JSON.parse(data).locations;
 
         if (!locations || locations.length === 0) {
           throw new ReferenceError('No location data found.');
@@ -295,7 +303,7 @@
 
       reader.onloadend = function (e) {
         helper.modifyDiv('uploadingData-div', 'hide');
-      }
+      };
 
       reader.onerror = function () {
         helper.modifyDiv('working-div', 'hide');
@@ -722,7 +730,7 @@
                         '</iframe>';
 
                 $('#date-output').html(dateText);
-                
+
                 // reset file input to allow for another upload
                 $('#file').val('');
 
@@ -733,296 +741,6 @@
                 helper.modifyDiv('working-div', 'hide');
 
                 helper.goToAnchor('calendar');
-              }
-
-
-              resetThenInsertNewEvents(localStorage.createdCalendarId, data);
-
-              function resetThenInsertNewEvents(calendarId, givenData) {
-
-                // function deleteAllEvents(calendarId) {
-                //   var events,
-                //       event,
-                //       listRequest,
-                //       batchDelete,
-                //       requestDeleted,
-                //       deleteRequest,
-                //       msg;
-                //
-                //   return new Promise(function (resolve) {
-                //
-                //     listRequest = gapi.client.calendar.events.list({
-                //       'calendarId': calendarId,
-                //       'showDeleted': false,
-                //       'singleEvents': true,
-                //       'orderBy': 'startTime'
-                //     });
-                //     listRequest.execute(function (resp) {
-                //       if (!resp.result) {
-                //         return;
-                //       }
-                //
-                //       deleteRequest = function (eventId) {
-                //         return gapi.client.calendar.events.delete({
-                //           'calendarId': localStorage.createdCalendarId,
-                //           'eventId': eventId
-                //         });
-                //       };
-                //
-                //       events = resp.result.items;
-                //       if (events.length > 0) {
-                //         batchDelete = gapi.client.newBatch();
-                //         for (var i = 0; i < events.length; i++) {
-                //           event = events[i];
-                //           requestDeleted = deleteRequest(event.id);
-                //           batchDelete.add(requestDeleted);
-                //         }
-                //         batchDelete.execute(function () {
-                //           msg = "No of events deleted before loading new ones: " + events.length;
-                //           resolve(msg);
-                //         });
-                //       } else {
-                //         msg = "No events to delete.";
-                //         resolve(msg);
-                //       }
-                //     });
-                //   });
-                // }
-
-                // deleteAllEvents(calendarId).then(function (response) {
-                //
-                //       var
-                //           dataForDay,
-                //           allEventsForDay,
-                //           groupedByDayData,
-                //           insertCounter,
-                //           getAllDwellTime;
-                //
-                //       groupedByDayData = _.groupBy(givenData, 'date');
-                //
-                //       getAllDwellTime = function (dayData) {
-                //
-                //         if (dayData.length < 1)
-                //           return [];
-                //
-                //         var allResourcesForDay = [],
-                //             resource,
-                //             firstItem,
-                //             lastItem,
-                //             timeDiff,
-                //             currentLocObject,
-                //             locLabel,
-                //             latlng,
-                //             colorId,
-                //             prevLocObject,
-                //             tmpStore = [],
-                //             createResource;
-                //
-                //         tmpStore.push(dayData[0]);
-                //         var counter = 0;
-                //
-                //         var roundToTwoDP = function (num) {
-                //           return +(Math.round(num + "e+2") + "e-2");
-                //         }
-                //
-                //         for (var i = 1; i < dayData.length; i++) {
-                //           currentLocObject = dayData[i];
-                //           prevLocObject = dayData[i - 1];
-                //           if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
-                //             tmpStore.push(currentLocObject);
-                //           }
-                //           else {
-                //             firstItem = tmpStore[0];
-                //             lastItem = tmpStore[tmpStore.length - 1];
-                //
-                //             if (firstItem === undefined || lastItem === undefined) {
-                //               counter++;
-                //               continue; //minor tweak to temporary avoid bug
-                //             }
-                //
-                //             timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
-                //             latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-                //             locLabel = firstItem.locationLabel.toUpperCase();
-                //
-                //             if (firstItem.locationLabel == "home")
-                //               colorId = "10"; //green
-                //             else if (firstItem.locationLabel == "work")
-                //               colorId = "11"; //red
-                //             else if (firstItem.locationLabel == "hobby")
-                //               colorId = "6"; //brown
-                //             else if (firstItem.locationLabel == "other")
-                //               colorId = "8"; //grey
-                //
-                //             createResource = function (startTime, endTime, summary, location, colorId, tdiff, label) {
-                //               return {
-                //                 "summary": summary || 'no summary',
-                //                 "location": location || 'empty location',
-                //                 "colorId": colorId,
-                //                 "start": {
-                //                   "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
-                //                 },
-                //                 "end": {
-                //                   "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
-                //                 },
-                //                 "timediff": tdiff,
-                //                 "label": label,
-                //               };
-                //             };
-                //
-                //             resource = createResource(
-                //                 new Date(firstItem.timestampMs),
-                //                 new Date(lastItem.timestampMs),
-                //                 locLabel, latlng, colorId, timeDiff, firstItem.locationLabel);
-                //
-                //             allResourcesForDay.push(resource);
-                //
-                //             // reset tmpStore to store next location
-                //             tmpStore = [];
-                //           }
-                //         }
-                //
-                //         return allResourcesForDay;
-                //       }
-                //
-                //       var compressAndFilter = function (allEv) {
-                //         if (allEv.length < 1) {
-                //           return [];
-                //         }
-                //
-                //         var
-                //             tmpArr = [],
-                //             lastEntry,
-                //             currEv;
-                //
-                //         tmpArr.push(allEv[0]);
-                //
-                //         for (var i = 1; i < allEv.length; i++) {
-                //           lastEntry = tmpArr[tmpArr.length - 1];
-                //           currEv = allEv[i];
-                //
-                //           if (lastEntry.label === currEv.label) {
-                //             lastEntry.end = currEv.end
-                //           }
-                //           else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
-                //             //console.log("ignore counter:", ignoreCounter);
-                //             //console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
-                //
-                //             if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
-                //               if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
-                //                 tmpArr.push(currEv);
-                //                 //console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
-                //               }
-                //               else if (allEv[i + 2]) {
-                //                 if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
-                //                   tmpArr.push(currEv);
-                //                   //console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
-                //                 }
-                //               }
-                //             }
-                //           }
-                //           else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
-                //             if (allEv[i + 1]) {
-                //               if (allEv[i + 1].label === lastEntry.label) {
-                //                 lastEntry.end = currEv.end;
-                //                 //console.log("extending with label from OTHER");
-                //               }
-                //             }
-                //           }
-                //           else {
-                //             tmpArr.push(currEv);
-                //           }
-                //         }
-                //         //console.log("total ignore counter:", ignoreCounter);
-                //
-                //         var
-                //             timediff,
-                //             ev,
-                //             resultsArr = [];
-                //
-                //         //update summary and delete irrelevant fields
-                //         for (var i = 0; i < tmpArr.length; i++) {
-                //           ev = tmpArr[i];
-                //           timediff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
-                //
-                //           if (timediff > 0) {
-                //             ev.summary += " (~ " + timediff.toFixed(1) + " hours)";
-                //             delete ev.label;
-                //             delete ev.timediff;
-                //             resultsArr.push(ev);
-                //           }
-                //
-                //         }
-                //         return resultsArr;
-                //       };
-                //
-                //       var
-                //           batchInsert,
-                //           requestToInsert,
-                //           insertRequest;
-                //
-                //       insertRequest = function (ev) {
-                //         if (ev.summary.indexOf('OTHER') >= 0) {
-                //           ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
-                //         }
-                //
-                //         return gapi.client.calendar.events.insert({
-                //           'calendarId': localStorage.createdCalendarId,
-                //           'resource': ev
-                //         });
-                //       };
-                //
-                //       insertCounter = 0;
-                //       for (var selectedDay in groupedByDayData) {
-                //         dataForDay = groupedByDayData[selectedDay];
-                //         allEventsForDay = getAllDwellTime(dataForDay);
-                //         allEventsForDay = compressAndFilter(allEventsForDay);
-                //
-                //         if (allEventsForDay.length > 0) {
-                //           batchInsert = gapi.client.newBatch();
-                //           for (var i = 0; i < allEventsForDay.length; i++) {
-                //             requestToInsert = insertRequest(allEventsForDay[i]);
-                //             batchInsert.add(requestToInsert);
-                //             insertCounter++;
-                //           }
-                //
-                //           batchInsert.execute(function () {
-                //           });
-                //         }
-                //       }
-                //       console.log("Total events inserted:", insertCounter);
-                //
-                //       var dateStr = new Date(nDaysAgoTimestamp);
-                //       dateStr = extractDate(dateStr);
-                //       dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
-                //       helper.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
-                //
-                //       // embed calendar view
-                //       var
-                //           primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
-                //           locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
-                //           timeZone = encodeURIComponent(localStorage.timeZone),
-                //           dateText =
-                //               "<i> Data inserted for (" + noOfDays + " days): " +
-                //               new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
-                //               "</i>.",
-                //           iFrameText =
-                //               '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
-                //               'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
-                //               'src=' + primaryCalendarId + '&amp;color=%23AB8B00&amp;' +
-                //               'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
-                //               'ctz=' + timeZone +
-                //               'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
-                //               '</iframe>';
-                //
-                //       $('#date-output').html(dateText + iFrameText);
-                //       localStorage.iFrameText = iFrameText;
-                //
-                //       helper.modifyDiv('calendar-div', 'hide');
-                //       helper.modifyDiv('working-div', 'hide');
-                //
-                //       helper.goToAnchor('calendar');
-                //     }
-                // );
               }
 
             };
