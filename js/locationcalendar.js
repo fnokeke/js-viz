@@ -233,8 +233,7 @@
 
       var file,
           fileSize,
-          // startBlob,
-          // blob,
+          blob,
           filename,
           reader;
 
@@ -247,11 +246,11 @@
       filename = file.name;
       fileSize = prettySize(file.size);
 
-      // startBlob = file.size/2;
-      // blob = file.slice(startBlob, startBlob + 5000);
+      // extract only last 100 MB of data of uploaded file as this is enough for timeframe
+      // we are interested in. Note that about 250MB is the browser limit for loading at once in memory
+      blob = file.slice(-100 * 1024 * 1024);
 
       reader = new FileReader();
-
       reader.onprogress = function (e) {
         var percentLoaded = Math.round(( e.loaded / e.total ) * 100);
         helper.updateDiv('#uploadStatus', percentLoaded + '% of ' + fileSize + ' loaded.', 'grey');
@@ -259,9 +258,7 @@
 
       function getLocationDataFromJson(data) {
         helper.assert(data !== '', 'parse json test.');
-        var locations = JSON.parse(data);
-        locations = locations.locations;
-        // var locations = JSON.parse(data).locations;
+        var locations = JSON.parse(data).locations;
 
         if (!locations || locations.length === 0) {
           throw new ReferenceError('No location data found.');
@@ -274,7 +271,11 @@
         try {
           if (e.target.result === '') throw new RangeError();
 
-          var data = getLocationDataFromJson(e.target.result);
+          // format selected data to valid json string
+          var data = e.target.result;
+          var startIndex = data.indexOf('timestampMs');
+          data = '{ "locations": [ {"' + data.substr(startIndex);
+          data = getLocationDataFromJson(data);
 
           helper.updateDiv('#uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
           helper.modifyDiv('calendar-div', 'show');
@@ -310,7 +311,7 @@
         helper.updateDiv('#uploadStatus', 'Something went wrong reading your JSON file. ', 'red')
       };
 
-      reader.readAsText(file);
+      reader.readAsText(blob);
     });
 
 
@@ -708,7 +709,8 @@
                 var dateStr = new Date(nDaysAgoTimestamp);
                 dateStr = extractDate(dateStr);
                 dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
-                helper.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" + dateStr + "&mode=list";
+                localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
+                    dateStr + "&mode=list";
 
 
                 // embed calendar view
@@ -777,7 +779,7 @@
     },
 
     openFullCalendarView: function () {
-      window.location.href = 'http://calendar.google.com'; // URL updated later in the code with proper parameter
+      window.location.href = localStorage.fullCalendarViewURL || 'http://calendar.google.com';
     },
 
     updateDiv: function (div, message, color) {
