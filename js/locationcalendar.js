@@ -256,26 +256,21 @@
         helper.updateDiv('#uploadStatus', percentLoaded + '% of ' + fileSize + ' loaded.', 'grey');
       };
 
-      function getLocationDataFromJson(data) {
-        helper.assert(data !== '', 'parse json test.');
-        var locations = JSON.parse(data).locations;
-
-        if (!locations || locations.length === 0) {
-          throw new ReferenceError('No location data found.');
-        }
-        return locations;
-      }
-
       reader.onload = function (e) {
         var msg;
         try {
           if (e.target.result === '') throw new RangeError();
 
-          // format selected data to valid json string
+          // format selected data to valid json string and extract locations
           var data = e.target.result;
+          helper.assert(data !== '', 'parse json test.');
+
           var startIndex = data.indexOf('timestampMs');
           data = '{ "locations": [ {"' + data.substr(startIndex);
-          data = getLocationDataFromJson(data);
+          data = JSON.parse(data).locations;
+          if (!data || data.length === 0) {
+            throw new ReferenceError('No location data found.');
+          }
 
           helper.updateDiv('#uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
           helper.modifyDiv('calendar-div', 'show');
@@ -314,443 +309,556 @@
       reader.readAsText(blob);
     });
 
-
     function processLocationHistory(uploadedData) {
-      // convert full addresses to lat,lon
-      var getLatLng = function (allMappedAddresses, callback) {
-        console.log("ui addresses:", allMappedAddresses);
 
-
-        var addressLength,
-            counter,
-            coords,
-            geocoder,
-            lat,
-            lng;
-
-        coords = {};
-        counter = 0;
-        addressLength = _.size(allMappedAddresses);
-        geocoder = new google.maps.Geocoder();
-
-        for (var label in allMappedAddresses) {
-
-          (function (label, address) {
-            geocoder.geocode({'address': address}, function (results, status) {
-
-              if (status == google.maps.GeocoderStatus.OK) {
-                lat = results[0].geometry.location.lat();
-                lng = results[0].geometry.location.lng();
-                coords[label] = [lat, lng];
-              } else {
-                console.log("error geocoding:", address);
-                callback(status);
-              }
-
-              counter++;
-              if (counter === addressLength) {
-                callback(coords);
-              }
-            });
-
-          }(label, allMappedAddresses[label]));
-        }
-
-      };
-
-      var allMappedAddresses = {
+      var userAddresses = {
         home: localStorage.homeAddress0,
         work: localStorage.workAddress0,
         hobby: localStorage.hobbyAddress0
       };
 
-      getLatLng(allMappedAddresses, function (geocodedAddresses) {
-            console.log("Geocoded addresses:", geocodedAddresses);
+      var promise = geocodeAddress(userAddresses);
+      promise.then(function (geocodedAddresses) {
+        doCalendarOperations(geocodedAddresses);
+      });
 
-            var doCalendarOperations = function (addresses, uploadedData, noOfDays) {
+      function geocodeAddress(userAddresses) {
+        return new Promise(function (resolve) {
 
-              var
-                  data,
-                  dateOfLastDay,
-                  lastDayTimestamp,
-                  nDaysAgoTimestamp,
-                  HOME,
-                  HOBBY,
-                  WORK,
-                  createdCalendarSummary,
-                  extractDate;
+          console.log("user addresses:", userAddresses);
 
-              data = uploadedData;
-              helper.assert(data.length > 0, "uploaded data length test");
+          var addressLength,
+              counter,
+              coords,
+              geocoder,
+              lat,
+              lng;
 
-              // format given date to yyyy-mm-dd
-              extractDate = function (date) {
-                return date.getFullYear() + "-" +
-                    ("0" + (date.getMonth() + 1)).slice(-2) +
-                    "-" + ("0" + date.getDate()).slice(-2);
+          coords = {};
+          counter = 0;
+          addressLength = _.size(userAddresses);
+          geocoder = new google.maps.Geocoder();
+
+          for (var label in userAddresses) {
+            if (userAddresses.hasOwnProperty(label)) {
+
+              (function (label, address) {
+                geocoder.geocode({'address': address}, function (results, status) {
+
+                  if (status == google.maps.GeocoderStatus.OK) {
+                    lat = results[0].geometry.location.lat();
+                    lng = results[0].geometry.location.lng();
+                    coords[label] = [lat, lng];
+                  } else {
+                    console.log("error geocoding:", address);
+                    resolve(status);
+                  }
+
+                  counter++;
+                  if (counter === addressLength) {
+                    resolve(coords);
+                  }
+                });
+
+              }(label, userAddresses[label]));
+            }
+          }
+        });
+      }
+
+      function doCalendarOperations(geocodedAddresses) {
+        console.log("Geocoded addresses:", geocodedAddresses);
+
+        var addresses = geocodedAddresses;
+        var noOfDays = localStorage.daysCount;
+
+        var
+            data,
+            dateOfLastDay,
+            lastDayTimestamp,
+            nDaysAgoTimestamp,
+            HOME,
+            HOBBY,
+            WORK,
+            extractDate;
+
+        data = uploadedData;
+        helper.assert(data.length > 0, "uploaded data length test");
+
+        // format given date to yyyy-mm-dd
+        extractDate = function (date) {
+          return date.getFullYear() + "-" +
+              ("0" + (date.getMonth() + 1)).slice(-2) +
+              "-" + ("0" + date.getDate()).slice(-2);
+        };
+
+        // convert columns to expected format and add other new columns
+        data.forEach(function (row) {
+
+          var timestamp = parseInt(row.timestampMs),
+              rowDate = new Date(timestamp);
+
+          row.latitudeE7 = row.latitudeE7 / 10e6;
+          row.longitudeE7 = row.longitudeE7 / 10e6;
+          row.timestampMs = timestamp;
+          row.fullDate = rowDate;
+          row.date = extractDate(rowDate);
+        });
+
+        // sort entire time once otherwise have to sort each value from groupby date keys
+        data = _.sortBy(data, 'timestampMs');
+
+        // reduce data to only last N days
+        // for testing purposes you can override input with custom noOfDays
+        dateOfLastDay = new Date(data[data.length - 1].timestampMs);
+        lastDayTimestamp = dateOfLastDay.getTime();
+        nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
+
+        data = data.filter(function (row) {
+          return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
+        });
+
+        /*
+         * ignore locations with accuracy over 1000m
+         */
+        data = data.filter(function (row) {
+          return row.accuracy <= 1000;
+        });
+
+        HOME = addresses.home;
+        HOBBY = addresses.hobby;
+        WORK = addresses.work;
+
+        var distance = function (lat1, lon1, lat2, lon2) {
+          var p = 0.017453292519943295;    // Math.PI / 180
+          var c = Math.cos;
+          var a = 0.5 - c((lat2 - lat1) * p) / 2 +
+              c(lat1 * p) * c(lat2 * p) *
+              (1 - c((lon2 - lon1) * p)) / 2;
+
+          return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+        };
+
+        var marginError = 300;
+        data.forEach(function (row) {
+          if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError)
+            row.locationLabel = 'home';
+          else if (distance(WORK[0], WORK[1], row.latitudeE7, row.longitudeE7) <= marginError)
+            row.locationLabel = 'work';
+          else if (distance(HOBBY[0], HOBBY[1], row.latitudeE7, row.longitudeE7) <= marginError)
+            row.locationLabel = 'hobby';
+          else
+            row.locationLabel = 'other';
+        });
+
+        helper.assert(localStorage.createdCalendarId, "calendarId exist test");
+
+        var promise = resetCalendar(localStorage.createdCalendarId);
+        promise.then(analyzeData(data));
+
+        function resetCalendar(calendarId) {
+          return new Promise(function (resolve) {
+            var events,
+                event,
+                listRequest,
+                batchDelete,
+                requestDeleted,
+                deleteRequest,
+                msg;
+
+            listRequest = gapi.client.calendar.events.list({
+              'calendarId': calendarId,
+              'showDeleted': false,
+              'singleEvents': true,
+              'orderBy': 'startTime'
+            });
+            listRequest.execute(function (resp) {
+              if (!resp.result) {
+                return;
+              }
+
+              deleteRequest = function (eventId) {
+                return gapi.client.calendar.events.delete({
+                  'calendarId': localStorage.createdCalendarId,
+                  'eventId': eventId
+                });
               };
 
-              // convert columns to expected format and add other new columns
-              data.forEach(function (row) {
+              events = resp.result.items;
+              if (events.length > 0) {
+                batchDelete = gapi.client.newBatch();
+                for (var i = 0; i < events.length; i++) {
+                  event = events[i];
+                  requestDeleted = deleteRequest(event.id);
+                  batchDelete.add(requestDeleted);
+                }
+                batchDelete.execute(function () {
+                  msg = "No of events deleted before loading new ones: " + events.length;
+                  resolve(msg);
+                });
+              } else {
+                msg = "No events to delete.";
+                resolve(msg);
+              }
+            });
+          });
+        }
 
-                var
-                    timestamp = parseInt(row.timestampMs),
-                    rowDate = new Date(timestamp);
+        function analyzeData(givenData) {
 
-                row.latitudeE7 = row.latitudeE7 / 10e6;
-                row.longitudeE7 = row.longitudeE7 / 10e6;
-                row.timestampMs = timestamp;
-                row.fullDate = rowDate;
-                row.date = extractDate(rowDate);
-              });
+          var
+              dataForDay,
+              allEventsForDay,
+              groupedByDayData,
+              insertCounter;
 
-              // sort entire time once otherwise have to sort each value from groupby date keys
-              data = _.sortBy(data, 'timestampMs');
+          groupedByDayData = _.groupBy(givenData, 'date');
 
-              // reduce data to only last N days
-              // for testing purposes you can override input with custom noOfDays
-              dateOfLastDay = new Date(data[data.length - 1].timestampMs);
-              lastDayTimestamp = dateOfLastDay.getTime();
-              nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
 
-              data = data.filter(function (row) {
-                return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
-              });
+          var
+              batchInsert,
+              requestToInsert,
+              insertRequest;
 
-              /*
-               * ignore locations with accuracy over 1000m
-               */
-              data = data.filter(function (row) {
-                return row.accuracy <= 1000;
-              });
+          insertRequest = function (ev) {
+            if (ev.summary.indexOf('OTHER') >= 0) {
+              ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
+            }
 
-              HOME = addresses.home;
-              HOBBY = addresses.hobby;
-              WORK = addresses.work;
+            return gapi.client.calendar.events.insert({
+              'calendarId': localStorage.createdCalendarId,
+              'resource': ev
+            });
+          };
 
-              var distance = function (lat1, lon1, lat2, lon2) {
-                var p = 0.017453292519943295;    // Math.PI / 180
-                var c = Math.cos;
-                var a = 0.5 - c((lat2 - lat1) * p) / 2 +
-                    c(lat1 * p) * c(lat2 * p) *
-                    (1 - c((lon2 - lon1) * p)) / 2;
+          insertCounter = 0;
 
-                return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
-              };
+          for (var selectedDay in groupedByDayData) {
+            if (groupedByDayData.hasOwnProperty(selectedDay)) {
 
-              var marginError = 300;
-              data.forEach(function (row) {
-                if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError)
-                  row.locationLabel = 'home';
-                else if (distance(WORK[0], WORK[1], row.latitudeE7, row.longitudeE7) <= marginError)
-                  row.locationLabel = 'work';
-                else if (distance(HOBBY[0], HOBBY[1], row.latitudeE7, row.longitudeE7) <= marginError)
-                  row.locationLabel = 'hobby';
-                else
-                  row.locationLabel = 'other';
-              });
+              dataForDay = groupedByDayData[selectedDay];
+              allEventsForDay = getAllDwellTime(dataForDay);
+              allEventsForDay = compressAndFilter(allEventsForDay);
 
-              helper.assert(localStorage.createdCalendarId, "calendarId exist test");
+              if (allEventsForDay.length > 0) {
+                batchInsert = gapi.client.newBatch();
+                for (var i = 0; i < allEventsForDay.length; i++) {
+                  requestToInsert = insertRequest(allEventsForDay[i]);
+                  batchInsert.add(requestToInsert);
+                  insertCounter++;
+                }
 
-              var promise = resetCalendar(localStorage.createdCalendarId);
-              promise.then(analyzeData(data));
-
-              function resetCalendar(calendarId) {
-                return new Promise(function (resolve) {
-                  var events,
-                      event,
-                      listRequest,
-                      batchDelete,
-                      requestDeleted,
-                      deleteRequest,
-                      msg;
-
-                  listRequest = gapi.client.calendar.events.list({
-                    'calendarId': calendarId,
-                    'showDeleted': false,
-                    'singleEvents': true,
-                    'orderBy': 'startTime'
-                  });
-                  listRequest.execute(function (resp) {
-                    if (!resp.result) {
-                      return;
-                    }
-
-                    deleteRequest = function (eventId) {
-                      return gapi.client.calendar.events.delete({
-                        'calendarId': localStorage.createdCalendarId,
-                        'eventId': eventId
-                      });
-                    };
-
-                    events = resp.result.items;
-                    if (events.length > 0) {
-                      batchDelete = gapi.client.newBatch();
-                      for (var i = 0; i < events.length; i++) {
-                        event = events[i];
-                        requestDeleted = deleteRequest(event.id);
-                        batchDelete.add(requestDeleted);
-                      }
-                      batchDelete.execute(function () {
-                        msg = "No of events deleted before loading new ones: " + events.length;
-                        resolve(msg);
-                      });
-                    } else {
-                      msg = "No events to delete.";
-                      resolve(msg);
-                    }
-                  });
+                batchInsert.execute(function () {
                 });
               }
+            }
+          }
 
-              function analyzeData(givenData) {
+          function getAllDwellTime(dayData) {
 
-                var
-                    dataForDay,
-                    allEventsForDay,
-                    groupedByDayData,
-                    insertCounter,
-                    getAllDwellTime;
+            if (dayData.length < 1) {
+              return [];
+            }
 
-                groupedByDayData = _.groupBy(givenData, 'date');
+            var allResourcesForDay = [],
+                resource,
+                firstItem,
+                lastItem,
+                timeDiff,
+                currentLocObject,
+                locLabel,
+                latlng,
+                colorId,
+                prevLocObject,
+                tmpStore = [],
+                createResource;
 
-                getAllDwellTime = function (dayData) {
+            tmpStore.push(dayData[0]);
+            var counter = 0;
 
-                  if (dayData.length < 1) {
-                    return [];
-                  }
+            var roundToTwoDP = function (num) {
+              return +(Math.round(num + "e+2") + "e-2");
+            };
 
-                  var allResourcesForDay = [],
-                      resource,
-                      firstItem,
-                      lastItem,
-                      timeDiff,
-                      currentLocObject,
-                      locLabel,
-                      latlng,
-                      colorId,
-                      prevLocObject,
-                      tmpStore = [],
-                      createResource;
+            for (var i = 1; i < dayData.length; i++) {
+              currentLocObject = dayData[i];
+              prevLocObject = dayData[i - 1];
+              if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
+                tmpStore.push(currentLocObject);
+              }
+              else {
+                firstItem = tmpStore[0];
+                lastItem = tmpStore[tmpStore.length - 1];
 
-                  tmpStore.push(dayData[0]);
-                  var counter = 0;
+                if (firstItem === undefined || lastItem === undefined) {
+                  counter++;
+                  continue; //minor tweak to temporary avoid bug
+                }
 
-                  var roundToTwoDP = function (num) {
-                    return +(Math.round(num + "e+2") + "e-2");
+                timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
+                latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
+                locLabel = firstItem.locationLabel.toUpperCase();
+
+                if (firstItem.locationLabel == "home")
+                  colorId = "10"; //green
+                else if (firstItem.locationLabel == "work")
+                  colorId = "11"; //red
+                else if (firstItem.locationLabel == "hobby")
+                  colorId = "6"; //brown
+                else if (firstItem.locationLabel == "other")
+                  colorId = "8"; //grey
+
+                createResource = function (startTime, endTime, summary, location, colorId, tdiff, label) {
+                  return {
+                    "summary": summary || 'no summary',
+                    "location": location || 'empty location',
+                    "colorId": colorId,
+                    "start": {
+                      "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
+                    },
+                    "end": {
+                      "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
+                    },
+                    "timediff": tdiff,
+                    "label": label,
                   };
-
-                  for (var i = 1; i < dayData.length; i++) {
-                    currentLocObject = dayData[i];
-                    prevLocObject = dayData[i - 1];
-                    if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
-                      tmpStore.push(currentLocObject);
-                    }
-                    else {
-                      firstItem = tmpStore[0];
-                      lastItem = tmpStore[tmpStore.length - 1];
-
-                      if (firstItem === undefined || lastItem === undefined) {
-                        counter++;
-                        continue; //minor tweak to temporary avoid bug
-                      }
-
-                      timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
-                      latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-                      locLabel = firstItem.locationLabel.toUpperCase();
-
-                      if (firstItem.locationLabel == "home")
-                        colorId = "10"; //green
-                      else if (firstItem.locationLabel == "work")
-                        colorId = "11"; //red
-                      else if (firstItem.locationLabel == "hobby")
-                        colorId = "6"; //brown
-                      else if (firstItem.locationLabel == "other")
-                        colorId = "8"; //grey
-
-                      createResource = function (startTime, endTime, summary, location, colorId, tdiff, label) {
-                        return {
-                          "summary": summary || 'no summary',
-                          "location": location || 'empty location',
-                          "colorId": colorId,
-                          "start": {
-                            "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
-                          },
-                          "end": {
-                            "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
-                          },
-                          "timediff": tdiff,
-                          "label": label,
-                        };
-                      };
-
-                      resource = createResource(
-                          new Date(firstItem.timestampMs),
-                          new Date(lastItem.timestampMs),
-                          locLabel, latlng, colorId, timeDiff, firstItem.locationLabel);
-
-                      allResourcesForDay.push(resource);
-
-                      // reset tmpStore to store next location
-                      tmpStore = [];
-                    }
-                  }
-
-                  return allResourcesForDay;
                 };
 
-                var compressAndFilter = function (allEv) {
-                  if (allEv.length < 1) {
-                    return [];
+                resource = createResource(
+                    new Date(firstItem.timestampMs),
+                    new Date(lastItem.timestampMs),
+                    locLabel, latlng, colorId, timeDiff, firstItem.locationLabel);
+
+                allResourcesForDay.push(resource);
+
+                // reset tmpStore to store next location
+                tmpStore = [];
+              }
+            }
+
+            return allResourcesForDay;
+          }
+
+          function compressAndFilter(allEv) {
+
+            if (allEv.length < 1) {
+              return [];
+            }
+
+            var
+                tmpArr = [],
+                lastEntry,
+                currEv;
+
+            tmpArr.push(allEv[0]);
+
+            for (var i = 1; i < allEv.length; i++) {
+              lastEntry = tmpArr[tmpArr.length - 1];
+              currEv = allEv[i];
+
+              if (lastEntry.label === currEv.label) {
+                lastEntry.end = currEv.end
+              }
+              else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
+                //console.log("ignore counter:", ignoreCounter);
+                //console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
+
+                if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
+                  if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
+                    tmpArr.push(currEv);
+                    //console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
                   }
-
-                  var
-                      tmpArr = [],
-                      lastEntry,
-                      currEv;
-
-                  tmpArr.push(allEv[0]);
-
-                  for (var i = 1; i < allEv.length; i++) {
-                    lastEntry = tmpArr[tmpArr.length - 1];
-                    currEv = allEv[i];
-
-                    if (lastEntry.label === currEv.label) {
-                      lastEntry.end = currEv.end
-                    }
-                    else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
-                      //console.log("ignore counter:", ignoreCounter);
-                      //console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
-
-                      if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
-                        if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
-                          tmpArr.push(currEv);
-                          //console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
-                        }
-                        else if (allEv[i + 2]) {
-                          if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
-                            tmpArr.push(currEv);
-                            //console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
-                          }
-                        }
-                      }
-                    }
-                    else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
-                      if (allEv[i + 1]) {
-                        if (allEv[i + 1].label === lastEntry.label) {
-                          lastEntry.end = currEv.end;
-                          //console.log("extending with label from OTHER");
-                        }
-                      }
-                    }
-                    else {
+                  else if (allEv[i + 2]) {
+                    if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
                       tmpArr.push(currEv);
+                      //console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
                     }
-                  }
-                  //console.log("total ignore counter:", ignoreCounter);
-
-                  var
-                      timediff,
-                      ev,
-                      resultsArr = [];
-
-                  //update summary and delete irrelevant fields
-                  for (var i = 0; i < tmpArr.length; i++) {
-                    ev = tmpArr[i];
-                    timediff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
-
-                    if (timediff > 0) {
-                      ev.summary += " (~ " + timediff.toFixed(1) + " hours)";
-                      delete ev.label;
-                      delete ev.timediff;
-                      resultsArr.push(ev);
-                    }
-
-                  }
-                  return resultsArr;
-                };
-
-                var
-                    batchInsert,
-                    requestToInsert,
-                    insertRequest;
-
-                insertRequest = function (ev) {
-                  if (ev.summary.indexOf('OTHER') >= 0) {
-                    ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
-                  }
-
-                  return gapi.client.calendar.events.insert({
-                    'calendarId': localStorage.createdCalendarId,
-                    'resource': ev
-                  });
-                };
-
-                insertCounter = 0;
-                for (var selectedDay in groupedByDayData) {
-                  dataForDay = groupedByDayData[selectedDay];
-                  allEventsForDay = getAllDwellTime(dataForDay);
-                  // allEventsForDay = compressAndFilter(allEventsForDay);
-
-                  if (allEventsForDay.length > 0) {
-                    batchInsert = gapi.client.newBatch();
-                    for (var i = 0; i < allEventsForDay.length; i++) {
-                      requestToInsert = insertRequest(allEventsForDay[i]);
-                      batchInsert.add(requestToInsert);
-                      insertCounter++;
-                    }
-
-                    batchInsert.execute(function () {
-                    });
                   }
                 }
-                console.log("Total events inserted:", insertCounter);
+              }
+              else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
+                if (allEv[i + 1]) {
+                  if (allEv[i + 1].label === lastEntry.label) {
+                    lastEntry.end = currEv.end;
+                    //console.log("extending with label from OTHER");
+                  }
+                }
+              }
+              else {
+                tmpArr.push(currEv);
+              }
+            }
+            //console.log("total ignore counter:", ignoreCounter);
 
-                var dateStr = new Date(nDaysAgoTimestamp);
-                dateStr = extractDate(dateStr);
-                dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
-                localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
-                    dateStr + "&mode=list";
+            var
+                timediff,
+                ev,
+                resultsArr = [];
 
+            //update summary and delete irrelevant fields
+            for (var i = 0; i < tmpArr.length; i++) {
+              ev = tmpArr[i];
+              timediff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
 
-                // embed calendar view
-                var
-                    primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
-                    locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
-                    timeZone = encodeURIComponent(localStorage.timeZone),
-                    dateText =
-                        "<i> Data inserted for (" + noOfDays + " days): " +
-                        new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
-                        "</i>.",
-                    iFrameText =
-                        '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
-                        'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
-
-                        'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
-                        // 'ctz=' + timeZone +
-                        'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
-                        '</iframe>';
-
-                $('#date-output').html(dateText);
-
-                // reset file input to allow for another upload
-                $('#file').val('');
-
-                // $('#date-output').html(dateText + iFrameText);
-                localStorage.iFrameText = iFrameText;
-
-                helper.modifyDiv('calendar-div', 'hide');
-                helper.modifyDiv('working-div', 'hide');
-
-                helper.goToAnchor('calendar');
+              if (timediff > 0) {
+                ev.summary += " (~ " + timediff.toFixed(1) + " hours)";
+                delete ev.label;
+                delete ev.timediff;
+                resultsArr.push(ev);
               }
 
-            };
-            doCalendarOperations(geocodedAddresses, uploadedData, localStorage.daysCount);
+            }
+            return resultsArr;
           }
-      )
-      ;
+
+          console.log("Total events inserted:", insertCounter);
+
+          var dateStr = new Date(nDaysAgoTimestamp);
+          dateStr = extractDate(dateStr);
+          dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
+          localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
+              dateStr + "&mode=list";
+
+
+          // embed calendar view
+          var
+              primaryCalendarId = encodeURIComponent(localStorage.primaryCalendarId),
+              locationCalendarId = encodeURIComponent(localStorage.createdCalendarId),
+              timeZone = encodeURIComponent(localStorage.timeZone),
+              dateText =
+                  "<i> Data inserted for (" + noOfDays + " days): " +
+                  new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
+                  "</i>.",
+              iFrameText =
+                  '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
+                  'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
+
+                  'src=' + locationCalendarId + '&amp;color=%888DF47&amp;' +
+                  // 'ctz=' + timeZone +
+                  'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
+                  '</iframe>';
+
+          $('#date-output').html(dateText);
+
+          // reset file input to allow for another upload
+          $('#file').val('');
+
+          // $('#date-output').html(dateText + iFrameText);
+          localStorage.iFrameText = iFrameText;
+
+          helper.modifyDiv('calendar-div', 'hide');
+          helper.modifyDiv('working-div', 'hide');
+
+          helper.goToAnchor('calendar');
+        }
+      }
     }
+
+  } // stageThree
+
+  stageFour();
+
+  function stageFour() {
+
+    var dsuAnalysis = {
+
+      runSampleDSU: function () {
+
+        $.getJSON('dataset/mobility_sample_andy.json', function (data) {
+          console.log("No of days of data:", data.length);
+
+          // use today as end date if custom end date is not provided
+          var
+              endDate = '',
+              todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
+              dsuDates = [];
+
+          for (var i = 0; i < localStorage.daysCount; i++) {
+            var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+            tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+            dsuDates.push(tmpDate);
+          }
+          console.log("dsuDates:", dsuDates);
+
+          var
+              results = [],
+              places = [
+                [34.0529931, -118.4443538]
+              ];
+
+          var result = dsuAnalysis.checkForPlaces(places, dsuDates);
+          console.log("results:", result);
+        });
+      },
+
+      checkForPlaces: function (places, dsuDates) {
+
+        var
+            result = [],
+            place = places[0];
+        //place = [34.0529931, -118.4443538];
+
+        data.forEach(function (day) {
+          if (dsuDates.indexOf(day.body.date) !== -1 && day.body.episodes) {
+            var episodes = day.body.episodes;
+            episodes.forEach(function (episode) {
+              if (episode.cluster) {
+                var ec = episode.cluster;
+                if (place[0] === ec.latitude && place[1] === ec.longitude) {
+                  result.push([episode.start, episode.end]);
+                }
+              }
+            });
+          }
+        });
+
+        return result;
+      },
+    };
+
+    function processMobilityLocation() {
+
+      var endDate = '2015-12-20',
+          todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
+          mobilityDates = [];
+
+      for (var i = 0; i < 1; i++) {
+        var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
+        tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
+        mobilityDates.push(tmpDate);
+      }
+
+      console.log("mobilityDates:", mobilityDates);
+      mobilityDates.forEach(function (date) {
+        dsu.query({
+          "date": date,
+          "device": "android",
+          "success": function (result) {
+            console.log("callback success:", result);
+          },
+          "error": function (result) {
+            console.log(date + " not found. Error code = " + result);
+          },
+        });
+      });
+
+      // query pam data
+      $.ajax({
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
+        },
+        url: "http://aws-qa.smalldata.io/dsu/",
+        data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
+        success: function (result) {
+          console.log(result);
+        },
+        error: function (e, status, error) {
+          console.log(e);
+        }
+      });
+    }
+
   }
 
 
@@ -914,114 +1022,11 @@
 }(gapi, jQuery, prettySize, _));
 
 
-function processMobilityLocation() {
-  "use strict";
-
-  var endDate = '2015-12-20',
-      todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
-      mobilityDates = [];
-
-  for (var i = 0; i < 1; i++) {
-    var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
-    tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
-    mobilityDates.push(tmpDate);
-  }
-
-  console.log("mobilityDates:", mobilityDates);
-  mobilityDates.forEach(function (date) {
-    dsu.query({
-      "date": date,
-      "device": "android",
-      "success": function (result) {
-        console.log("callback success:", result);
-      },
-      "error": function (result) {
-        console.log(date + " not found. Error code = " + result);
-      },
-    });
-  });
-
-  // query pam data
-  $.ajax({
-    method: "GET",
-    headers: {
-      "Authorization": "Bearer [OAUTH_ACCESS_TOKEN]"
-    },
-    url: "http://aws-qa.smalldata.io/dsu/",
-    data: {schema_namespace: "omh", schema_name: "physical-activity", schema_version: "1.0"},
-    success: function (result) {
-      console.log(result);
-    },
-    error: function (e, status, error) {
-      console.log(e);
-    }
-  });
-}
-
-
-var dsuAnalysis = {
-
-  runSampleDSU: function () {
-
-    $.getJSON('dataset/mobility_sample_andy.json', function (data) {
-      console.log("No of days of data:", data.length);
-
-      // use today as end date if custom end date is not provided
-      var
-          endDate = '',
-          todayTimestamp = (endDate !== '') ? new Date(endDate).getTime() : new Date().getTime(),
-          dsuDates = [];
-
-      for (var i = 0; i < localStorage.daysCount; i++) {
-        var tmpDate = new Date(todayTimestamp - (i * 24 * 60 * 60 * 1000));
-        tmpDate = tmpDate.toJSON().substring(0, 10); //YYYY-mm-dd
-        dsuDates.push(tmpDate);
-      }
-      console.log("dsuDates:", dsuDates);
-
-      var
-          results = [],
-          places = [
-            [34.0529931, -118.4443538]
-          ];
-
-      var result = dsuAnalysis.checkForPlaces(places, dsuDates);
-      console.log("results:", result);
-    });
-  },
-
-  checkForPlaces: function (places, dsuDates) {
-
-    var
-        result = [],
-        place = places[0];
-    //place = [34.0529931, -118.4443538];
-
-    data.forEach(function (day) {
-      if (dsuDates.indexOf(day.body.date) !== -1 && day.body.episodes) {
-        var episodes = day.body.episodes;
-        episodes.forEach(function (episode) {
-          if (episode.cluster) {
-            var ec = episode.cluster;
-            if (place[0] === ec.latitude && place[1] === ec.longitude) {
-              result.push([episode.start, episode.end]);
-            }
-          }
-        });
-      }
-    });
-
-    return result;
-  },
-};
-
-
 //TODO: throw error when page hangs during file loading
 //TODO: prevent continuation when user does not enter address
-//show calendar iframe
+//TODO: show calendar iframe
 
 //TODO: remove locations where user was moving or not stationary
-
 //TODO: let users know that they have to be patient because the archive download could actually be slow
 //TODO: people don't know what to view or expect when the calendar finally pops up
 
