@@ -214,8 +214,8 @@
           }
         }
 
-        // clear previous file input if any
-        $('#file').val('');
+        // clear previous file input if any there before
+        helper.resetFileupload();
         helper.updateDiv('#uploadStatus', '', 'darkgrey');
 
         // clear previously uploaded file
@@ -237,7 +237,9 @@
           filename,
           reader;
 
-      if (!this.files[0]) return;
+      if (!this.files[0]) {
+        return;
+      }
 
       helper.modifyDiv('uploadingData-div', 'show');
       helper.modifyDiv('working-div', 'show');
@@ -246,7 +248,7 @@
       filename = file.name;
       fileSize = prettySize(file.size);
 
-      // extract only last 100 MB of data of uploaded file as this is enough for timeframe
+      // extract only last 100 MB of data of uploaded file as this is enough for time frame
       // we are interested in. Note that about 250MB is the browser limit for loading at once in memory
       blob = file.slice(-100 * 1024 * 1024);
 
@@ -291,8 +293,7 @@
           else {
             msg = 'Uh oh :/ Something weird happened. Please contact admin.';
           }
-
-          helper.updateDiv('#uploadStatus', msg, 'red');
+          helper.showError(msg);
           return;
         }
       };
@@ -303,7 +304,7 @@
 
       reader.onerror = function () {
         helper.modifyDiv('working-div', 'hide');
-        helper.updateDiv('#uploadStatus', 'Something went wrong reading your JSON file. ', 'red')
+        helper.updateDiv('#uploadStatus', 'Something went wrong reading your JSON file. ', 'red');
       };
 
       reader.readAsText(blob);
@@ -317,52 +318,115 @@
         hobby: localStorage.hobbyAddress0
       };
 
+      // Cornell Tech address gives wrong geocoded lat/lng so we'll replace it with 111 8th Ave
+      for (var label in userAddresses) {
+        if (userAddresses.hasOwnProperty(label)) {
+          if (userAddresses[label] === 'Cornell Tech, 8th Avenue, New York, NY, United States') {
+            userAddresses[label] = '111 8th Avenue, New York, NY, United States';
+          }
+        }
+      }
+
       var promise = geocodeAddress(userAddresses);
       promise.then(function (geocodedAddresses) {
         doCalendarOperations(geocodedAddresses);
       });
 
       function geocodeAddress(userAddresses) {
-        return new Promise(function (resolve) {
+        return new Promise(function (resolve, reject) {
 
           console.log("user addresses:", userAddresses);
 
-          var addressLength,
-              counter,
+          var counter,
               coords,
               geocoder,
-              lat,
-              lng;
+              noOfAddresses;
 
           coords = {};
           counter = 0;
-          addressLength = _.size(userAddresses);
-          geocoder = new google.maps.Geocoder();
+          noOfAddresses = _.size(userAddresses);
 
           for (var label in userAddresses) {
             if (userAddresses.hasOwnProperty(label)) {
 
-              (function (label, address) {
-                geocoder.geocode({'address': address}, function (results, status) {
+              (function (addrLabel, addr) {
+                var url,
+                    lat,
+                    lng;
 
-                  if (status == google.maps.GeocoderStatus.OK) {
-                    lat = results[0].geometry.location.lat();
-                    lng = results[0].geometry.location.lng();
-                    coords[label] = [lat, lng];
-                  } else {
-                    console.log("error geocoding:", address);
-                    resolve(status);
-                  }
+                url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(addr);
 
-                  counter++;
-                  if (counter === addressLength) {
-                    resolve(coords);
+                $.getJSON(url, function (response) {
+
+                  try {
+                    lat = response.results[0].geometry.location.lat;
+                    lng = response.results[0].geometry.location.lng;
+                    coords[addrLabel] = [lat, lng];
+                    counter++;
+
+                    if (response.status === 'ZERO_RESULTS') {
+                      reject("Invalid address provided.");
+                    }
+
+                    if (counter === noOfAddresses) {
+                      resolve(coords);
+                    }
+                  } catch (err) {
+                    reject("Error happened. Please contact Admin.");
+                    helper.showError('Address is not valid. Try again or contact admin.');
+
                   }
                 });
 
               }(label, userAddresses[label]));
             }
           }
+          return;
+
+
+          geocoder = new google.maps.Geocoder();
+
+          // for (var label in userAddresses) {
+          //   if (userAddresses.hasOwnProperty(label)) {
+          //
+          //     (function (label, address) {
+          //
+          //       var url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(address);
+          //       $.getJSON(url, function (address) {
+          //         var lat = address.results[0].geometry.location.lat;
+          //         var lng = address.results[0].geometry.location.lng;
+          //         // for (var i = 0; i < data.results.length; i++) {
+          //         // console.log("all results:", data.results[i]);
+          //         //var addr = data.results[i].formatted_address;
+          //         //console.log("URL address is: ", addr);
+          //
+          //
+          //         //console.log("lat:", lat);
+          //         //console.log("lng:", lng);
+          //         // }
+          //       });
+          //
+          //
+          //       geocoder.geocode({'address': address}, function (results, status) {
+          //
+          //         if (status == google.maps.GeocoderStatus.OK) {
+          //           lat = results[0].geometry.location.lat();
+          //           lng = results[0].geometry.location.lng();
+          //           coords[label] = [lat, lng];
+          //         } else {
+          //           console.log("error geocoding:", address);
+          //           resolve(status);
+          //         }
+          //
+          //         counter++;
+          //         if (counter === noOfAddresses) {
+          //           resolve(coords);
+          //         }
+          //       });
+          //
+          //     }(label, userAddresses[label]));
+          //   }
+          // }
         });
       }
 
@@ -740,14 +804,14 @@
 
           $('#date-output').html(dateText);
 
-          // reset file input to allow for another upload
-          $('#file').val('');
 
           // $('#date-output').html(dateText + iFrameText);
           localStorage.iFrameText = iFrameText;
 
+          helper.resetFileupload();
           helper.modifyDiv('calendar-div', 'hide');
           helper.modifyDiv('working-div', 'hide');
+          helper.showError();
 
           helper.goToAnchor('calendar');
         }
@@ -887,7 +951,20 @@
     },
 
     openFullCalendarView: function () {
-      window.location.href = localStorage.fullCalendarViewURL || 'http://calendar.google.com';
+      // window.location.href = localStorage.fullCalendarViewURL || 'http://calendar.google.com';
+      window.open(localStorage.fullCalendarViewURL || 'http://calendar.google.com', '_blank');
+    },
+
+    resetFileupload: function () {
+      $('#file').val('');
+    },
+    
+    showError: function (msg) {
+      var error = msg || '';
+      helper.updateDiv('#uploadStatus', error, 'red');
+      helper.resetFileupload();
+      helper.modifyDiv('working-div', 'hide');
+      helper.modifyDiv('calendar-div', 'hide');
     },
 
     updateDiv: function (div, message, color) {
