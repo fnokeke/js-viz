@@ -339,7 +339,6 @@
 
           var counter,
               coords,
-              geocoder,
               noOfAddresses;
 
           coords = {};
@@ -355,7 +354,6 @@
                     lng;
 
                 url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(addr);
-
                 $.getJSON(url, function (response) {
 
                   try {
@@ -364,17 +362,16 @@
                     coords[addrLabel] = [lat, lng];
                     counter++;
 
-                    if (response.status === 'ZERO_RESULTS') {
-                      reject("Invalid address provided.");
-                    }
-
                     if (counter === noOfAddresses) {
                       resolve(coords);
+                    }
+                    
+                    if (response.status === 'ZERO_RESULTS') {
+                      reject("Invalid address provided.");
                     }
                   } catch (err) {
                     reject("Error happened. Please contact Admin.");
                     helper.showError('Address is not valid. Try again or contact admin.');
-
                   }
                 });
 
@@ -382,51 +379,6 @@
             }
           }
           return;
-
-
-          geocoder = new google.maps.Geocoder();
-
-          // for (var label in userAddresses) {
-          //   if (userAddresses.hasOwnProperty(label)) {
-          //
-          //     (function (label, address) {
-          //
-          //       var url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(address);
-          //       $.getJSON(url, function (address) {
-          //         var lat = address.results[0].geometry.location.lat;
-          //         var lng = address.results[0].geometry.location.lng;
-          //         // for (var i = 0; i < data.results.length; i++) {
-          //         // console.log("all results:", data.results[i]);
-          //         //var addr = data.results[i].formatted_address;
-          //         //console.log("URL address is: ", addr);
-          //
-          //
-          //         //console.log("lat:", lat);
-          //         //console.log("lng:", lng);
-          //         // }
-          //       });
-          //
-          //
-          //       geocoder.geocode({'address': address}, function (results, status) {
-          //
-          //         if (status == google.maps.GeocoderStatus.OK) {
-          //           lat = results[0].geometry.location.lat();
-          //           lng = results[0].geometry.location.lng();
-          //           coords[label] = [lat, lng];
-          //         } else {
-          //           console.log("error geocoding:", address);
-          //           resolve(status);
-          //         }
-          //
-          //         counter++;
-          //         if (counter === noOfAddresses) {
-          //           resolve(coords);
-          //         }
-          //       });
-          //
-          //     }(label, userAddresses[label]));
-          //   }
-          // }
         });
       }
 
