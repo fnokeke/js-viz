@@ -296,3 +296,13 @@ li {
         -webkit-transform: scale(1.0);
     }
 }
+
+.place-label {
+    width: 100px;
+    /*background: none;*/
+    background: none;
+    border-style: none;
+    border-style: none;
+    font-size: 150%;
+    color: darkred;
+}

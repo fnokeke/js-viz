@@ -14,6 +14,9 @@
       if (key.indexOf('Address') !== -1 && key !== 'homeAddress0' &&
           key !== 'workAddress0' && key !== 'hobbyAddress0') {
         createAddressField(key, localStorage[key], true);
+      } else if (key.indexOf('placeAddressLabel') !== -1 ) {
+        console.log("key is:", key);
+        // createTextField(key, localStorage[key]);
       } else {
         $('#' + key).val(localStorage[key]);
       }
@@ -33,7 +36,7 @@
           '<iframe src="https://calendar.google.com/calendar/embed?title=%20&amp;' +
           'showPrint=0&amp;mode=WEEK&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;' +
           'src=' + encodeURIComponent(localStorage.createdCalendarId) + '&amp;color=%888DF47&amp;' +
-           'ctz=' + encodeURIComponent(localStorage.timeZone) + 
+          'ctz=' + encodeURIComponent(localStorage.timeZone) +
           'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
           '</iframe>';
     }
@@ -440,7 +443,7 @@
         lastDayTimestamp = dateOfLastDay.getTime();
         nDaysAgoTimestamp = dateOfLastDay.setDate(dateOfLastDay.getDate() - noOfDays);
 
-        // update calenderViewURL 
+        // update calenderViewURL
         dateStr = new Date(nDaysAgoTimestamp);
         dateStr = helper.formatDate(dateStr);
         dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
@@ -981,11 +984,34 @@
     });
   }
 
+  function createTextField(inputName, inputValue) {
+    var counter,
+        inputDiv,
+        placeLabelName;
+
+    counter = localStorage.workId;
+    placeLabelName = "placeAddressLabel" + counter;
+    inputDiv = inputName.replace(/\d+/g, '') + '-div';
+
+    $('<input/>').attr(
+        {
+          type: 'text',
+          name: placeLabelName,
+          id: placeLabelName,
+          value: inputValue,
+          placeholder: 'place label',
+          class: 'place-label'
+        }
+    ).appendTo('#' + inputDiv);
+
+  }
+
   // create additional text fields when button is clicked
   function createAddressField(labelName, inputValue, isPopulating) {
     var counter,
         inputName,
         inputDiv,
+        placeLabelName,
         removeButtonName;
 
     if (!isPopulating) {
@@ -1001,9 +1027,21 @@
       inputName = labelName;
     }
 
+    placeLabelName = "placeAddressLabel" + counter;
     removeButtonName = 'remove' + inputName;
     inputDiv = inputName.replace(/\d+/g, '') + '-div';
     inputValue = inputValue || '';
+
+    // place label
+    $('<input/>').attr(
+        {
+          type: 'text',
+          name: placeLabelName,
+          id: placeLabelName,
+          placeholder: 'place label',
+          class: 'place-label'
+        }
+    ).appendTo('#' + inputDiv);
 
     // create text field for address
     $('<input/>').attr(
@@ -1012,7 +1050,8 @@
           name: inputName,
           id: inputName,
           value: inputValue,
-          placeholder: 'enter another ' + labelName + ' address.',
+          placeholder: 'enter full address of place'
+          // placeholder: 'enter another ' + labelName + ' address.',
         }
     ).appendTo('#' + inputDiv);
 
@@ -1030,6 +1069,7 @@
 
     $('#' + removeButtonName).click(function () {
       $('#' + inputName).remove();
+      $('#' + placeLabelName).remove();
       $('#' + removeButtonName).remove();
       delete localStorage[inputName];
     });
