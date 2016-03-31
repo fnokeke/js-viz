@@ -30,10 +30,13 @@
 
             <form id="addressForm" class="form-element">
 
-                <div id="workAddress-div">
-                    <input type="text" id="placeLabel" name="placeLabel" placeholder="place label" class="place-label">
-                    <input type="text" id="workAddress0" name="workAddress0" placeholder="Enter full place address here.">
-                    <input type="button" value="+" class="btn btn-sign" id="addWorkButton">
+                <div id="placeAddress-div">
+                    <label> No of Days:</label>
+                    <input type="text" value="7" id="daysCount" name="daysCount">
+
+                    <input type="text" id="defaultLabel" name="defaultLabel" placeholder="place label" class="place-label">
+                    <input type="text" id="defaultAddress" name="defaultAddress" placeholder="Enter full place address here.">
+                    <input type="button" value="+" class="btn btn-sign" id="addPlaceButton">
                 </div>
 
                 <!-- hide other fields for now -->
@@ -50,10 +53,6 @@
                         <input type="button" value="+" class="btn btn-sign" id="addHobbyButton">
                     </div>
 
-                    <div>
-                        <label> No of Days:</label>
-                        <input type="text" value="7" id="daysCount" name="daysCount">
-                    </div>
                 </div>
 
             </form>
