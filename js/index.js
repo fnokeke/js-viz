@@ -271,6 +271,7 @@
         var msg;
         try {
           if (e.target.result === '') throw new RangeError();
+          else if (e.target.result === '{\n}') throw new ReferenceError("Sorry, you have no locations data :(");
 
           // format selected data to valid json string and extract locations
           var data = e.target.result;
@@ -297,7 +298,7 @@
             msg = 'Your data is too large for this browser. Please use Safari.';
           }
           else if (err instanceof ReferenceError) {
-            msg = 'Uh oh. That doesn\'t look like your location data. Check and try again.';
+            msg = err.message || 'Uh oh. That doesn\'t look like your location data. Check and try again.';
           }
           else {
             msg = 'Uh oh :/ Something weird happened. Please contact admin.';
