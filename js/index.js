@@ -238,7 +238,11 @@
           reader.onload = function (e) {
             var msg;
             try {
-              if (e.target.result === '') throw new RangeError();
+              if (e.target.result === '') {
+                throw new RangeError();
+              } else if (e.target.result === '{}') {
+                throw new ReferenceError("Sorry, you have no locations data :(");
+              }
 
               // format selected data to valid json string and extract locations
               var data = e.target.result;
@@ -265,7 +269,7 @@
                 msg = 'Your data is too large for this browser. Please use Safari.';
               }
               else if (err instanceof ReferenceError) {
-                msg = 'Uh oh. That doesn\'t look like your location data. Check and try again.';
+                msg = err.message || 'Uh oh. That doesn\'t look like your location data. Check and try again.';
               }
               else {
                 msg = 'Uh oh :/ Something weird happened. Please contact admin.';
@@ -964,7 +968,7 @@
               name: inputName,
               id: inputName,
               value: inputValue || '',
-              placeholder: 'place label',
+              placeholder: 'label place e.g. home, school, gym',
               class: 'place-label'
             }
         ).appendTo('#placeAddress-div');
@@ -1002,7 +1006,8 @@
               name: inputName,
               id: inputName,
               value: inputValue,
-              placeholder: 'enter full address of place'
+              placeholder: 'address of labelled place',
+              class: 'place-address',
             }
         ).appendTo('#' + inputDiv);
 

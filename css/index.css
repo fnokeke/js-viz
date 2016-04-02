@@ -12,21 +12,25 @@ body.working {
 }
 
 .btn {
-    width: 250px;
-    height: 50px;
-    -moz-border-radius: 15px;
+    width: 25%;
+    height: 7%;
     color: #fff;
+    /*border: solid green;*/
     border-style: none;
+    border-radius: 25px;
     background-color: rgb(255, 97, 83);
-    font-size: 15px;
     padding: 5px 15px 8.5px;
-    margin-bottom: 5px;
+    font-size: 70%;
+    -moz-border-radius: 1%;
+    margin: 1%;
 }
 
 .btn.btn-sign {
-    width: 50px;
-    height: 50px;
-    margin-left: -50px;
+    width: 5%;
+    height: 10%;
+    border-radius: 5px;
+    margin-left: -4%;
+    padding: 0 auto;
 }
 
 .btn.btn-cal {
@@ -100,8 +104,8 @@ body.working {
 }
 
 .form-element {
-    display: table;
-    text-align: center;
+    /*display: table;*/
+    /*text-align: center;*/
 }
 
 .form-element div {
@@ -110,17 +114,20 @@ body.working {
 
 .form-element label {
     display: table-cell;
-    text-align: right;
-    width: 250px;
+    width: 30%;
+    height: 10%;
+    /*text-align: right;*/
+    /*margin-right: 40%;*/
+    border: 5px solid purple;
 }
 
 .form-element div input[type='text'] {
     display: table-cell;
-    width: 700px;
-    height: 50px;
-    margin-left: 5px;
-    margin-bottom: 5px;
-    border: 2px solid #000;
+    width: 50%;
+    height: 40%;
+    /*margin-left: 5px;*/
+    /*margin-bottom: 5px;*/
+    border: 5px solid red;
     text-align: center;
 }
 
@@ -157,11 +164,12 @@ body.working {
 #authorize-div {
     font-family: "Century Gothic", Helvetica, Arial, sans-serif;
     color: #fff;
+    margin-bottom: 50%;
 }
 
 #address-div {
-    width: 100%;
-    padding-bottom: 10%;
+    /*width: 100%;*/
+    /*padding-bottom: 10%;*/
 }
 
 .bright-font {
@@ -298,11 +306,32 @@ li {
 }
 
 .place-label {
-    width: 100px;
+    /*width: 100px;*/
     /*background: none;*/
-    background: none;
+    /*font-size: 150%;*/
+    /*border: solid 5px powderblue;*/
     border-style: none;
-    border-style: none;
-    font-size: 150%;
     color: darkred;
+    height: 7%;
+    width: 40%;
+    font-size: 100%;
+    text-align: center;
+}
+
+.place-address {
+    border: solid black;
+    height: 8%;
+    width: 80%;
+    font-size: 100%;
+    color: peru;
+    text-align: center;
+    margin-bottom: 3%;
+}
+
+
+.address-center-content {
+    /*border: 5px solid d;*/
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
 }

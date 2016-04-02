@@ -23,41 +23,38 @@
             </div>
         </div>
 
-        <div id="address-div" class="cd-scrolling-bg cd-color-1">
-            <a name="address"></a>
-            <h2>Please enter full address</h2>
-            <scan id="addressStatus"></scan>
+        <!--<div id="address-div" class="cd-scrolling-bg cd-color-1">-->
+        <div id="address-div" class="">
 
-            <form id="addressForm" class="form-element">
+            <div class="address-center-content">
 
-                <div id="placeAddress-div">
-                    <label> No of Days:</label>
-                    <input type="text" value="7" id="daysCount" name="daysCount">
+                <a name="address"></a>
+                <h2>
+                    Where do you spend most of your time?
+                </h2>
+                <scan id="addressStatus"></scan>
 
-                    <input type="text" id="defaultLabel" name="defaultLabel" placeholder="place label" class="place-label">
-                    <input type="text" id="defaultAddress" name="defaultAddress" placeholder="Enter full place address here.">
-                    <input type="button" value="+" class="btn btn-sign" id="addPlaceButton">
-                </div>
+                <!--<form id="addressForm" class="form-element">-->
+                <form id="addressForm" class="">
+                    <div id="placeAddress-div">
+                        <label class="place-label">
+                            Number of days you'd like to track
+                        </label><br><br>
+                        <input type="number" id="daysCount" class="place-address" name="daysCount"
+                        placeholder="Enter number of days such as 7, 14, 30">
+                        <br>
 
-                <!-- hide other fields for now -->
-                <div style="display: none">
-                    <div>
-                        <label>Home Address:</label>
-                        <input type="text" id="homeAddress0" name="homeAddress0" placeholder="Enter home address here.">
+                        <input type="text" id="defaultLabel" name="defaultLabel"
+                               placeholder="label place e.g. home, school, gym"
+                               class="place-label">
+                        <input type="text" id="defaultAddress" name="defaultAddress"
+                               placeholder="Enter full place address here."
+                        class="place-address">
+                        <input type="button" value="+" class="btn btn-sign" id="addPlaceButton">
                     </div>
-
-                    <div id="hobbyAddress-div">
-                        <label> Hobby Address:</label>
-                        <input type="text" name="hobbyAddress0" id="hobbyAddress0"
-                               placeholder="Enter hobby address here.">
-                        <input type="button" value="+" class="btn btn-sign" id="addHobbyButton">
-                    </div>
-
-                </div>
-
-            </form>
-            <input id="saveInputButton" class="btn" type="button" value="Save">
-
+                    <input id="saveInputButton" class="btn" type="button" value="Save">
+                </form>
+            </div>
 
         </div>
 
@@ -198,4 +195,21 @@
 </div>
 
 </body>
+<!-- hide other fields for now
+<div style="display: none">
+    <div>
+        <label>Home Address:</label>
+        <input type="text" id="homeAddress0" name="homeAddress0"
+               placeholder="Enter home address here.">
+    </div>
+
+    <div id="hobbyAddress-div">
+        <label> Hobby Address:</label>
+        <input type="text" name="hobbyAddress0" id="hobbyAddress0"
+               placeholder="Enter hobby address here.">
+        <input type="button" value="+" class="btn btn-sign" id="addHobbyButton">
+    </div>
+
+</div>
+-->
 </html>
