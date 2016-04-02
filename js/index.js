@@ -24,6 +24,8 @@
           addAutocompleteListener(address);
         });
 
+        console.log("clusteredPlaces (initView): ", getClusteredPlaces());
+
         // embed calendar view
         if (localStorage.iFrameText) {
           // $('#date-output').html(localStorage.iFrameText);
@@ -293,26 +295,38 @@
 
         function processLocationHistory(uploadedData) {
           var userAddresses,
+              listOfAddr,
               promiseGeocode,
               promiseReset;
 
-          userAddresses = {
-            home: localStorage.homeAddress0,
-            work: localStorage.workAddress0,
-            hobby: localStorage.hobbyAddress0
-          };
+          // userAddresses = {
+          //   home: localStorage.homeAddress0,
+          //   work: localStorage.workAddress0,
+          //   hobby: localStorage.hobbyAddress0
+          // };
+
+          userAddresses = getClusteredPlaces();
 
           // Cornell Tech address gives wrong geocoded lat/lng so we'll replace it with 111 8th Ave
           for (var label in userAddresses) {
             if (userAddresses.hasOwnProperty(label)) {
-              if (userAddresses[label] === 'Cornell Tech, 8th Avenue, New York, NY, United States') {
-                userAddresses[label] = '111 8th Avenue, New York, NY, United States';
+
+              listOfAddr = userAddresses[label];
+              for (var i = 0; i < listOfAddr; i++) {
+                if (listOfAddr[i] === 'Cornell Tech, 8th Avenue, New York, NY, United States') {
+                  listOfAddr[i] = '111 8th Avenue, New York, NY, United States';
+                }
               }
+
             }
           }
-
+          console.log("userAddresses:", userAddresses);
+          
+          // geocode all addresses to lat,lng coordinates
           promiseGeocode = geocodeAddress(userAddresses);
           promiseGeocode.then(function (geocodedAddresses) {
+
+            console.log("geocodedAddresses: ", geocodedAddresses);
 
             var data = clusterLocations(uploadedData, geocodedAddresses);
             promiseReset = resetCalendar(localStorage.createdCalendarId);
@@ -327,54 +341,68 @@
 
           function geocodeAddress(userAddresses) {
             return new Promise(function (resolve, reject) {
-              console.log("user addresses:", userAddresses);
-              // for (var i = 0; i < hobby.length; i++) {
-              //   if (hobby[i] !== '') {
-              //     hasValidHobby = true;
-              //     break;
-              //   }
-              // }
-
 
               var counter,
                   coords,
+                  listOfUserAddr,
                   noOfAddresses;
 
               coords = {};
               counter = 0;
-              noOfAddresses = _.size(userAddresses);
+              noOfAddresses = 0;
+
+              for (var label in userAddresses) {
+                if (userAddresses.hasOwnProperty(label)) {
+                  listOfAddr = userAddresses[label];
+                  noOfAddresses += listOfAddr.length;
+                }
+              }
+              console.log("Total number of user addresses:", noOfAddresses);
+
 
               for (var label in userAddresses) {
                 if (userAddresses.hasOwnProperty(label)) {
 
-                  (function (addrLabel, addr) {
-                    var url,
-                        lat,
-                        lng;
+                  listOfUserAddr = userAddresses[label];
+                  for (var i = 0; i < listOfUserAddr; i++) {
 
-                    url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(addr);
-                    $.getJSON(url, function (response) {
+                    (function (addrLabel, addr) {
+                      console.log("addrLabel:", addrLabel);
+                      console.log("addr", addr);
+                      var url,
+                          lat,
+                          lng;
 
-                      try {
-                        lat = response.results[0].geometry.location.lat;
-                        lng = response.results[0].geometry.location.lng;
-                        coords[addrLabel] = [lat, lng];
-                        counter++;
+                      url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(addr);
+                      $.getJSON(url, function (response) {
 
-                        if (counter === noOfAddresses) {
-                          resolve(coords);
+                        try {
+                          lat = response.results[0].geometry.location.lat;
+                          lng = response.results[0].geometry.location.lng;
+
+                          if (!coords[addrLabel]) {
+                            coords[addrLabel] = [[lat, lng]];
+                          } else {
+                            coords[addrLabel].push([lat, lng]);
+                          }
+                          counter++;
+
+                          if (counter === noOfAddresses) {
+                            resolve(coords);
+                          }
+
+                          if (response.status === 'ZERO_RESULTS') {
+                            reject("Invalid address provided.");
+                          }
+                        } catch (err) {
+                          reject("Error happened. Please contact Admin.");
+                          helper.updateStatus('Address is not valid. Try again or contact admin.');
                         }
+                      });
 
-                        if (response.status === 'ZERO_RESULTS') {
-                          reject("Invalid address provided.");
-                        }
-                      } catch (err) {
-                        reject("Error happened. Please contact Admin.");
-                        helper.updateStatus('Address is not valid. Try again or contact admin.');
-                      }
-                    });
+                    }(label, listOfUserAddr[i]));
 
-                  }(label, userAddresses[label]));
+                  }
                 }
               }
             });
@@ -992,7 +1020,7 @@
           inputName = labelName + 'Address' + counter;
           placeLabel = "placeLabel" + counter;
         }
-        
+
         createPlaceLabel(placeLabel);
 
         removeButtonName = 'remove' + inputName;
@@ -1032,7 +1060,45 @@
       }
 
 
+      // cluster addresses with same label
+      // {
+      //    home: [address1],
+      //    hobby: [address1, address2],
+      //    school: [address1, address2, address3]
+      // }
+      function getClusteredPlaces() {
+
+        var clusteredPlaces = {},
+            label,
+            addr;
+
+        for (var entry in localStorage) {
+
+          if (entry.indexOf('Label') > -1) {
+
+            if (entry.indexOf('defaultLabel') > -1) {
+              addr = 'defaultAddress' + entry.substr(14);
+            } else if (entry.indexOf('placeLabel') > -1) {
+              addr = 'placeAddress' + entry.substr(10);
+            }
+
+            addr = localStorage[addr];
+            label = localStorage[entry];
+
+            if (!clusteredPlaces[label]) {
+              clusteredPlaces[label] = [addr];
+            } else {
+              clusteredPlaces[label].push(addr);
+            }
+
+          }
+        }
+
+        return clusteredPlaces;
+      }
+
     }
+
     (gapi, jQuery, prettySize, _)
 )
 ;
@@ -1045,3 +1111,4 @@
 //TODO: remove locations where user was moving or not stationary
 //TODO: let users know that they have to be patient because the archive download could actually be slow
 //TODO: people don't know what to view or expect when the calendar finally pops up
+//TODO: remove illegal characters from text input of addresses or labels
