@@ -312,7 +312,7 @@
             if (userAddresses.hasOwnProperty(label)) {
 
               listOfAddr = userAddresses[label];
-              for (var i = 0; i < listOfAddr; i++) {
+              for (var i = 0; i < listOfAddr.length; i++) {
                 if (listOfAddr[i] === 'Cornell Tech, 8th Avenue, New York, NY, United States') {
                   listOfAddr[i] = '111 8th Avenue, New York, NY, United States';
                 }
@@ -321,7 +321,7 @@
             }
           }
           console.log("userAddresses:", userAddresses);
-          
+
           // geocode all addresses to lat,lng coordinates
           promiseGeocode = geocodeAddress(userAddresses);
           promiseGeocode.then(function (geocodedAddresses) {
@@ -364,11 +364,9 @@
                 if (userAddresses.hasOwnProperty(label)) {
 
                   listOfUserAddr = userAddresses[label];
-                  for (var i = 0; i < listOfUserAddr; i++) {
+                  for (var i = 0; i < listOfUserAddr.length; i++) {
 
                     (function (addrLabel, addr) {
-                      console.log("addrLabel:", addrLabel);
-                      console.log("addr", addr);
                       var url,
                           lat,
                           lng;
@@ -408,21 +406,21 @@
             });
           }
 
-          function clusterLocations(data, addresses) {
+          function clusterLocations(data, geocodedAddresses) {
+            console.log("clusterLocations received addresses as:", geocodedAddresses);
 
             var
                 noOfDays,
                 dateOfLastDay,
                 lastDayTimestamp,
                 nDaysAgoTimestamp,
-                dateStr,
-                HOME,
-                HOBBY,
-                WORK;
+                dateStr;
+            // HOME,
+            // HOBBY,
+            // WORK;
 
             // addresses = geocodedAddresses;
             // data = uploadedData;
-            console.log("Geocoded addresses:", addresses);
 
             noOfDays = localStorage.daysCount;
             helper.assert(data.length > 0, "uploaded data length test");
@@ -470,22 +468,56 @@
               return row.accuracy <= 1000;
             });
 
-            HOME = addresses.home;
-            HOBBY = addresses.hobby;
-            WORK = addresses.work;
+            // HOME = addresses.home;
+            // HOBBY = addresses.hobby;
+            // WORK = addresses.work;
+            //
+            // data.forEach(function (row) {
+            //   if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError) {
+            //     row.locationLabel = 'home';
+            //   } else if (distance(WORK[0], WORK[1], row.latitudeE7, row.longitudeE7) <= marginError) {
+            //     row.locationLabel = 'work';
+            //   } else if (distance(HOBBY[0], HOBBY[1], row.latitudeE7, row.longitudeE7) <= marginError) {
+            //     row.locationLabel = 'hobby';
+            //   } else {
+            //     row.locationLabel = 'other';
+            //   }
+            // });
 
             // cluster locations into different categories within margin of error
-            var marginError = 300;
+            var listOfLatLng,
+                latLng,
+                foundLabel,
+                marginError = 300;
+
             data.forEach(function (row) {
-              if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-                row.locationLabel = 'home';
-              } else if (distance(WORK[0], WORK[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-                row.locationLabel = 'work';
-              } else if (distance(HOBBY[0], HOBBY[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-                row.locationLabel = 'hobby';
-              } else {
+              foundLabel = false;
+
+              for (var label in geocodedAddresses) {
+                if (geocodedAddresses.hasOwnProperty(label)) {
+                  listOfLatLng = geocodedAddresses[label];
+
+                  for (var i = 0; i < listOfLatLng.length; i++) {
+                    latLng = listOfLatLng[i];
+
+                    if (distance(latLng[0], latLng[1], row.latitudeE7, row.longitudeE7) <= marginError) {
+                      row.locationLabel = label;
+                      foundLabel = true;
+                      break;
+                    }
+                  }
+
+                  if (foundLabel) {
+                    break;
+                  }
+
+                }
+              }
+
+              if (!foundLabel) {
                 row.locationLabel = 'other';
               }
+
             });
 
             function distance(lat1, lon1, lat2, lon2) {
@@ -620,9 +652,9 @@
               tmpStore.push(dayData[0]);
               var counter = 0;
 
-              var roundToTwoDP = function (num) {
-                return +(Math.round(num + "e+2") + "e-2");
-              };
+              // var roundToTwoDP = function (num) {
+              //   return +(Math.round(num + "e+2") + "e-2");
+              // };
 
               for (var i = 1; i < dayData.length; i++) {
                 currentLocObject = dayData[i];
@@ -638,17 +670,19 @@
                     continue; //minor tweak to temporary avoid bug
                   }
 
-                  timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
+                  // timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
+                  timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000*60*60);
+                  timeDiff = parseFloat(timeDiff.toFixed(2));
                   latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
                   locLabel = firstItem.locationLabel.toUpperCase();
 
-                  if (firstItem.locationLabel == "home") {
+                  if (firstItem.locationLabel === "home") {
                     colorId = "10"; //green
-                  } else if (firstItem.locationLabel == "work") {
+                  } else if (firstItem.locationLabel === "work") {
                     colorId = "11"; //red
-                  } else if (firstItem.locationLabel == "hobby") {
+                  } else if (firstItem.locationLabel === "hobby") {
                     colorId = "6"; //brown
-                  } else if (firstItem.locationLabel == "other") {
+                  } else if (firstItem.locationLabel === "other") {
                     colorId = "8"; //grey
                   }
 
@@ -1112,3 +1146,5 @@
 //TODO: let users know that they have to be patient because the archive download could actually be slow
 //TODO: people don't know what to view or expect when the calendar finally pops up
 //TODO: remove illegal characters from text input of addresses or labels
+
+//TODO: the click google calendar button looks weird after you have printed the date so fix it.

@@ -15,9 +15,8 @@ body.working {
     width: 25%;
     height: 7%;
     color: #fff;
-    /*border: solid green;*/
     border-style: none;
-    border-radius: 25px;
+    border-radius: 5px;
     background-color: rgb(255, 97, 83);
     padding: 5px 15px 8.5px;
     font-size: 70%;
@@ -34,9 +33,10 @@ body.working {
 }
 
 .btn.btn-cal {
-    width: 200px;
-    height: 40px;
-    padding: 2px;
+    width: 20%;
+    height: 7%;
+    border-radius: 5px;
+    margin: 0 auto;
 }
 
 .btn:hover {
