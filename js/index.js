@@ -8,6 +8,9 @@
       initView();
 
       function initView() {
+        var addresses,
+            clusteredPlaces,
+            labelColors;
 
         // populate address fields with last entries
         for (var key in localStorage) {
@@ -19,12 +22,19 @@
         }
 
         // attach autocomplete listeners to addresses
-        var addresses = ['defaultAddress'];
+        addresses = ['defaultAddress'];
         addresses.forEach(function (address) {
           addAutocompleteListener(address);
         });
 
-        console.log("clusteredPlaces (initView): ", getClusteredPlaces());
+        clusteredPlaces = getClusteredPlaces();
+        console.log("clusteredPlaces (initView): ", clusteredPlaces);
+
+        labelColors = Object.keys(clusteredPlaces);
+        console.log('labelColors (initView):', labelColors);
+        console.log('labelColors (stringify):', JSON.stringify(Object.keys(clusteredPlaces)));
+        localStorage.setItem('labelColors', labelColors);
+        localStorage.setItem('labelColors', JSON.stringify(Object.keys(clusteredPlaces)));
 
         // embed calendar view
         if (localStorage.iFrameText) {
@@ -407,7 +417,6 @@
           }
 
           function clusterLocations(data, geocodedAddresses) {
-            console.log("clusterLocations received addresses as:", geocodedAddresses);
 
             var
                 noOfDays,
@@ -644,10 +653,9 @@
                   currentLocObject,
                   locLabel,
                   latlng,
-                  colorId,
+                  eventColorId,
                   prevLocObject,
-                  tmpStore = [],
-                  createResource;
+                  tmpStore = [];
 
               tmpStore.push(dayData[0]);
               var counter = 0;
@@ -655,68 +663,69 @@
               // var roundToTwoDP = function (num) {
               //   return +(Math.round(num + "e+2") + "e-2");
               // };
+              try {
 
-              for (var i = 1; i < dayData.length; i++) {
-                currentLocObject = dayData[i];
-                prevLocObject = dayData[i - 1];
-                if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
-                  tmpStore.push(currentLocObject);
-                } else {
-                  firstItem = tmpStore[0];
-                  lastItem = tmpStore[tmpStore.length - 1];
+                for (var i = 1; i < dayData.length; i++) {
+                  currentLocObject = dayData[i];
+                  prevLocObject = dayData[i - 1];
+                  if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
+                    tmpStore.push(currentLocObject);
+                  } else {
+                    firstItem = tmpStore[0];
+                    lastItem = tmpStore[tmpStore.length - 1];
 
-                  if (firstItem === undefined || lastItem === undefined) {
-                    counter++;
-                    continue; //minor tweak to temporary avoid bug
+                    if (firstItem === undefined || lastItem === undefined) {
+                      counter++;
+                      continue; //minor tweak to temporary avoid bug
+                    }
+
+                    // timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
+                    timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
+                    timeDiff = parseFloat(timeDiff.toFixed(2));
+                    latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
+                    locLabel = firstItem.locationLabel.toUpperCase();
+
+                    // color id can only be from string '1' to '11' to get valid event color
+                    eventColorId = JSON.parse(localStorage.getItem('labelColors'));
+                    eventColorId = eventColorId.indexOf(firstItem.locationLabel);
+                    resource = createResource(
+                        new Date(firstItem.timestampMs),
+                        new Date(lastItem.timestampMs),
+                        locLabel, latlng, eventColorId, timeDiff, firstItem.locationLabel
+                    );
+
+                    allResourcesForDay.push(resource);
+
+                    // reset tmpStore to store next location
+                    tmpStore = [];
                   }
-
-                  // timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
-                  timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000*60*60);
-                  timeDiff = parseFloat(timeDiff.toFixed(2));
-                  latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-                  locLabel = firstItem.locationLabel.toUpperCase();
-
-                  if (firstItem.locationLabel === "home") {
-                    colorId = "10"; //green
-                  } else if (firstItem.locationLabel === "work") {
-                    colorId = "11"; //red
-                  } else if (firstItem.locationLabel === "hobby") {
-                    colorId = "6"; //brown
-                  } else if (firstItem.locationLabel === "other") {
-                    colorId = "8"; //grey
-                  }
-
-                  createResource = function (startTime, endTime, summary, location, colorId, tdiff, label) {
-                    return {
-                      "summary": summary || 'no summary',
-                      "location": location || 'empty location',
-                      "colorId": colorId,
-                      "start": {
-                        "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
-                      },
-                      "end": {
-                        "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
-                      },
-                      "timediff": tdiff,
-                      "label": label,
-                    };
-                  };
-
-                  resource = createResource(
-                      new Date(firstItem.timestampMs),
-                      new Date(lastItem.timestampMs),
-                      locLabel, latlng, colorId, timeDiff, firstItem.locationLabel
-                  );
-
-                  allResourcesForDay.push(resource);
-
-                  // reset tmpStore to store next location
-                  tmpStore = [];
                 }
+
+              } catch (err) {
+                console.log("Error happened.", err.message);
+                helper.updateStatus("Error happened. Please contact Admin.");
               }
+
 
               return allResourcesForDay;
             }
+
+            function createResource(startTime, endTime, summary, location, colorId, tdiff, label) {
+              return {
+                "summary": summary || 'no summary',
+                "location": location || 'empty location',
+                "colorId": colorId,
+                "start": {
+                  "dateTime": startTime //e.g. "2015-12-23T10:00:00.000-07:00"
+                },
+                "end": {
+                  "dateTime": endTime //e.g. "2015-12-23T17:25:00.000-07:00"
+                },
+                "timediff": tdiff,
+                "label": label
+              };
+            }
+
 
             function compressAndFilter(allEv) {
 
@@ -1131,11 +1140,8 @@
         return clusteredPlaces;
       }
 
-    }
-
-    (gapi, jQuery, prettySize, _)
-)
-;
+    }(gapi, jQuery, prettySize, _)
+);
 
 
 //TODO: throw error when page hangs during file loading
@@ -1148,3 +1154,7 @@
 //TODO: remove illegal characters from text input of addresses or labels
 
 //TODO: the click google calendar button looks weird after you have printed the date so fix it.
+
+//TODO: compressFilter doesn't account for hour jumps between two times. For instance, if I was at home at 10am and
+// then no location recorded again until 2pm. Then compressFilter assumes I was home from 10am to 2pm, which might be
+// inaccurate especially if my phone was off or if I just went somewhere else.
