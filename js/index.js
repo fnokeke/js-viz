@@ -9,8 +9,8 @@
 
       function initView() {
         var addresses,
-            clusteredPlaces,
-            labelColors;
+            clusteredPlaces;
+
 
         // populate address fields with last entries
         for (var key in localStorage) {
@@ -30,11 +30,8 @@
         clusteredPlaces = getClusteredPlaces();
         console.log("clusteredPlaces (initView): ", clusteredPlaces);
 
-        labelColors = Object.keys(clusteredPlaces);
-        console.log('labelColors (initView):', labelColors);
-        console.log('labelColors (stringify):', JSON.stringify(Object.keys(clusteredPlaces)));
-        localStorage.setItem('labelColors', labelColors);
         localStorage.setItem('labelColors', JSON.stringify(Object.keys(clusteredPlaces)));
+        console.log('labelColors:', JSON.stringify(Object.keys(clusteredPlaces)));
 
         // embed calendar view
         if (localStorage.iFrameText) {
@@ -459,7 +456,7 @@
             dateStr = helper.formatDate(dateStr);
             dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
             localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
-                dateStr + "&mode=list";
+                dateStr + "&mode=week";
 
             // update dateText
             localStorage.dateText =
@@ -686,14 +683,15 @@
                     locLabel = firstItem.locationLabel.toUpperCase();
 
                     // color id can only be from string '1' to '11' to get valid event color
+                    // '8'('grey') used for category that doesn't exist
                     eventColorId = JSON.parse(localStorage.getItem('labelColors'));
-                    eventColorId = eventColorId.indexOf(firstItem.locationLabel);
+                    eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
+
                     resource = createResource(
                         new Date(firstItem.timestampMs),
                         new Date(lastItem.timestampMs),
                         locLabel, latlng, eventColorId, timeDiff, firstItem.locationLabel
                     );
-
                     allResourcesForDay.push(resource);
 
                     // reset tmpStore to store next location
