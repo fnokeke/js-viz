@@ -36,14 +36,14 @@
 
                 <!--<form id="addressForm" class="form-element">-->
                 <form id="addressForm" class="">
-                    <div id="placeAddress-div">
-                        <label class="place-label">
-                            Number of days you'd like to track
-                        </label><br><br>
-                        <input type="number" min=1 max = 60 id="daysCount" class="place-address" name="daysCount"
-                        placeholder="Enter number of days such as 7, 14, 30">
-                        <br>
+                    <label class="place-label">
+                        Number of days you'd like to track: &nbsp;
+                    </label> <br><br>
+                    <input type="number" min=1 max = 60 id="daysCount" class="place-address place-count" name="daysCount"
+                           placeholder="7, 14, 30">
+                    <br>
 
+                    <div id="placeAddress-div">
                         <input type="text" id="defaultLabel" name="defaultLabel"
                                placeholder="label place e.g. home, school, gym"
                                class="place-label">
@@ -51,6 +51,7 @@
                                placeholder="Enter full place address here."
                         class="place-address">
                         <input type="button" value="+" class="btn btn-sign" id="addPlaceButton">
+
                     </div>
                     <input id="saveInputButton" class="btn" type="button" value="Save">
                 </form>

@@ -1,7 +1,5 @@
 //  Created by fnokeke on 1/9/16.
 
-//Code Refactoring
-
 (function (gapi, $, prettySize, _) {
       'use strict';
 
@@ -306,12 +304,6 @@
               promiseGeocode,
               promiseReset;
 
-          // userAddresses = {
-          //   home: localStorage.homeAddress0,
-          //   work: localStorage.workAddress0,
-          //   hobby: localStorage.hobbyAddress0
-          // };
-
           userAddresses = getClusteredPlaces();
 
           // Cornell Tech address gives wrong geocoded lat/lng so we'll replace it with 111 8th Ave
@@ -421,12 +413,6 @@
                 lastDayTimestamp,
                 nDaysAgoTimestamp,
                 dateStr;
-            // HOME,
-            // HOBBY,
-            // WORK;
-
-            // addresses = geocodedAddresses;
-            // data = uploadedData;
 
             noOfDays = localStorage.daysCount;
             helper.assert(data.length > 0, "uploaded data length test");
@@ -473,22 +459,6 @@
             data = data.filter(function (row) {
               return row.accuracy <= 1000;
             });
-
-            // HOME = addresses.home;
-            // HOBBY = addresses.hobby;
-            // WORK = addresses.work;
-            //
-            // data.forEach(function (row) {
-            //   if (distance(HOME[0], HOME[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-            //     row.locationLabel = 'home';
-            //   } else if (distance(WORK[0], WORK[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-            //     row.locationLabel = 'work';
-            //   } else if (distance(HOBBY[0], HOBBY[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-            //     row.locationLabel = 'hobby';
-            //   } else {
-            //     row.locationLabel = 'other';
-            //   }
-            // });
 
             // cluster locations into different categories within margin of error
             var listOfLatLng,
@@ -649,17 +619,14 @@
                   timeDiff,
                   currentLocObject,
                   locLabel,
-                  latlng,
+                  latLng,
                   eventColorId,
                   prevLocObject,
-                  tmpStore = [];
+                  tmpStore = [],
+                  counter = 0;
 
               tmpStore.push(dayData[0]);
-              var counter = 0;
 
-              // var roundToTwoDP = function (num) {
-              //   return +(Math.round(num + "e+2") + "e-2");
-              // };
               try {
 
                 for (var i = 1; i < dayData.length; i++) {
@@ -676,10 +643,9 @@
                       continue; //minor tweak to temporary avoid bug
                     }
 
-                    // timeDiff = roundToTwoDP((lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60));
                     timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
                     timeDiff = parseFloat(timeDiff.toFixed(2));
-                    latlng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
+                    latLng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
                     locLabel = firstItem.locationLabel.toUpperCase();
 
                     // color id can only be from string '1' to '11' to get valid event color
@@ -690,7 +656,7 @@
                     resource = createResource(
                         new Date(firstItem.timestampMs),
                         new Date(lastItem.timestampMs),
-                        locLabel, latlng, eventColorId, timeDiff, firstItem.locationLabel
+                        locLabel, latLng, eventColorId, timeDiff, firstItem.locationLabel
                     );
                     allResourcesForDay.push(resource);
 
@@ -703,7 +669,6 @@
                 console.log("Error happened.", err.message);
                 helper.updateStatus("Error happened. Please contact Admin.");
               }
-
 
               return allResourcesForDay;
             }
@@ -727,15 +692,19 @@
 
             function compressAndFilter(allEv) {
 
+              var tmpArr,
+                  lastEntry,
+                  currEv,
+                  timediff,
+                  ev,
+                  resultsArr;
+
+
               if (allEv.length < 1) {
                 return [];
               }
 
-              var
-                  tmpArr = [],
-                  lastEntry,
-                  currEv;
-
+              tmpArr = [];
               tmpArr.push(allEv[0]);
 
               for (var i = 1; i < allEv.length; i++) {
@@ -743,21 +712,17 @@
                 currEv = allEv[i];
 
                 if (lastEntry.label === currEv.label) {
-                  lastEntry.end = currEv.end
+                  lastEntry.end = currEv.end;
                 }
                 else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
-                  //console.log("ignore counter:", ignoreCounter);
-                  //console.log("entry to ignore:", currEv.summary, currEv.start.dateTime, "----", currEv.end.dateTime);
 
                   if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
                     if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
-                      tmpArr.push(currEv);
-                      //console.log("Not gonna ignore because next event has same label as this: ", currEv.label)
+                      tmpArr.push(currEv); // "don't ignore because next event has same label as this: currEv.label
                     }
                     else if (allEv[i + 2]) {
                       if ((allEv[i + 2].label === currEv.label) && allEv[i + 2].label !== "other") {
-                        tmpArr.push(currEv);
-                        //console.log("Not gonna ignore because next TWO event has same label as this:", currEv.label)
+                        tmpArr.push(currEv); // don't ignore because next TWO event has same label as this: currEv.label
                       }
                     }
                   }
@@ -765,8 +730,7 @@
                 else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
                   if (allEv[i + 1]) {
                     if (allEv[i + 1].label === lastEntry.label) {
-                      lastEntry.end = currEv.end;
-                      //console.log("extending with label from OTHER");
+                      lastEntry.end = currEv.end; // extending with label from 'OTHER'
                     }
                   }
                 }
@@ -774,14 +738,9 @@
                   tmpArr.push(currEv);
                 }
               }
-              //console.log("total ignore counter:", ignoreCounter);
-
-              var
-                  timediff,
-                  ev,
-                  resultsArr = [];
 
               //update summary and delete irrelevant fields
+              resultsArr = [];
               for (var i = 0; i < tmpArr.length; i++) {
                 ev = tmpArr[i];
                 timediff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
@@ -939,7 +898,6 @@
         },
 
         openFullCalendarView: function () {
-          // window.location.href = localStorage.fullCalendarViewURL || 'http://calendar.google.com';
           window.open(localStorage.fullCalendarViewURL || 'http://calendar.google.com', '_blank');
         },
 
@@ -1154,5 +1112,5 @@
 //TODO: the click google calendar button looks weird after you have printed the date so fix it.
 
 //TODO: compressFilter doesn't account for hour jumps between two times. For instance, if I was at home at 10am and
-// then no location recorded again until 2pm. Then compressFilter assumes I was home from 10am to 2pm, which might be
-// inaccurate especially if my phone was off or if I just went somewhere else.
+// TODO: compressFilter cont'd: then no location recorded again until 2pm. Then compressFilter assumes I was home from 10am to 2pm, which might be
+//TODO: compressFilter cont'd:  inaccurate especially if my phone was off or if I just went somewhere else.
