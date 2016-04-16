@@ -589,7 +589,11 @@
 
                 dataForDay = groupedByDayData[selectedDay];
                 allEventsForDay = getAllDwellTime(dataForDay);
-                allEventsForDay = compressAndFilter(allEventsForDay);
+                if (allEventsForDay === -1) {
+                  console.log("error caught here.");
+                  break;
+                }
+                // allEventsForDay = compressAndFilter(allEventsForDay);
 
                 if (allEventsForDay.length > 0) {
                   batchInsert = gapi.client.newBatch();
@@ -668,6 +672,7 @@
               } catch (err) {
                 console.log("Error happened.", err.message);
                 helper.updateStatus("Error happened. Please contact Admin.");
+                allResourcesForDay = -1;
               }
 
               return allResourcesForDay;
@@ -1012,6 +1017,7 @@
         if (isPopulating) {
           inputName = labelName;
           placeLabel = labelName.replace("placeAddress", "placeLabel");
+          localStorage.placeId = placeLabel.split("placeLabel")[1];
 
         } else { //creating new fields
           localStorage.placeId = 1 + parseInt(localStorage.placeId || 0);
@@ -1055,7 +1061,9 @@
           $('#' + placeLabel).remove();
           $('#' + removeButtonName).remove();
           delete localStorage[inputName];
+          delete localStorage["placeLabel" + inputName.split("placeAddress")[1]]; //e.g. placeLabel8
         });
+
       }
 
 
