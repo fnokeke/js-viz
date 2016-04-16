@@ -655,6 +655,7 @@
                     // color id can only be from string '1' to '11' to get valid event color
                     // '8'('grey') used for category that doesn't exist
                     eventColorId = JSON.parse(localStorage.getItem('labelColors'));
+                    helper.assert(eventColorId !== null, "eventColorId test.");
                     eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
 
                     resource = createResource(
@@ -912,10 +913,12 @@
 
         updateStatus: function (msg) {
           var error = msg || '';
-          helper.updateDiv('#uploadStatus', error, 'red');
           helper.resetFileupload();
           helper.modifyDiv('working-div', 'hide');
           helper.modifyDiv('calendar-div', 'hide');
+          $('#date-output').html(localStorage.dateText);
+          helper.updateDiv('#uploadStatus', error, 'red');
+          helper.updateDiv('#date-output', error, 'red');
         },
 
         updateDiv: function (div, message, color) {
