@@ -575,7 +575,7 @@
 
             dataForDay = groupedByDayData[selectedDay];
             allEventsForDay = getAllDwellTime(dataForDay);
-            allEventsForDay = compressAndFilter(allEventsForDay);
+            // allEventsForDay = compressAndFilter(allEventsForDay);
 
             if (allEventsForDay.length > 0) {
               batchInsert = gapi.client.newBatch();
