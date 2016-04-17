@@ -218,6 +218,7 @@
           var file,
               fileSize,
               blob,
+              limit,
               filename,
               reader;
 
@@ -232,9 +233,16 @@
           filename = file.name;
           fileSize = prettySize(file.size);
 
-          // extract only last 100 MB of data of uploaded file as this is enough for time frame
-          // we are interested in. Note that about 250MB is the browser limit for loading at once in memory
-          blob = file.slice(-100 * 1024 * 1024);
+          // extract only first 100 MB of data of uploaded file as this is enough for time frame
+          // we are interested in (max of 1 month). Note that about 250MB is the browser limit for loading in memory
+          // JSON file has descending order of timestamp. For instance, first entry has today's timestamp
+          // while second entry has yesterday's timestamp
+          blob = file;
+          limit = 100*1000*1000;
+          
+          if (file.size > limit) {
+            blob = file.slice(0, 100 * 1024 * 1024);
+          }
 
           reader = new FileReader();
           reader.onprogress = function (e) {
@@ -253,14 +261,18 @@
 
               // format selected data to valid json string and extract locations
               var data = e.target.result;
-              helper.assert(data !== '', 'parse json test.');
-
-              var startIndex = data.indexOf('timestampMs');
-              data = '{ "locations": [ {"' + data.substr(startIndex);
-              data = JSON.parse(data).locations;
-              if (!data || data.length === 0) {
+              if (!data || data.length === '{}') {
                 throw new ReferenceError('No location data found.');
               }
+
+              if (file.size > limit) {
+                var startSearchIndex = data.length - 300;
+                var lastCloseBrace = data.indexOf("}", startSearchIndex);
+                var subDATA = data.substr(0, lastCloseBrace);
+                data = subDATA + "}]}";
+              }
+              
+              data = JSON.parse(data).locations;
 
               helper.updateDiv('#uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
               helper.modifyDiv('calendar-div', 'show');
@@ -916,9 +928,6 @@
           helper.resetFileupload();
           helper.modifyDiv('working-div', 'hide');
           helper.modifyDiv('calendar-div', 'hide');
-          $('#date-output').html(localStorage.dateText);
-          helper.updateDiv('#uploadStatus', error, 'red');
-          helper.updateDiv('#date-output', error, 'red');
         },
 
         updateDiv: function (div, message, color) {
