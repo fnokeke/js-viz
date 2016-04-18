@@ -6,9 +6,7 @@
       initView();
 
       function initView() {
-        var addresses,
-            clusteredPlaces;
-
+        var addresses;
 
         // populate address fields with last entries
         for (var key in localStorage) {
@@ -25,11 +23,7 @@
           addAutocompleteListener(address);
         });
 
-        clusteredPlaces = getClusteredPlaces();
-        console.log("clusteredPlaces (initView): ", clusteredPlaces);
-
-        localStorage.setItem('labelColors', JSON.stringify(Object.keys(clusteredPlaces)));
-        console.log('labelColors:', JSON.stringify(Object.keys(clusteredPlaces)));
+        updateLabelsOfPlaces();
 
         // embed calendar view
         if (localStorage.iFrameText) {
@@ -43,6 +37,19 @@
               'style="border-width:0" width="98%" height="90%" frameborder="0" scrolling="no"> ' +
               '</iframe>';
         }
+
+      }
+
+      function updateLabelsOfPlaces() {
+        var clusteredPlaces,
+            labelColors;
+
+        clusteredPlaces = getClusteredPlaces();
+        labelColors = JSON.stringify(Object.keys(clusteredPlaces));
+        localStorage.setItem('labelColors', labelColors);
+
+        console.log("clusteredPlaces: ", clusteredPlaces);
+        console.log('updated labelColors:', labelColors);
 
       }
 
@@ -178,10 +185,10 @@
           //check if place label and addresses provided are valid entries
           if (!(placesAdded.length > 0 && daysCount !== '')) {
             helper.goToAnchor('address');
-            helper.updateDiv('#addressStatus', 'Please complete all fields.', 'red');
+            helper.updateDiv('addressStatus', 'Please complete all fields.', 'red');
             return;
           } else {
-            helper.updateDiv('#addressStatus', 'Fields successfully completed!', 'green');
+            helper.updateDiv('addressStatus', 'Fields successfully completed!', 'green');
             createdCalendarId = localStorage.createdCalendarId;
             createdCalendarSummary = localStorage.createdCalendarSummary;
             token = localStorage.dsuToken;
@@ -198,9 +205,12 @@
               localStorage[placeEntry.name] = placeEntry.value;
             }
 
+            //update labelColors as places are added
+            updateLabelsOfPlaces();
+
             // clear previous file input if any there before
             helper.resetFileupload();
-            helper.updateDiv('#uploadStatus', '', 'darkgrey');
+            helper.updateDiv('uploadStatus', '', 'darkgrey');
 
             // clear previously uploaded file
             helper.goToAnchor('data');
@@ -247,7 +257,7 @@
           reader = new FileReader();
           reader.onprogress = function (e) {
             var percentLoaded = Math.round(( e.loaded / e.total ) * 100);
-            helper.updateDiv('#uploadStatus', percentLoaded + '% of ' + fileSize + ' loaded.', 'grey');
+            helper.updateDiv('uploadStatus', percentLoaded + '% of ' + fileSize + ' loaded.', 'grey');
           };
 
           reader.onload = function (e) {
@@ -261,20 +271,24 @@
 
               // format selected data to valid json string and extract locations
               var data = e.target.result;
+              
               if (!data || data.length === '{}') {
                 throw new ReferenceError('No location data found.');
               }
 
               if (file.size > limit) {
-                var startSearchIndex = data.length - 300;
+                var startSearchIndex = data.length - 1000;
                 var lastCloseBrace = data.indexOf("accuracy", startSearchIndex);
-                var subDATA = data.substr(0, lastCloseBrace - 1);
-                data = subDATA + "\"accuracy\": 0}]}";
+                
+                if (lastCloseBrace !== -1) {
+                  var subDATA = data.substr(0, lastCloseBrace - 1);
+                  data = subDATA + "\"accuracy\": 0}]}";
+                }
               }
 
               data = JSON.parse(data).locations;
 
-              helper.updateDiv('#uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
+              helper.updateDiv('uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
               helper.modifyDiv('calendar-div', 'show');
 
               processLocationHistory(data);
@@ -304,7 +318,7 @@
 
           reader.onerror = function () {
             helper.modifyDiv('working-div', 'hide');
-            helper.updateDiv('#uploadStatus', 'Something went wrong reading your JSON file. ', 'red');
+            helper.updateDiv('uploadStatus', 'Something went wrong reading your JSON file. ', 'red');
           };
 
           reader.readAsText(blob);
@@ -602,7 +616,9 @@
                 dataForDay = groupedByDayData[selectedDay];
                 allEventsForDay = getAllDwellTime(dataForDay);
                 if (allEventsForDay === -1) {
-                  console.log("error caught here.");
+                  console.log("error seen here: allEventsForDay == -1");
+                  helper.updateStatus("Something just went wrong. Please contact Admin.");
+                  helper.modifyDiv('date-output', 'hide');
                   break;
                 }
                 // allEventsForDay = compressAndFilter(allEventsForDay);
@@ -643,7 +659,7 @@
 
               tmpStore.push(dayData[0]);
 
-              try {
+              // try {
 
                 for (var i = 1; i < dayData.length; i++) {
                   currentLocObject = dayData[i];
@@ -667,9 +683,8 @@
                     // color id can only be from string '1' to '11' to get valid event color
                     // '8'('grey') used for category that doesn't exist
                     eventColorId = JSON.parse(localStorage.getItem('labelColors'));
-                    eventColorId = (locLabel !== 'OTHER' || !eventColorId) ?
-                        eventColorId.indexOf(firstItem.locationLabel) :
-                        '8';
+                    // eventColorId = null;
+                    eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
 
                     if (eventColorId === null) {
                       console.log("eventColorId is null");
@@ -687,11 +702,10 @@
                   }
                 }
 
-              } catch (err) {
-                console.log("Error happened.", err.message);
-                helper.updateStatus("Error happened. Please contact Admin.");
-                allResourcesForDay = -1;
-              }
+              // } catch (err) {
+              //   console.log("Error happened.", err.message);
+              //   allResourcesForDay = -1;
+              // }
 
               return allResourcesForDay;
             }
@@ -910,7 +924,8 @@
         },
 
         goToAnchor: function (anchor) {
-          var loc = document.location.toString().split('#')[0];
+          var loc = document.location.toString().split('#')[0]
+
           document.location = loc + '#' + anchor;
           return false;
         },
@@ -933,10 +948,12 @@
           helper.resetFileupload();
           helper.modifyDiv('working-div', 'hide');
           helper.modifyDiv('calendar-div', 'hide');
+          helper.updateDiv('uploadStatus', msg, 'red');
+          console.log(error);
         },
 
         updateDiv: function (div, message, color) {
-          $(div).text(message);
+          $('#' + div).text(message);
           $(div).css('color', color);
         }
       };
@@ -1079,6 +1096,7 @@
           $('#' + removeButtonName).remove();
           delete localStorage[inputName];
           delete localStorage["placeLabel" + inputName.split("placeAddress")[1]]; //e.g. placeLabel8
+          updateLabelsOfPlaces();
         });
 
       }
@@ -1139,3 +1157,7 @@
 //TODO: compressFilter doesn't account for hour jumps between two times. For instance, if I was at home at 10am and
 // TODO: compressFilter cont'd: then no location recorded again until 2pm. Then compressFilter assumes I was home from 10am to 2pm, which might be
 //TODO: compressFilter cont'd:  inaccurate especially if my phone was off or if I just went somewhere else.
+
+//TODO: smooth out compressFilter
+//TODO: show UI errors when errors happen during location processing
+//TODO: add DB Scan
