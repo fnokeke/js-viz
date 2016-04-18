@@ -239,7 +239,7 @@
           // while second entry has yesterday's timestamp
           blob = file;
           limit = 100*1000*1000;
-          
+
           if (file.size > limit) {
             blob = file.slice(0, 100 * 1024 * 1024);
           }
@@ -267,11 +267,11 @@
 
               if (file.size > limit) {
                 var startSearchIndex = data.length - 300;
-                var lastCloseBrace = data.indexOf("}", startSearchIndex);
-                var subDATA = data.substr(0, lastCloseBrace);
-                data = subDATA + "}]}";
+                var lastCloseBrace = data.indexOf("accuracy", startSearchIndex);
+                var subDATA = data.substr(0, lastCloseBrace-1);
+                data = subDATA + "\"accuracy\": 0}]}";
               }
-              
+
               data = JSON.parse(data).locations;
 
               helper.updateDiv('#uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
