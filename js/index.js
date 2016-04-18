@@ -271,7 +271,7 @@
 
               // format selected data to valid json string and extract locations
               var data = e.target.result;
-              
+
               if (!data || data.length === '{}') {
                 throw new ReferenceError('No location data found.');
               }
@@ -279,7 +279,7 @@
               if (file.size > limit) {
                 var startSearchIndex = data.length - 1000;
                 var lastCloseBrace = data.indexOf("accuracy", startSearchIndex);
-                
+
                 if (lastCloseBrace !== -1) {
                   var subDATA = data.substr(0, lastCloseBrace - 1);
                   data = subDATA + "\"accuracy\": 0}]}";
@@ -356,10 +356,15 @@
             var data = clusterLocations(uploadedData, geocodedAddresses);
             promiseReset = resetCalendar(localStorage.createdCalendarId);
             promiseReset.then(function () {
-              analyzeData(data);
-              $('#date-output').html(localStorage.dateText);
-              helper.updateStatus();
-              helper.goToAnchor('calendar');
+              try {
+                analyzeData(data);
+                $('#date-output').html(localStorage.dateText);
+                helper.updateStatus();
+                helper.goToAnchor('calendar');
+              } catch (err) {
+                console.log("analyzeData error caught:", err);
+                helper.updateStatus("Uh oh, couldn't finish processing your location data. Please contact admin.");
+              }
             });
 
           });
@@ -661,46 +666,41 @@
 
               // try {
 
-                for (var i = 1; i < dayData.length; i++) {
-                  currentLocObject = dayData[i];
-                  prevLocObject = dayData[i - 1];
-                  if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
-                    tmpStore.push(currentLocObject);
-                  } else {
-                    firstItem = tmpStore[0];
-                    lastItem = tmpStore[tmpStore.length - 1];
+              for (var i = 1; i < dayData.length; i++) {
+                currentLocObject = dayData[i];
+                prevLocObject = dayData[i - 1];
+                if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
+                  tmpStore.push(currentLocObject);
+                } else {
+                  firstItem = tmpStore[0];
+                  lastItem = tmpStore[tmpStore.length - 1];
 
-                    if (firstItem === undefined || lastItem === undefined) {
-                      counter++;
-                      continue; //minor tweak to temporary avoid bug
-                    }
-
-                    timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
-                    timeDiff = parseFloat(timeDiff.toFixed(2));
-                    latLng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-                    locLabel = firstItem.locationLabel.toUpperCase();
-
-                    // color id can only be from string '1' to '11' to get valid event color
-                    // '8'('grey') used for category that doesn't exist
-                    eventColorId = JSON.parse(localStorage.getItem('labelColors'));
-                    // eventColorId = null;
-                    eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
-
-                    if (eventColorId === null) {
-                      console.log("eventColorId is null");
-                    }
-
-                    resource = createResource(
-                        new Date(firstItem.timestampMs),
-                        new Date(lastItem.timestampMs),
-                        locLabel, latLng, eventColorId, timeDiff, firstItem.locationLabel
-                    );
-                    allResourcesForDay.push(resource);
-
-                    // reset tmpStore to store next location
-                    tmpStore = [];
+                  if (firstItem === undefined || lastItem === undefined) {
+                    counter++;
+                    continue; //minor tweak to temporary avoid bug
                   }
+
+                  timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
+                  timeDiff = parseFloat(timeDiff.toFixed(2));
+                  latLng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
+                  locLabel = firstItem.locationLabel.toUpperCase();
+
+                  // color id can only be from string '1' to '11' to get valid event color
+                  // '8'('grey') used for category that doesn't exist
+                  eventColorId = JSON.parse(localStorage.getItem('labelColors'));
+                  eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
+
+                  resource = createResource(
+                      new Date(firstItem.timestampMs),
+                      new Date(lastItem.timestampMs),
+                      locLabel, latLng, eventColorId, timeDiff, firstItem.locationLabel
+                  );
+                  allResourcesForDay.push(resource);
+
+                  // reset tmpStore to store next location
+                  tmpStore = [];
                 }
+              }
 
               // } catch (err) {
               //   console.log("Error happened.", err.message);
@@ -948,13 +948,12 @@
           helper.resetFileupload();
           helper.modifyDiv('working-div', 'hide');
           helper.modifyDiv('calendar-div', 'hide');
-          helper.updateDiv('uploadStatus', msg, 'red');
-          console.log(error);
+          helper.updateDiv('uploadStatus', error, 'red');
         },
 
         updateDiv: function (div, message, color) {
           $('#' + div).text(message);
-          $(div).css('color', color);
+          $('#' + div).css('color', color);
         }
       };
 
