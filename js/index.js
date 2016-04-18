@@ -238,7 +238,7 @@
           // JSON file has descending order of timestamp. For instance, first entry has today's timestamp
           // while second entry has yesterday's timestamp
           blob = file;
-          limit = 100*1000*1000;
+          limit = 100 * 1000 * 1000;
 
           if (file.size > limit) {
             blob = file.slice(0, 100 * 1024 * 1024);
@@ -268,7 +268,7 @@
               if (file.size > limit) {
                 var startSearchIndex = data.length - 300;
                 var lastCloseBrace = data.indexOf("accuracy", startSearchIndex);
-                var subDATA = data.substr(0, lastCloseBrace-1);
+                var subDATA = data.substr(0, lastCloseBrace - 1);
                 data = subDATA + "\"accuracy\": 0}]}";
               }
 
@@ -667,8 +667,13 @@
                     // color id can only be from string '1' to '11' to get valid event color
                     // '8'('grey') used for category that doesn't exist
                     eventColorId = JSON.parse(localStorage.getItem('labelColors'));
-                    helper.assert(eventColorId !== null, "eventColorId test.");
-                    eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
+                    eventColorId = (locLabel !== 'OTHER' || !eventColorId) ?
+                        eventColorId.indexOf(firstItem.locationLabel) :
+                        '8';
+
+                    if (eventColorId === null) {
+                      console.log("eventColorId is null");
+                    }
 
                     resource = createResource(
                         new Date(firstItem.timestampMs),
