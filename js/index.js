@@ -265,14 +265,12 @@
             try {
               if (e.target.result === '') {
                 throw new RangeError();
-              } else if (e.target.result === '{}') {
-                throw new ReferenceError("Sorry, you have no locations data :(");
               }
 
               // format selected data to valid json string and extract locations
               var data = e.target.result;
 
-              if (!data || data.length === '{}') {
+              if (!data) {
                 throw new ReferenceError('No location data found.');
               }
 
@@ -286,7 +284,11 @@
                 }
               }
 
-              data = JSON.parse(data).locations;
+              data = JSON.parse(data);
+              if (_.size(data) === 0) {
+                throw new ReferenceError("Uh oh, you have no locations data :(");
+              }
+              data = data.locations;
 
               helper.updateDiv('uploadStatus', filename + ' loaded successfully! (' + fileSize + ')', 'darkgrey');
               helper.modifyDiv('calendar-div', 'show');
@@ -299,7 +301,7 @@
                 msg = 'Wrong file uploaded. Your file should end in ".json"';
               }
               else if (err instanceof RangeError) {
-                msg = 'Your data is too large for this browser. Please use Safari.';
+                msg = 'Sorry cannot continue because there is no data in the file uploaded :(';
               }
               else if (err instanceof ReferenceError) {
                 msg = err.message || 'Uh oh. That doesn\'t look like your location data. Check and try again.';
@@ -1158,5 +1160,5 @@
 //TODO: compressFilter cont'd:  inaccurate especially if my phone was off or if I just went somewhere else.
 
 //TODO: smooth out compressFilter
-//TODO: show UI errors when errors happen during location processing
 //TODO: add DB Scan
+// Remove locations when user is not still: use confidence value of still or not moving
