@@ -306,10 +306,6 @@ li {
 }
 
 .place-label {
-    /*width: 100px;*/
-    /*background: none;*/
-    /*font-size: 150%;*/
-    /*border: solid 5px powderblue;*/
     border: dotted black;
     color: darkred;
     height: 7%;
@@ -334,7 +330,7 @@ li {
 }
 
 .place-count {
-    width: 6%;
+    width: 10%;
     height: 5%;
     font-size: 70%;
     border-style: dotted;
