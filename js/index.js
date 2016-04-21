@@ -188,7 +188,7 @@
             helper.updateDiv('addressStatus', 'Please complete all fields.', 'red');
             return;
           } else {
-            helper.updateDiv('addressStatus', 'Fields successfully completed!', 'green');
+            // helper.updateDiv('addressStatus', 'Fields successfully completed!', 'green');
             createdCalendarId = localStorage.createdCalendarId;
             createdCalendarSummary = localStorage.createdCalendarSummary;
             token = localStorage.dsuToken;
@@ -683,8 +683,15 @@
                   }
 
                   timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
+
+                  // if (timeDiff < 0.05) {  // ignore every event less than 3 minutes
+                  //   console.log("Ignoring event with duration (< 3mins):", timeDiff);
+                  //   // continue;
+                  // }
+
                   timeDiff = parseFloat(timeDiff.toFixed(2));
                   latLng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
+                  // locLabel = firstItem.locationLabel.toUpperCase() + "(~" + timeDiff + " hrs)";
                   locLabel = firstItem.locationLabel.toUpperCase();
 
                   // color id can only be from string '1' to '11' to get valid event color
@@ -1035,7 +1042,7 @@
               name: inputName,
               id: inputName,
               value: inputValue || '',
-              placeholder: 'label place e.g. home, school, gym',
+              placeholder: 'enter label of place e.g. home, school, gym',
               class: 'place-label'
             }
         ).appendTo('#placeAddress-div');

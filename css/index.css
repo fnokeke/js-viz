@@ -206,7 +206,7 @@ input[type='radio'] {
 
 li {
     margin-top: 50px;
-    margin-bottom: 100px;
+    margin-bottom: 50px;
     text-align: left;
 }
 
@@ -310,7 +310,7 @@ li {
     /*background: none;*/
     /*font-size: 150%;*/
     /*border: solid 5px powderblue;*/
-    border-style: none;
+    border: dotted black;
     color: darkred;
     height: 7%;
     width: 40%;
@@ -328,9 +328,17 @@ li {
     margin-bottom: 3%;
 }
 
+.daysCount-div {
+    font-size: 110%;
+    color: peru;
+}
+
 .place-count {
-    width: 10%;
-    font-size: 80%;
+    width: 6%;
+    height: 5%;
+    font-size: 70%;
+    border-style: dotted;
+    color: darkred;
 }
 
 

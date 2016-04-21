@@ -36,20 +36,23 @@
 
                 <!--<form id="addressForm" class="form-element">-->
                 <form id="addressForm" class="">
-                    <label class="place-label">
-                        Number of days you'd like to track: &nbsp;
-                    </label> <br><br>
-                    <input type="number" min=1 max = 60 id="daysCount" class="place-address place-count" name="daysCount"
-                           placeholder="7, 14, 30">
-                    <br>
+                    <!--<label class="place-label">-->
+                    <!--Number of days you'd like to track: &nbsp;-->
+                    <!--</label> <br><br>-->
+                    <div class="daysCount-div">
+                        Track last <input type="number" min=1 max=60 id="daysCount" class="place-address place-count"
+                                          name="daysCount"
+                                          value=7> days of your data.
+
+                    </div>
 
                     <div id="placeAddress-div">
                         <input type="text" id="defaultLabel" name="defaultLabel"
-                               placeholder="label place e.g. home, school, gym"
+                               placeholder="Enter label of place e.g. home, school, gym"
                                class="place-label">
                         <input type="text" id="defaultAddress" name="defaultAddress"
                                placeholder="Enter full place address here."
-                        class="place-address">
+                               class="place-address">
                         <input type="button" value="+" class="btn btn-sign" id="addPlaceButton">
 
                     </div>
@@ -63,8 +66,8 @@
             <a name="data"></a>
             <h2>Have you downloaded your location history data?</h2>
             <div class="radiowrapper">
-                <input name="locationHistory" type="radio" value="yes" checked="checked">Yes
-                <input name="locationHistory" type="radio" value="no">No
+                <input name="locationHistory" type="radio" value="yes">Yes
+                <input name="locationHistory" type="radio" value="no" checked="checked">No
             </div>
             <input type="button" value="Next" class="btn" id="getDataButton">
 
@@ -76,67 +79,67 @@
 
             <div id="download-content">
                 <ol>
-                    <li><a href="https://takeout.google.com/settings/takeout" target="_blank"> Go to Google Takeout </a>
+                    <!--<li><a href="https://takeout.google.com/settings/takeout" target="_blank"> Go to Google Takeout </a>-->
+                    <!--</li>-->
+
+                    <li><a href="https://takeout.google.com/settings/takeout/custom/
+                    location_history?hl=en&gl=US&expflags" target="_blank"> Go to Google Takeout </a>
                     </li>
 
-                    <li> Select <b>None</b> to uncheck all boxes. <br><br>
-                        <img src="img/select_none.png" width="700">
+                    <!--<li> Select <b>None</b> to uncheck all boxes. <br><br>-->
+                    <!--<img src="img/select_none.png" width="700">-->
+                    <!--</li>-->
+
+                    <!--<li>-->
+                    <!--Scroll down and check <b>Location History</b>. <br>-->
+                    <!--<img src="img/select_location_history.png" width="700">-->
+                    <!--</li>-->
+
+                    <li> Click <b>Next</b> >> <b>Create Archive</b> >> <b>Download</b> <br>
+                        <i>Note: Be patient with the download process, which may take up to 3 minutes :) </i>
                     </li>
+
+                    <!--<li>-->
+                    <!--As shown below, verify that <i>File type</i> is <b>.zip</b> and <i>Delivery Method</i> is <b>Send-->
+                    <!--download-->
+                    <!--link-->
+                    <!--via-->
+                    <!--email</b>.-->
+                    <!--</li>-->
+
+                    <!--<li>-->
+                    <!--Click <b>Create archive</b>.<br>-->
+                    <!--<img src="img/create_archive.png" width="700"><br>-->
+                    <!--<i>Note: Be patient with the download process as it could sometimes take up to 5 mins or more-->
+                    <!--:) </i>-->
+                    <!--</li>-->
+
+                    <!--<li>-->
+                    <!--When the archive progress bar is complete, <b>Download</b> the data unto your computer. <br>-->
+                    <!--<img src="img/download_complete.png" width="700">-->
+                    <!--</li>-->
+
+                    <!--<li>-->
+                    <!--Locate the downloaded <b>.zip</b> file on your computer and unzip it (typically-->
+                    <!--double-clicking). The file is usually a takout-2016**.zip</b> file unless you rename it.-->
+                    <!--<a href="http://www.glyphnotes.com/gn-zip.cfm" target="_blank">More details</a> about how to-->
+                    <!--unzip a file.-->
+                    <!--</li>-->
 
                     <li>
-                        Scroll down and check <b>Location History</b>. <br>
-                        <img src="img/select_location_history.png" width="700">
-                    </li>
-
-                    <li> Click <b>Next</b></li>
-
-                    <li>
-                        As shown below, verify that <i>File type</i> is <b>.zip</b> and <i>Delivery Method</i> is <b>Send
-                        download
-                        link
-                        via
-                        email</b>.
-                    </li>
-
-                    <li>
-                        Click <b>Create archive</b>.<br>
-                        <img src="img/create_archive.png" width="700"><br>
-                        <i>Note: Be patient with the download process as it could sometimes take up to 5 mins or more
-                            :) </i>
-                    </li>
-
-                    <li>
-                        When the archive progress bar is complete, <b>Download</b> the data unto your computer. <br>
-                        <img src="img/download_complete.png" width="700">
-                    </li>
-
-                    <li>
-                        Locate the downloaded <b>.zip</b> file on your computer and unzip it (typically
-                        double-clicking). The file
-                        is usually a takout-2016**.zip</b> file unless you rename it.
-                        <a href="http://www.glyphnotes.com/gn-zip.cfm" target="_blank">More details</a> about how to
-                        unzip a file.
-                    </li>
-
-                    <li>
-                        Locate the file <b>LocationHistory.json</b> inside <b>Location History</b> folder, which is
-                        inside
-                        <b>Takeout</b> folder.Your unzipped directory should have the structure shown below. <br>
+                        Double-click the downloaded file to automatically create a new folder (<b>takout-2016**.zip</b>)
+                        and upload <b>LocationHistory.json</b> below.
                         <img src="img/zip-file-structure.png" width="800">
                     </li>
 
-                    <li>
-                        Upload <b>LocationHistory.json</b> when prompted for file upload in Student LifeMaps.
-                    </li>
+                    <!--<li>-->
+                    <!--Optional: If you already went through the process of downloading Location History but never-->
+                    <!--saved the data-->
+                    <!--to your computer, you can always click on <b>Manage archives</b> and then click <b>Download</b>.-->
+                    <!--<img src="img/manage_archive.png" width="800">-->
+                    <!--</li>-->
 
-                    <li>
-                        Optional: If you already went through the process of downloading Location History but never
-                        saved the data
-                        to your computer, you can always click on <b>Manage archives</b> and then click <b>Download</b>.
-                        <img src="img/manage_archive.png" width="800">
-                    </li>
-
-                    <li><a href="#upload"> Continue to Data Upload</a></li>
+                    <!--<li><a href="#upload"> Continue to Data Upload</a></li>-->
 
                 </ol>
             </div> <!-- end download-content div -->
