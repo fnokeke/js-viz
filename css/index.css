@@ -32,6 +32,20 @@ body.working {
     padding: 0 auto;
 }
 
+.btn.btn-sign.add {
+    background-color: #00a753;
+}
+
+.btn.btn-sign.add:hover {
+    background-image: -webkit-linear-gradient(top, darkgreen, darkgreen);
+    background-image: -moz-linear-gradient(top, darkgreen, darkgreen);
+    background-image: -ms-linear-gradient(top,  darkgreen, darkgreen);
+    background-image: -o-linear-gradient(top,  darkgreen, darkgreen);
+    background-image: linear-gradient(to bottom, darkgreen, darkgreen);
+    text-decoration: none;
+
+}
+
 .btn.btn-cal {
     width: 20%;
     height: 7%;
