@@ -530,7 +530,7 @@
             // ignore locations with accuracy over 1000m
             var oldLen = _.size(data);
             data = data.filter(function (row) {
-              return row.accuracy <= 1000;
+              return row.accuracy <= 2250;
             });
             console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
 
