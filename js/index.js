@@ -360,7 +360,6 @@
             promiseReset.then(function () {
               try {
                 analyzeData(data);
-                $('#date-output').html(localStorage.dateText);
                 helper.updateStatus();
                 helper.goToAnchor('calendar');
               } catch (err) {
@@ -368,7 +367,6 @@
                 helper.updateStatus("Uh oh, couldn't finish processing your location data. Please contact admin.");
               }
             });
-
           });
 
           function geocodeAddress(userAddresses) {
@@ -450,6 +448,11 @@
             noOfDays = localStorage.daysCount;
             helper.assert(data.length > 0, "uploaded data length test");
 
+            // var activitysCounter = 0;
+            // var totalDataPoint = 0;
+            // var onFootCounter = 0;
+            // var inVehicleCounter = 0;
+
             // convert columns to expected format and add other new columns
             data.forEach(function (row) {
               var timestamp = parseInt(row.timestampMs),
@@ -460,7 +463,42 @@
               row.timestampMs = timestamp;
               row.fullDate = rowDate;
               row.date = helper.formatDate(rowDate);
+
+              // if (row.date === '2016-04-16') {
+              // console.log("==============");
+              // console.log(row.fullDate);
+              // }
+
+              // if (row.date === '2016-04-16' && row.activitys) {
+              //
+              //   row.activitys.forEach(function (activityArray) {
+              //     if (activitysCounter > 100) {
+              //       // throw new BreakException("100 encountered");
+              //     }
+              //
+              //     activityArray.activities.forEach(function (activity) {
+              //       totalDataPoint++;
+              //       // console.log("confidence:", activity.confidence, "type:", activity.type);
+              //
+              //       if (activity.type === "inVehicle" && activity.confidence >= 85) {
+              //         inVehicleCounter++;
+              //       } else if (activity.type === "onFoot" && activity.confidence >= 85) {
+              //         onFootCounter++;
+              //       }
+              //
+              //     });
+              //
+              //   });
+              //
+              // }
+
+
             });
+
+            // console.log("total activities", totalDataPoint);
+            // console.log("invehicle counter", inVehicleCounter);
+            // console.log("onFootCounter", onFootCounter);
+            // console.log("onFootcounter ratio:", 1.0 * onFootCounter / totalDataPoint);
 
             // sort entire time once otherwise have to sort each value from groupby date keys
             data = _.sortBy(data, 'timestampMs');
@@ -475,7 +513,7 @@
             dateStr = helper.formatDate(dateStr);
             dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
             localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
-                dateStr + "&mode=week";
+                dateStr + "&mode=list";
 
             // update dateText
             localStorage.dateText =
@@ -488,16 +526,33 @@
               return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
             });
 
+
             // ignore locations with accuracy over 1000m
+            var oldLen = _.size(data);
             data = data.filter(function (row) {
               return row.accuracy <= 1000;
             });
+            console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
+
+
+            // remove activitys where there is a high chance of moving (confidence is probability of moving)
+            // oldLen = _.size(data);
+            // data = data.filter(function (row) {
+            //   if (!row.activitys) {
+            //     return true;
+            //   } else { // this has activitys array
+            //     var act = row.activitys[0];
+            //     return act.confidence < 65 && !(act.type === 'inVehicle' || act.type === 'onFoot' || act.type === 'walking');
+            //   }
+            // });
+            // console.log("num of rows dropped after non-movement filter:", oldLen - _.size(data));
+
 
             // cluster locations into different categories within margin of error
             var listOfLatLng,
                 latLng,
                 foundLabel,
-                marginError = 300;
+                marginError = 100;
 
             data.forEach(function (row) {
               foundLabel = false;
@@ -643,7 +698,13 @@
                 }
               }
             }
-            console.log("Total events inserted:", insertCounter);
+
+            if (insertCounter > 0) {
+              console.log("Total events inserted:", insertCounter);
+              $('#date-output').html(localStorage.dateText);
+            } else {
+              console.log("No events inserted.");
+            }
 
             function getAllDwellTime(dayData) {
 
@@ -666,8 +727,6 @@
 
               tmpStore.push(dayData[0]);
 
-              // try {
-
               for (var i = 1; i < dayData.length; i++) {
                 currentLocObject = dayData[i];
                 prevLocObject = dayData[i - 1];
@@ -677,27 +736,26 @@
                   firstItem = tmpStore[0];
                   lastItem = tmpStore[tmpStore.length - 1];
 
-                  if (firstItem === undefined || lastItem === undefined) {
+                  if (!firstItem || !lastItem) {
                     counter++;
                     continue; //minor tweak to temporary avoid bug
                   }
 
-                  timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
-
-                  // if (timeDiff < 0.05) {  // ignore every event less than 3 minutes
-                  //   console.log("Ignoring event with duration (< 3mins):", timeDiff);
-                  //   // continue;
-                  // }
-
-                  timeDiff = parseFloat(timeDiff.toFixed(2));
                   latLng = {lat: firstItem.latitudeE7, lng: firstItem.longitudeE7}; //TODO: change input passed
-                  // locLabel = firstItem.locationLabel.toUpperCase() + "(~" + timeDiff + " hrs)";
-                  locLabel = firstItem.locationLabel.toUpperCase();
 
                   // color id can only be from string '1' to '11' to get valid event color
                   // '8'('grey') used for category that doesn't exist
+                  locLabel = firstItem.locationLabel.toUpperCase();
                   eventColorId = JSON.parse(localStorage.getItem('labelColors'));
                   eventColorId = (locLabel !== 'OTHER') ? eventColorId.indexOf(firstItem.locationLabel) : '8';
+
+                  timeDiff = (lastItem.timestampMs - firstItem.timestampMs) / (1000 * 60 * 60);
+                  if (timeDiff < 1.67) {
+                    timeDiff = 60 * timeDiff;
+                    locLabel = firstItem.locationLabel.toUpperCase() + '(~ ' + timeDiff.toFixed(0) + ' mins)';
+                  } else {
+                    locLabel = firstItem.locationLabel.toUpperCase() + '(~ ' + timeDiff.toFixed(1) + ' hrs)';
+                  }
 
                   resource = createResource(
                       new Date(firstItem.timestampMs),
@@ -710,11 +768,6 @@
                   tmpStore = [];
                 }
               }
-
-              // } catch (err) {
-              //   console.log("Error happened.", err.message);
-              //   allResourcesForDay = -1;
-              // }
 
               return allResourcesForDay;
             }
@@ -800,8 +853,10 @@
 
               }
               return resultsArr;
-            }
-          }
+            } //compressFilter
+
+
+          } //analyzeData
         }
 
       } // stageThree
@@ -1151,21 +1206,15 @@
 );
 
 
-//TODO: throw error when page hangs during file loading
-//TODO: prevent continuation when user does not enter address
-//TODO: show calendar iframe
-
 //TODO: remove locations where user was moving or not stationary
-//TODO: let users know that they have to be patient because the archive download could actually be slow
 //TODO: people don't know what to view or expect when the calendar finally pops up
 //TODO: remove illegal characters from text input of addresses or labels
-
-//TODO: the click google calendar button looks weird after you have printed the date so fix it.
 
 //TODO: compressFilter doesn't account for hour jumps between two times. For instance, if I was at home at 10am and
 // TODO: compressFilter cont'd: then no location recorded again until 2pm. Then compressFilter assumes I was home from 10am to 2pm, which might be
 //TODO: compressFilter cont'd:  inaccurate especially if my phone was off or if I just went somewhere else.
 
-//TODO: smooth out compressFilter
-//TODO: add DB Scan
-// Remove locations when user is not still: use confidence value of still or not moving
+//TODO: smooth out compressFilter: remove locations with short amount of time (threshold of 3 minutes is fine)
+// TODO: remove non-still location
+
+//TODO: don't use both green and red colors.
