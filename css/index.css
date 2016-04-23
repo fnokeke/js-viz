@@ -17,14 +17,24 @@ body.working {
     color: #fff;
     border-style: none;
     border-radius: 5px;
-    background-color: rgb(255, 97, 83);
+    background-color: #008CBA;
     padding: 5px 15px 8.5px;
     font-size: 70%;
     -moz-border-radius: 1%;
     margin: 1%;
 }
 
+.btn:hover {
+    background-image: -webkit-linear-gradient(top, #4372AA, #4372AA);
+    background-image: -moz-linear-gradient(top, #4372AA, #4372AA);
+    background-image: -ms-linear-gradient(top, #4372AA, #4372AA);
+    background-image: -o-linear-gradient(top, #4372AA, #4372AA);
+    background-image: linear-gradient(to bottom, #4372AA, #4372AA);
+    text-decoration: none;
+}
+
 .btn.btn-sign {
+    background-color: rosybrown;
     width: 5%;
     height: 10%;
     border-radius: 5px;
@@ -32,18 +42,27 @@ body.working {
     padding: 0 auto;
 }
 
+.btn.btn-sign:hover {
+    background-image: -webkit-linear-gradient(top, indianred, indianred);
+    background-image: -moz-linear-gradient(top, indianred, indianred);
+    background-image: -ms-linear-gradient(top,  indianred, indianred);
+    background-image: -o-linear-gradient(top,  indianred, indianred);
+    background-image: linear-gradient(to bottom, indianred, indianred);
+    text-decoration: none;
+
+}
+
 .btn.btn-sign.add {
     background-color: #00a753;
 }
 
 .btn.btn-sign.add:hover {
-    background-image: -webkit-linear-gradient(top, darkgreen, darkgreen);
-    background-image: -moz-linear-gradient(top, darkgreen, darkgreen);
-    background-image: -ms-linear-gradient(top,  darkgreen, darkgreen);
-    background-image: -o-linear-gradient(top,  darkgreen, darkgreen);
-    background-image: linear-gradient(to bottom, darkgreen, darkgreen);
+    background-image: -webkit-linear-gradient(top, green, green);
+    background-image: -moz-linear-gradient(top, green, green);
+    background-image: -ms-linear-gradient(top,  green, green);
+    background-image: -o-linear-gradient(top,  green, green);
+    background-image: linear-gradient(to bottom, green, green);
     text-decoration: none;
-
 }
 
 .btn.btn-cal {
@@ -53,14 +72,6 @@ body.working {
     margin: 0 auto;
 }
 
-.btn:hover {
-    background-image: -webkit-linear-gradient(top, indianred, indianred);
-    background-image: -moz-linear-gradient(top, indianred, indianred);
-    background-image: -ms-linear-gradient(top,  indianred, indianred);
-    background-image: -o-linear-gradient(top,  indianred, indianred);
-    background-image: linear-gradient(to bottom, indianred, indianred);
-    text-decoration: none;
-}
 
 .cd-fixed-bg {
     height: 100%;
@@ -331,7 +342,7 @@ li {
 .place-address {
     border: solid black;
     height: 8%;
-    width: 80%;
+    width: 90%;
     font-size: 100%;
     color: peru;
     text-align: center;
