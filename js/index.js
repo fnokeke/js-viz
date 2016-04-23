@@ -552,7 +552,7 @@
             var listOfLatLng,
                 latLng,
                 foundLabel,
-                marginError = 100;
+                marginError = 200;
 
             data.forEach(function (row) {
               foundLabel = false;
@@ -683,7 +683,7 @@
                   helper.modifyDiv('date-output', 'hide');
                   break;
                 }
-                // allEventsForDay = compressAndFilter(allEventsForDay);
+                allEventsForDay = compressAndFilter(allEventsForDay);
 
                 if (allEventsForDay.length > 0) {
                   batchInsert = gapi.client.newBatch();
@@ -723,14 +723,33 @@
                   eventColorId,
                   prevLocObject,
                   tmpStore = [],
+              // threshold,
+              // duration,
                   counter = 0;
 
+              // threshold = 0; // number in minutes
               tmpStore.push(dayData[0]);
 
               for (var i = 1; i < dayData.length; i++) {
                 currentLocObject = dayData[i];
                 prevLocObject = dayData[i - 1];
+
+                //check that events are actually close enough before tagging them as same bucket
+                // duration = (currentLocObject.timestampMs - prevLocObject.timestampMs) / (1000.0 * 60);
+
+                // if (currentLocObject.locationLabel === 'other' && duration < threshold) {
+                //   continue;
+                // }
+
                 if (currentLocObject.locationLabel === prevLocObject.locationLabel && i !== dayData.length - 1) {
+
+                  // 'other' could be midpoint between first and last
+                  // or first point or just last point
+                  // if (currentLocObject.locationLabel === 'other' && duration > threshold) {
+                  // if (currentLocObject.locationLabel === 'other') {
+                  //   currentLocObject = prevLocObject;
+                  // }
+
                   tmpStore.push(currentLocObject);
                 } else {
                   firstItem = tmpStore[0];
@@ -794,7 +813,7 @@
               var tmpArr,
                   lastEntry,
                   currEv,
-                  timediff,
+                  timeDiff,
                   ev,
                   resultsArr;
 
@@ -812,8 +831,7 @@
 
                 if (lastEntry.label === currEv.label) {
                   lastEntry.end = currEv.end;
-                }
-                else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
+                } else if ((lastEntry.label !== currEv.label) && (currEv.timediff === 0)) {
 
                   if (allEv[i + 1]) { // if next is same as current event label then accept zero as timediff
                     if ((allEv[i + 1].label === currEv.label) && allEv[i + 1].label !== "other") {
@@ -825,15 +843,13 @@
                       }
                     }
                   }
-                }
-                else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
+                } else if ((lastEntry.label !== currEv.label) && (currEv.label === "other")) { // home-other-home == home-home
                   if (allEv[i + 1]) {
                     if (allEv[i + 1].label === lastEntry.label) {
                       lastEntry.end = currEv.end; // extending with label from 'OTHER'
                     }
                   }
-                }
-                else {
+                } else {
                   tmpArr.push(currEv);
                 }
               }
@@ -842,10 +858,18 @@
               resultsArr = [];
               for (var i = 0; i < tmpArr.length; i++) {
                 ev = tmpArr[i];
-                timediff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
+                ev.summary = ev.summary.split('(')[0];
+                timeDiff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
 
-                if (timediff > 0) {
-                  ev.summary += " (~ " + timediff.toFixed(1) + " hours)";
+                if (timeDiff > 0) {
+                  
+                  if (timeDiff < 1.67) {
+                    timeDiff = 60 * timeDiff;
+                    ev.summary += '(~ ' + timeDiff.toFixed(0) + ' mins)';
+                  } else {
+                    ev.summary += '(~ ' + timeDiff.toFixed(1) + ' hrs)';
+                  }
+
                   delete ev.label;
                   delete ev.timediff;
                   resultsArr.push(ev);
@@ -853,7 +877,7 @@
 
               }
               return resultsArr;
-            } //compressFilter
+            } //compressAndFilter
 
 
           } //analyzeData
