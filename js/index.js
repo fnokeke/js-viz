@@ -240,10 +240,33 @@
           helper.modifyDiv('working-div', 'show');
 
           file = this.files[0];
+
+          // add unzip
+          // JSZip.loadAsync(file).then(function (zip) {
+          //   console.log("zip.files:", zip.files);
+          //
+          //   // zip.file('Takeout/Location History/LocationHistory.json').loadAsync(locContent);//({type:"blob"})
+          //       // .then(function (content) {
+          //       //   // see FileSaver.js
+          //       // });
+          //   zip.file("Takeout/Location History/LocationHistory.json")
+          //       .async("string", function (meta) {
+          //         console.log("Generating the content, we are at " + meta.percent.toFixed(2) + " %");
+          //       })
+          //       .then(function () {
+          //             console.log("all done");
+          //       });
+          //
+          //
+          //
+          //   return zip.file('Takeout/Location History/LocationHistory.json');
+          // }).then(function (locFile) {
+          //   console.log("I got text here.");
+          // });
+
           filename = file.name;
           fileSize = prettySize(file.size);
 
-          // extract only first 100 MB of data of uploaded file as this is enough for time frame
           // we are interested in (max of 1 month). Note that about 250MB is the browser limit for loading in memory
           // JSON file has descending order of timestamp. For instance, first entry has today's timestamp
           // while second entry has yesterday's timestamp
@@ -527,13 +550,75 @@
             });
 
 
-            // ignore locations with accuracy over 1000m
+            // ignore locations with accuracy over threshold
             var oldLen = _.size(data);
             data = data.filter(function (row) {
               return row.accuracy <= 2250;
             });
             console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
 
+
+            function haversineDistance(x,y) {
+              var lat1 = x[0];
+              var lon1 = x[1];
+              var lat2 = y[0];
+              var lon2 = y[1];
+
+              var p = 0.017453292519943295;    // Math.PI / 180
+              var c = Math.cos;
+              var a = 0.5 - c((lat2 - lat1) * p) / 2 +
+                  c(lat1 * p) * c(lat2 * p) *
+                  (1 - c((lon2 - lon1) * p)) / 2;
+
+              // return distance in meters
+              return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+            }
+
+
+            function getCentroid(indices, dataset) {
+              var centroid = [0,0];
+              var numOfPoints = indices.length;
+
+              for (var i = 0; i < numOfPoints; i++) {
+                centroid[0] += dataset[i][0];
+                centroid[1] += dataset[i][1];
+              }
+
+              centroid[0] /= (1.0*numOfPoints);
+              centroid[1] /= (1.0*numOfPoints);
+
+              return centroid;
+            }
+
+            // DBSCAN
+            console.log("------------------");
+            console.log("Started DB Scan");
+
+            var dbscan = new DBSCAN();
+            var oneDayDatset = [];
+
+            data.forEach(function (row) {
+              if (row.date === "2016-04-24") {
+                oneDayDatset.push([row.latitudeE7, row.longitudeE7]);
+              }
+            });
+
+            // var clusters = dbscan.run(oneDayDatset, 200, 3, haversineDistance);
+            var clusters = dbscan.run(oneDayDatset, 100, 3, haversineDistance);
+            var noise = dbscan.noise;
+            console.log("clusters are:", clusters);
+            console.log("db scan noise (", noise.length, " pts):", noise);
+            
+            // for (var i = 0; i < noise.length; i++) {
+            //   console.log("noise(", i, "):", oneDayDatset[i]);
+            // }
+
+            clusters.forEach(function (clusterIndices) {
+              console.log("Centroid (", clusterIndices.length, " pts):", getCentroid(clusterIndices, oneDayDatset));
+            });
+
+            console.log("Ended DB Scan");
+            console.log("------------------");
 
             // remove activitys where there is a high chance of moving (confidence is probability of moving)
             // oldLen = _.size(data);
@@ -660,9 +745,9 @@
             groupedByDayData = _.groupBy(givenData, 'date');
 
             insertRequest = function (ev) {
-              if (ev.summary.indexOf('OTHER') > -1) {
-                ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
-              }
+              // if (ev.summary.indexOf('OTHER') > -1) {
+              ev.location = "(" + ev.location.lat + ", " + ev.location.lng + ")";
+              // }
 
               return gapi.client.calendar.events.insert({
                 'calendarId': localStorage.createdCalendarId,
@@ -683,7 +768,7 @@
                   helper.modifyDiv('date-output', 'hide');
                   break;
                 }
-                allEventsForDay = compressAndFilter(allEventsForDay);
+                // allEventsForDay = compressAndFilter(allEventsForDay);
 
                 if (allEventsForDay.length > 0) {
                   batchInsert = gapi.client.newBatch();
@@ -862,7 +947,7 @@
                 timeDiff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
 
                 if (timeDiff > 0) {
-                  
+
                   if (timeDiff < 1.67) {
                     timeDiff = 60 * timeDiff;
                     ev.summary += '(~ ' + timeDiff.toFixed(0) + ' mins)';
