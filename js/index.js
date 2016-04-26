@@ -558,7 +558,7 @@
             console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
 
 
-            function haversineDistance(x,y) {
+            function haversineDistance(x, y) {
               var lat1 = x[0];
               var lon1 = x[1];
               var lat2 = y[0];
@@ -575,22 +575,27 @@
             }
 
 
-            function getCentroid(indices, dataset) {
-              var centroid = [0,0];
-              var numOfPoints = indices.length;
+            function getCentroid(cluster, dataset) {
+              var centroid = [0, 0];
+              var numOfPoints = cluster.length;
+              var index;
 
+              // cluster contains the dataset index of chosen values
               for (var i = 0; i < numOfPoints; i++) {
-                centroid[0] += dataset[i][0];
-                centroid[1] += dataset[i][1];
+                index = cluster[i];
+                centroid[0] += dataset[index][0];
+                centroid[1] += dataset[index][1];
               }
 
-              centroid[0] /= (1.0*numOfPoints);
-              centroid[1] /= (1.0*numOfPoints);
+              centroid[0] /= (1.0 * numOfPoints);
+              centroid[1] /= (1.0 * numOfPoints);
 
               return centroid;
             }
 
-            // DBSCAN
+            // ==========
+            // dbscan
+            // ==========
             console.log("------------------");
             console.log("Started DB Scan");
 
@@ -598,23 +603,28 @@
             var oneDayDatset = [];
 
             data.forEach(function (row) {
-              if (row.date === "2016-04-24") {
+              if (row.date === "2016-04-22") {
                 oneDayDatset.push([row.latitudeE7, row.longitudeE7]);
               }
             });
 
-            // var clusters = dbscan.run(oneDayDatset, 200, 3, haversineDistance);
             var clusters = dbscan.run(oneDayDatset, 100, 3, haversineDistance);
             var noise = dbscan.noise;
-            console.log("clusters are:", clusters);
-            console.log("db scan noise (", noise.length, " pts):", noise);
+            var noiseDataset = [];
+            for (var i = 0; i<noise.length; i++) {
+              var noiseLocation = oneDayDatset[noise[i]];
+              noiseDataset.push(noiseLocation[0] + "," + noiseLocation[1]);
+            }
             
+            console.log("clusters are:", clusters);
+            console.log("db scan noise (", noiseDataset.length, " pts):", noiseDataset);
+
             // for (var i = 0; i < noise.length; i++) {
             //   console.log("noise(", i, "):", oneDayDatset[i]);
             // }
 
-            clusters.forEach(function (clusterIndices) {
-              console.log("Centroid (", clusterIndices.length, " pts):", getCentroid(clusterIndices, oneDayDatset));
+            clusters.forEach(function (cluster) {
+              console.log("Centroid (", cluster.length, " pts):", getCentroid(cluster, oneDayDatset));
             });
 
             console.log("Ended DB Scan");
