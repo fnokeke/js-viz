@@ -49,7 +49,7 @@
         localStorage.setItem('labelColors', labelColors);
 
         console.log("clusteredPlaces: ", clusteredPlaces);
-        console.log('updated labelColors:', labelColors);
+        console.log('user labels:', labelColors);
 
       }
 
@@ -549,7 +549,6 @@
               return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
             });
 
-
             // ignore locations with accuracy over threshold
             var oldLen = _.size(data);
             data = data.filter(function (row) {
@@ -557,6 +556,130 @@
             });
             console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
 
+
+            // ==========
+            // dbscan
+            // ==========
+            var selectedDates = ["2016-04-15", "2016-04-16", "2016-04-20", "2016-04-20"];
+            // var selectedDates = ["2016-04-22"];
+            var datasetSelected = [];
+
+            data.forEach(function (row) {
+              if (selectedDates.indexOf(row.date) > 0) {
+                datasetSelected.push([row.latitudeE7, row.longitudeE7, row.timestampMs]);
+              }
+            });
+            console.log("rows selected:", datasetSelected.length);
+
+            // each cluster contains indices of values that belong to that cluster
+            var dayEvents = getDayEventsFromCluster(geocodedAddresses, datasetSelected);
+            console.log("total dayEvents::::::::::", dayEvents);
+
+            function getDayEventsFromCluster(geocodedAddresses, oneDayDatset, eps=100, minPts=3, debug) {
+
+              var dbscan = new DBSCAN();
+              var clusters = dbscan.run(oneDayDatset, eps, minPts, haversineDistance);
+
+              if (debug) {
+                console.log("Number of clusters:", clusters.length);
+              }
+
+              var sortedCentroidCluster = {};
+              var values;
+              var centroid;
+              var centroidKey;
+              var centroidsNotUsed = [];
+
+              clusters.forEach(function (cluster) {
+                values = getClusterValues(cluster, oneDayDatset);
+                centroid = getCentroid(values);
+                centroidKey = centroid[0] + "," + centroid[1];
+
+                sortedCentroidCluster[centroidKey] = sortByTimestamp(values);
+                centroidsNotUsed.push(centroidKey);
+
+                if (debug) {
+                  console.log("centroid:", centroid);
+                }
+
+              });
+
+              if (debug) {
+                console.log("centroidCluster = ", sortedCentroidCluster);
+                console.log("Ended DB Scan");
+                console.log("------------------");
+              }
+
+              //
+              // find the cluster that user address falls into
+              //
+              var arrLatLng;
+              var labelClusterValues;
+              var listLatLng;
+              var events;
+              var allDayEvents = [];
+
+              for (var label in geocodedAddresses) {
+                if (geocodedAddresses.hasOwnProperty(label)) {
+
+                  listLatLng = geocodedAddresses[label];
+                  for (var i = 0; i < listLatLng.length; i++) {
+                    arrLatLng = listLatLng[i];
+                    labelClusterValues = getLabelClusterValues(arrLatLng, sortedCentroidCluster);
+                    if (labelClusterValues.length > 0) {
+                      centroidsNotUsed.pop(arrLatLng.join(','));
+
+                      if (debug) {
+                        console.log("====================");
+                      }
+
+                      helper.assert(labelClusterValues.length > 3, "DBSCAN should have min of 3 values");
+                      events = getEvents(label, labelClusterValues);
+                      allDayEvents.push(events);
+
+                      if (debug) {
+                        console.log("summarized duration (", label, "):", events);
+
+                        var eventItem;
+                        for (var i = 0; i < events.length; i++) {
+                          eventItem = events[i];
+                          console.log(eventItem[0], "::::::::", eventItem[1], "-", eventItem[2]);
+                        }
+                      }
+
+                    }
+                  }
+                }
+              }
+
+              // add other places that user didn't specify
+              var count = 1;
+              var clusterLabel;
+              for (var key in centroidsNotUsed) {
+
+                if (centroidsNotUsed.hasOwnProperty(key)) {
+                  centroid = centroidsNotUsed[key];
+                  clusterLabel = "PLACE" + count;
+                  events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
+                  allDayEvents.push(events);
+                  count++;
+
+                  if (debug) {
+                    console.log("summarized duration (", clusterLabel, "):", events);
+
+                    var eventItem;
+                    for (var i = 0; i < events.length; i++) {
+                      eventItem = events[i];
+                      console.log(eventItem[0], "::::::::", eventItem[1], "-", eventItem[2]);
+                    }
+                  }
+
+                }
+
+              }
+
+              return allDayEvents;
+            }
 
             function haversineDistance(x, y) {
               var lat1 = x[0];
@@ -574,17 +697,27 @@
               return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
             }
 
+            function getClusterValues(cluster, dataset) {
+              var clusterValues = [];
+              var item;
 
-            function getCentroid(cluster, dataset) {
+              for (var i = 0; i < cluster.length; i++) {
+                item = cluster[i];
+                clusterValues.push(dataset[item]);
+              }
+
+              return clusterValues;
+            }
+
+            function getCentroid(clusterValues) {
               var centroid = [0, 0];
-              var numOfPoints = cluster.length;
-              var index;
+              var item;
+              var numOfPoints = clusterValues.length;
 
-              // cluster contains the dataset index of chosen values
               for (var i = 0; i < numOfPoints; i++) {
-                index = cluster[i];
-                centroid[0] += dataset[index][0];
-                centroid[1] += dataset[index][1];
+                item = clusterValues[i];
+                centroid[0] += item[0];
+                centroid[1] += item[1];
               }
 
               centroid[0] /= (1.0 * numOfPoints);
@@ -593,54 +726,124 @@
               return centroid;
             }
 
-            // ==========
-            // dbscan
-            // ==========
-            console.log("------------------");
-            console.log("Started DB Scan");
+            function sortByTimestamp(cluster) {
+              var clusterToSort = [];
+              var result = [];
+              var item;
 
-            var dbscan = new DBSCAN();
-            var oneDayDatset = [];
-
-            data.forEach(function (row) {
-              if (row.date === "2016-04-22") {
-                oneDayDatset.push([row.latitudeE7, row.longitudeE7]);
+              // convert to fortmat that allows use to use sortBy
+              for (var i = 0; i < cluster.length; i++) {
+                item = cluster[i];
+                clusterToSort.push({lat: item[0], lng: item[1], timestampMs: item[2]});
               }
-            });
+              clusterToSort = _.sortBy(clusterToSort, 'timestampMs');
 
-            var clusters = dbscan.run(oneDayDatset, 100, 3, haversineDistance);
-            var noise = dbscan.noise;
-            var noiseDataset = [];
-            for (var i = 0; i<noise.length; i++) {
-              var noiseLocation = oneDayDatset[noise[i]];
-              noiseDataset.push(noiseLocation[0] + "," + noiseLocation[1]);
+              for (var i = 0; i < clusterToSort.length; i++) {
+                item = clusterToSort[i];
+                result.push([item.lat, item.lng, new Date(item.timestampMs)]);
+              }
+
+              return result;
             }
-            
-            console.log("clusters are:", clusters);
-            console.log("db scan noise (", noiseDataset.length, " pts):", noiseDataset);
 
-            // for (var i = 0; i < noise.length; i++) {
-            //   console.log("noise(", i, "):", oneDayDatset[i]);
-            // }
+            function getLabelClusterValues(arrLatLng, centroidCluster, eps=100) {
+              var keyLatLng;
+              var cluster = [];
+              for (var key in centroidCluster) {
+                if (centroidCluster.hasOwnProperty(key)) {
 
-            clusters.forEach(function (cluster) {
-              console.log("Centroid (", cluster.length, " pts):", getCentroid(cluster, oneDayDatset));
-            });
+                  keyLatLng = key.split(",");
+                  keyLatLng = [parseFloat(keyLatLng[0]), parseFloat(keyLatLng[1])];
 
-            console.log("Ended DB Scan");
-            console.log("------------------");
+                  if (haversineDistance(keyLatLng, arrLatLng) < eps) {
+                    cluster = centroidCluster[key];
+                    break;
+                  }
+                }
+              }
 
-            // remove activitys where there is a high chance of moving (confidence is probability of moving)
-            // oldLen = _.size(data);
-            // data = data.filter(function (row) {
-            //   if (!row.activitys) {
-            //     return true;
-            //   } else { // this has activitys array
-            //     var act = row.activitys[0];
-            //     return act.confidence < 65 && !(act.type === 'inVehicle' || act.type === 'onFoot' || act.type === 'walking');
-            //   }
-            // });
-            // console.log("num of rows dropped after non-movement filter:", oldLen - _.size(data));
+              return cluster;
+            }
+
+            function getEvents(eventLabel, sortedLocValues) {
+
+              var results = [];
+              var eventBegin;
+              var prevItem, currItem;
+              var maxDiff = 15; // time in minutes
+              maxDiff = maxDiff * 60 * 1000; //convert to microseconds
+              var duration;
+              var index;
+              var sortedLen = sortedLocValues.length;
+
+
+              index = 0;
+              while (index < sortedLen - 1) {
+                eventBegin = sortedLocValues[index];
+
+                for (var i = index + 1; i < sortedLen; i++) {
+                  prevItem = sortedLocValues[i - 1];
+                  currItem = sortedLocValues[i];
+                  duration = currItem[2] - prevItem[2];
+
+                  if (duration > maxDiff) {
+                    results.push([eventLabel, eventBegin[2], prevItem[2]]); //label, beginTime, endTime
+                    eventBegin = currItem;
+                  }
+
+                  if (i === sortedLen - 1 && duration <= maxDiff) {
+                    results.push([eventLabel, eventBegin[2], currItem[2]]);
+                  } else if (i === sortedLen - 1 && duration > maxDiff) {
+                    results.push([eventLabel, eventBegin[2], prevItem[2]]);
+                    results.push([eventLabel, prevItem[2], currItem[2]]);
+                  }
+
+                  index = i;
+                }
+              }
+
+              return results;
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            //
+            // find which cluster geocodedAddress belongs to
+            //
 
 
             // cluster locations into different categories within margin of error
