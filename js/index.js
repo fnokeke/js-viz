@@ -48,8 +48,7 @@
         labelColors = JSON.stringify(Object.keys(clusteredPlaces));
         localStorage.setItem('labelColors', labelColors);
 
-        console.log("clusteredPlaces: ", clusteredPlaces);
-        console.log('user labels:', labelColors);
+        console.log('user places labels:', labelColors);
 
       }
 
@@ -515,11 +514,6 @@
               row.fullDate = rowDate;
               row.date = helper.formatDate(rowDate);
 
-              // if (row.date === '2016-04-16') {
-              // console.log("==============");
-              // console.log(row.fullDate);
-              // }
-
               // if (row.date === '2016-04-16' && row.activitys) {
               //
               //   row.activitys.forEach(function (activityArray) {
@@ -562,6 +556,7 @@
             // update calenderViewURL
             dateStr = new Date(nDaysAgoTimestamp);
             dateStr = helper.formatDate(dateStr);
+            var dateToCompare = dateStr;
             dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
             localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
                 dateStr + "&mode=list";
@@ -572,16 +567,21 @@
                 new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
                 "</i>.";
 
-
             data = data.filter(function (row) {
               return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
             });
 
+            // show me all entries
+            // data.forEach(function (row) {
+            //   if (row.date === '2016-04-28')
+            //     console.log(row.fullDate, row.accuracy, row.activitys || '', row.latitudeE7, row.longitudeE7);
+            // });
+
             // ignore locations with accuracy over threshold
             var oldLen = _.size(data);
-            data = data.filter(function (row) {
-              return row.accuracy <= 2250;
-            });
+            // data = data.filter(function (row) {
+            //   return row.accuracy <= 1000;
+            // });
             console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
 
 
@@ -607,17 +607,26 @@
               var item,
                   counter = 0,
                   batchInsert,
+                  startTime,
+                  endTime,
+                  minDuration,
                   requestToInsert;
 
+              minDuration = 10; //number of minutes
+              minDuration = minDuration * 60 * 1000; //microseconds
               batchInsert = gapi.client.newBatch();
 
               for (var i = 0; i < events.length; i++) {
                 item = events[i];
-                // console.log("item to insert:", item);
                 for (var j = 0; j < item.length; j++) {
-                  requestToInsert = insertSingleRequest(item[j]);
-                  batchInsert.add(requestToInsert);
-                  counter++;
+                  startTime = item[j][1];
+                  endTime = item[j][2];
+
+                  if ((endTime - startTime) > minDuration) {
+                    requestToInsert = insertSingleRequest(item[j]);
+                    batchInsert.add(requestToInsert);
+                    counter++;
+                  }
                 }
               }
 
@@ -626,9 +635,8 @@
 
                 for (var key in resp) {
                   if (resp[key].error) {
-                    console.log("error occured during insert:", resp);
+                    console.log("error occurred during insert:", resp[key]);
                     helper.updateStatus("oh no something bad happened. Please contact admin.");
-                    break;
                   }
                 }
 
@@ -658,6 +666,7 @@
 
               var dbscan = new DBSCAN();
               var clusters = dbscan.run(oneDayDatset, eps, minPts, haversineDistance);
+              console.log("noise points(", dbscan.noise.length, ") pts:", dbscan.noise);
 
               if (debug) {
                 console.log("Number of clusters:", clusters.length);
@@ -672,7 +681,6 @@
                 values = getClusterValues(cluster, oneDayDatset);
                 centroid = getCentroid(values);
                 centroidKey = centroid.toString();
-
                 sortedCentroidCluster[centroidKey] = sortByTimestamp(values);
 
                 if (debug) {
@@ -738,6 +746,9 @@
               var clusterLabel;
               for (var centroid in sortedCentroidCluster) {
                 clusterLabel = "PLACE" + count + ';' + '8' + ';' + centroid; //PLACE1;colorId;lat,lng
+                if (count === 23) {
+                  console.log("debug for place 23");
+                }
                 events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
                 allDayEvents.push(events);
                 count++;
@@ -873,8 +884,8 @@
                   if (i === sortedLen - 1 && duration <= maxDiff) {
                     results.push([eventLabel, eventBegin[2], currItem[2], colorId, latLng]);
                   } else if (i === sortedLen - 1 && duration > maxDiff) {
-                    results.push([eventLabel, eventBegin[2], prevItem[2], colorId, latLng]);
-                    results.push([eventLabel, prevItem[2], currItem[2], colorId, latLng]);
+                    results.push([eventLabel, prevItem[2], prevItem[2], colorId, latLng]);
+                    results.push([eventLabel, currItem[2], currItem[2], colorId, latLng]);
                   }
 
                   index = i;
@@ -1027,27 +1038,29 @@
                 }
                 // allEventsForDay = compressAndFilter(allEventsForDay);
 
-                //put batch insert on hold
-                if (allEventsForDay.length > 0) {
-                  batchInsert = gapi.client.newBatch();
-                  for (var i = 0; i < allEventsForDay.length; i++) {
-                    requestToInsert = insertRequest(allEventsForDay[i]);
-                    batchInsert.add(requestToInsert);
-                    insertCounter++;
-                  }
-
-                  batchInsert.execute(function () {
-                  });
-                }
+                // todo: @remove
+                // put batch insert on hold
+                // if (allEventsForDay.length > 0) {
+                //   batchInsert = gapi.client.newBatch();
+                //   for (var i = 0; i < allEventsForDay.length; i++) {
+                //     requestToInsert = insertRequest(allEventsForDay[i]);
+                //     batchInsert.add(requestToInsert);
+                //     insertCounter++;
+                //   }
+                //
+                //   batchInsert.execute(function () {
+                //   });
+                // }
               }
             }
 
-            if (insertCounter > 0) {
-              console.log("Total events inserted:", insertCounter);
-              $('#date-output').html(localStorage.dateText);
-            } else {
-              console.log("No events inserted.");
-            }
+            // todo: @remove
+            // if (insertCounter > 0) {
+            //   console.log("Total events inserted:", insertCounter);
+            //   $('#date-output').html(localStorage.dateText);
+            // } else {
+            //   console.log("No events inserted.");
+            // }
 
             function getAllDwellTime(dayData) {
 
@@ -1589,3 +1602,5 @@
 
 //TODO: if difference between start and stop time is less than 3 minutes then throw the event away
 // add lat,lng to the event that you've created
+//TODO: fix picking up thai restaurant
+//check that your clustering is by day
