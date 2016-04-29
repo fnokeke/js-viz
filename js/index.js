@@ -631,13 +631,19 @@
               }
 
               batchInsert.execute(function (resp) {
-                console.log("Attempting to insert", counter, "events");
 
                 for (var key in resp) {
                   if (resp[key].error) {
                     console.log("error occurred during insert:", resp[key]);
                     helper.updateStatus("oh no something bad happened. Please contact admin.");
                   }
+                }
+                
+                if (counter > 0) {
+                  console.log("Total events inserted:", counter);
+                  $('#date-output').html(localStorage.dateText);
+                } else {
+                  console.log("No events inserted.");
                 }
 
               });
