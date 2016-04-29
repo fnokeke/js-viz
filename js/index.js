@@ -375,8 +375,36 @@
           // geocode all addresses to lat,lng coordinates
           promiseGeocode = geocodeAddress(userAddresses);
           promiseGeocode.then(function (geocodedAddresses) {
+            var tmpGeocodedAddress = {};
+            var colorCounter = 1;
+            var newLabelName;
 
             console.log("geocodedAddresses: ", geocodedAddresses);
+
+            //update label of geocoded Addresses to have their own specific color of events for google calendar
+            for (var label in geocodedAddresses) {
+              if (geocodedAddresses.hasOwnProperty(label)) {
+                tmpGeocodedAddress[label] = geocodedAddresses[label];
+              }
+            }
+
+            for (var label in tmpGeocodedAddress) {
+              if (tmpGeocodedAddress.hasOwnProperty(label)) {
+
+                if (colorCounter === 8) { // 8 is grey and this color is reserved for other categories
+                  colorCounter++;
+                }
+
+                if (colorCounter > 11) { // google only makes events colors with ids 1-11. Wonder why :/
+                  colorCounter %= 11;
+                }
+
+                newLabelName = label + ';' + colorCounter;
+                geocodedAddresses[newLabelName] = geocodedAddresses[label];
+                delete geocodedAddresses[label];
+                colorCounter++;
+              }
+            }
 
             var data = clusterLocations(uploadedData, geocodedAddresses);
             promiseReset = resetCalendar(localStorage.createdCalendarId);
@@ -560,20 +588,71 @@
             // ==========
             // dbscan
             // ==========
-            var selectedDates = ["2016-04-15", "2016-04-16", "2016-04-20", "2016-04-20"];
-            // var selectedDates = ["2016-04-22"];
+            // var selectedDates = ["2016-04-15", "2016-04-16", "2016-04-19", "2016-04-20"];
             var datasetSelected = [];
 
             data.forEach(function (row) {
-              if (selectedDates.indexOf(row.date) > 0) {
-                datasetSelected.push([row.latitudeE7, row.longitudeE7, row.timestampMs]);
-              }
+              datasetSelected.push([row.latitudeE7, row.longitudeE7, row.timestampMs]);
+              // if (selectedDates.indexOf(row.date) > 0) { }
             });
             console.log("rows selected:", datasetSelected.length);
 
             // each cluster contains indices of values that belong to that cluster
             var dayEvents = getDayEventsFromCluster(geocodedAddresses, datasetSelected);
             console.log("total dayEvents::::::::::", dayEvents);
+            batchInsertEvents(dayEvents);
+
+
+            function batchInsertEvents(events) {
+              var item,
+                  counter = 0,
+                  batchInsert,
+                  requestToInsert;
+
+              batchInsert = gapi.client.newBatch();
+
+              for (var i = 0; i < events.length; i++) {
+                item = events[i];
+                // console.log("item to insert:", item);
+                for (var j = 0; j < item.length; j++) {
+                  requestToInsert = insertSingleRequest(item[j]);
+                  batchInsert.add(requestToInsert);
+                  counter++;
+                }
+              }
+
+              batchInsert.execute(function (resp) {
+                console.log("Attempting to insert", counter, "events");
+
+                for (var key in resp) {
+                  if (resp[key].error) {
+                    console.log("error occured during insert:", resp);
+                    helper.updateStatus("oh no something bad happened. Please contact admin.");
+                    break;
+                  }
+                }
+
+              });
+            }
+
+            function insertSingleRequest(ev) {
+              var resource = {
+                "summary": ev[0],
+                "location": ev[4],
+                "colorId": ev[3],
+                "start": {
+                  "dateTime": ev[1] //e.g. "2015-12-23T10:00:00.000-07:00"
+                },
+                "end": {
+                  "dateTime": ev[2] //e.g. "2015-12-23T17:25:00.000-07:00"
+                }
+              };
+
+              return gapi.client.calendar.events.insert({
+                'calendarId': localStorage.createdCalendarId,
+                'resource': resource
+              });
+            }
 
             function getDayEventsFromCluster(geocodedAddresses, oneDayDatset, eps=100, minPts=3, debug) {
 
@@ -588,15 +667,13 @@
               var values;
               var centroid;
               var centroidKey;
-              var centroidsNotUsed = [];
 
               clusters.forEach(function (cluster) {
                 values = getClusterValues(cluster, oneDayDatset);
                 centroid = getCentroid(values);
-                centroidKey = centroid[0] + "," + centroid[1];
+                centroidKey = centroid.toString();
 
                 sortedCentroidCluster[centroidKey] = sortByTimestamp(values);
-                centroidsNotUsed.push(centroidKey);
 
                 if (debug) {
                   console.log("centroid:", centroid);
@@ -617,6 +694,8 @@
               var labelClusterValues;
               var listLatLng;
               var events;
+              var eventLabel;
+              var results;
               var allDayEvents = [];
 
               for (var label in geocodedAddresses) {
@@ -625,16 +704,18 @@
                   listLatLng = geocodedAddresses[label];
                   for (var i = 0; i < listLatLng.length; i++) {
                     arrLatLng = listLatLng[i];
-                    labelClusterValues = getLabelClusterValues(arrLatLng, sortedCentroidCluster);
-                    if (labelClusterValues.length > 0) {
-                      centroidsNotUsed.pop(arrLatLng.join(','));
+                    results = getLabelClusterValues(arrLatLng, sortedCentroidCluster);
+                    if (results.length > 0) {
+                      delete sortedCentroidCluster[results[0].toString()];
+                      labelClusterValues = results[1];
 
                       if (debug) {
                         console.log("====================");
                       }
 
                       helper.assert(labelClusterValues.length > 3, "DBSCAN should have min of 3 values");
-                      events = getEvents(label, labelClusterValues);
+                      eventLabel = label + ';' + arrLatLng;
+                      events = getEvents(eventLabel, labelClusterValues);
                       allDayEvents.push(events);
 
                       if (debug) {
@@ -655,27 +736,21 @@
               // add other places that user didn't specify
               var count = 1;
               var clusterLabel;
-              for (var key in centroidsNotUsed) {
+              for (var centroid in sortedCentroidCluster) {
+                clusterLabel = "PLACE" + count + ';' + '8' + ';' + centroid; //PLACE1;colorId;lat,lng
+                events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
+                allDayEvents.push(events);
+                count++;
 
-                if (centroidsNotUsed.hasOwnProperty(key)) {
-                  centroid = centroidsNotUsed[key];
-                  clusterLabel = "PLACE" + count;
-                  events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
-                  allDayEvents.push(events);
-                  count++;
+                if (debug) {
+                  console.log("summarized duration (", clusterLabel, "):", events);
 
-                  if (debug) {
-                    console.log("summarized duration (", clusterLabel, "):", events);
-
-                    var eventItem;
-                    for (var i = 0; i < events.length; i++) {
-                      eventItem = events[i];
-                      console.log(eventItem[0], "::::::::", eventItem[1], "-", eventItem[2]);
-                    }
+                  var eventItem;
+                  for (var i = 0; i < events.length; i++) {
+                    eventItem = events[i];
+                    console.log(eventItem[0], "::::::::", eventItem[1], "-", eventItem[2]);
                   }
-
                 }
-
               }
 
               return allDayEvents;
@@ -748,7 +823,7 @@
 
             function getLabelClusterValues(arrLatLng, centroidCluster, eps=100) {
               var keyLatLng;
-              var cluster = [];
+              var result = [];
               for (var key in centroidCluster) {
                 if (centroidCluster.hasOwnProperty(key)) {
 
@@ -756,16 +831,16 @@
                   keyLatLng = [parseFloat(keyLatLng[0]), parseFloat(keyLatLng[1])];
 
                   if (haversineDistance(keyLatLng, arrLatLng) < eps) {
-                    cluster = centroidCluster[key];
+                    result = [key, centroidCluster[key]];
                     break;
                   }
                 }
               }
 
-              return cluster;
+              return result;
             }
 
-            function getEvents(eventLabel, sortedLocValues) {
+            function getEvents(labelKey, sortedLocValues) {
 
               var results = [];
               var eventBegin;
@@ -775,6 +850,10 @@
               var duration;
               var index;
               var sortedLen = sortedLocValues.length;
+              var labels = labelKey.split(';');
+              var eventLabel = labels[0];
+              var colorId = labels[1];
+              var latLng = labels[2];
 
 
               index = 0;
@@ -787,15 +866,15 @@
                   duration = currItem[2] - prevItem[2];
 
                   if (duration > maxDiff) {
-                    results.push([eventLabel, eventBegin[2], prevItem[2]]); //label, beginTime, endTime
+                    results.push([eventLabel, eventBegin[2], prevItem[2], colorId, latLng]); //label, beginTime, endTime
                     eventBegin = currItem;
                   }
 
                   if (i === sortedLen - 1 && duration <= maxDiff) {
-                    results.push([eventLabel, eventBegin[2], currItem[2]]);
+                    results.push([eventLabel, eventBegin[2], currItem[2], colorId, latLng]);
                   } else if (i === sortedLen - 1 && duration > maxDiff) {
-                    results.push([eventLabel, eventBegin[2], prevItem[2]]);
-                    results.push([eventLabel, prevItem[2], currItem[2]]);
+                    results.push([eventLabel, eventBegin[2], prevItem[2], colorId, latLng]);
+                    results.push([eventLabel, prevItem[2], currItem[2], colorId, latLng]);
                   }
 
                   index = i;
@@ -804,41 +883,6 @@
 
               return results;
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
             //
@@ -983,6 +1027,7 @@
                 }
                 // allEventsForDay = compressAndFilter(allEventsForDay);
 
+                //put batch insert on hold
                 if (allEventsForDay.length > 0) {
                   batchInsert = gapi.client.newBatch();
                   for (var i = 0; i < allEventsForDay.length; i++) {
@@ -1540,3 +1585,7 @@
 // TODO: remove non-still location
 
 //TODO: don't use both green and red colors.
+
+
+//TODO: if difference between start and stop time is less than 3 minutes then throw the event away
+// add lat,lng to the event that you've created
