@@ -612,7 +612,7 @@
                   minDuration,
                   requestToInsert;
 
-              minDuration = 10; //number of minutes
+              minDuration = 30; //number of minutes
               minDuration = minDuration * 60 * 1000; //microseconds
               batchInsert = gapi.client.newBatch();
 
