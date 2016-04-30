@@ -556,7 +556,6 @@
             // update calenderViewURL
             dateStr = new Date(nDaysAgoTimestamp);
             dateStr = helper.formatDate(dateStr);
-            var dateToCompare = dateStr;
             dateStr = dateStr.replace(/-/g, ''); //yyyymmdd
             localStorage.fullCalendarViewURL = "https://www.google.com/calendar/render?tab=mc&date=" +
                 dateStr + "&mode=list";
@@ -573,16 +572,17 @@
 
             // show me all entries
             // data.forEach(function (row) {
-            //   if (row.date === '2016-04-28')
+            //   if (row.date === '2016-04-20') {
             //     console.log(row.fullDate, row.accuracy, row.activitys || '', row.latitudeE7, row.longitudeE7);
+            //   }
             // });
 
             // ignore locations with accuracy over threshold
-            var oldLen = _.size(data);
+            // var oldLen = _.size(data);
             // data = data.filter(function (row) {
             //   return row.accuracy <= 1000;
             // });
-            console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
+            // console.log("num of rows dropped after accuracy filter:", oldLen - _.size(data));
 
 
             // ==========
@@ -612,7 +612,7 @@
                   minDuration,
                   requestToInsert;
 
-              minDuration = 30; //number of minutes
+              minDuration = 5; //number of minutes
               minDuration = minDuration * 60 * 1000; //microseconds
               batchInsert = gapi.client.newBatch();
 
@@ -638,7 +638,7 @@
                     helper.updateStatus("oh no something bad happened. Please contact admin.");
                   }
                 }
-                
+
                 if (counter > 0) {
                   console.log("Total events inserted:", counter);
                   $('#date-output').html(localStorage.dateText);
@@ -752,8 +752,8 @@
               var clusterLabel;
               for (var centroid in sortedCentroidCluster) {
                 clusterLabel = "PLACE" + count + ';' + '8' + ';' + centroid; //PLACE1;colorId;lat,lng
-                if (count === 23) {
-                  console.log("debug for place 23");
+                if (count === 1) {
+                  console.log("debug for place", count);
                 }
                 events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
                 allDayEvents.push(events);
@@ -900,11 +900,6 @@
 
               return results;
             }
-
-
-            //
-            // find which cluster geocodedAddress belongs to
-            //
 
 
             // cluster locations into different categories within margin of error
