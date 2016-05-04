@@ -571,11 +571,21 @@
             });
 
             // show me all entries
-            // data.forEach(function (row) {
-            //   if (row.date === '2016-04-20') {
-            //     console.log(row.fullDate, row.accuracy, row.activitys || '', row.latitudeE7, row.longitudeE7);
-            //   }
-            // });
+            var prevRow = {};
+            data.forEach(function (row) {
+              // if (row.date === '2016-04-20') {
+              console.log(row.fullDate, row.accuracy, row.activitys || '', row.latitudeE7, row.longitudeE7,
+                  row.velocity || '', row.heading || '', row.altitude || '');
+              if (prevRow.latitudeE7 && prevRow.longitudeE7) {
+                console.log("Distance (prev-curr):",
+                    distance(prevRow.latitudeE7, prevRow.longitudeE7, row.latitudeE7, row.longitudeE7));
+                console.log("--------");
+              }
+              prevRow.latitudeE7 = row.latitudeE7;
+              prevRow.longitudeE7 = row.longitudeE7;
+              // }
+            });
+            console.log("size of data:", data.length);
 
             // ignore locations with accuracy over threshold
             // var oldLen = _.size(data);
@@ -593,15 +603,59 @@
 
             data.forEach(function (row) {
               datasetSelected.push([row.latitudeE7, row.longitudeE7, row.timestampMs]);
-              // if (selectedDates.indexOf(row.date) > 0) { }
             });
-            console.log("rows selected:", datasetSelected.length);
+            console.log("dataset rows selected for clusters:", datasetSelected.length);
 
             // each cluster contains indices of values that belong to that cluster
             var dayEvents = getDayEventsFromCluster(geocodedAddresses, datasetSelected);
             console.log("total dayEvents::::::::::", dayEvents);
+
+            // compress events for each place
+            for (var i = 0; i < dayEvents.length; i++) {
+              dayEvents[i] = mergeSimilarEvents(dayEvents[i]);
+            }
+            console.log("compressed total dayEvents::::::::::", dayEvents);
+
+            // batch insert all events
             batchInsertEvents(dayEvents);
 
+
+            function mergeSimilarEvents(dayEvents) {
+              var dayLen = dayEvents.length;
+              var begin, curr, prev;
+              var minDuration = 60; //mins
+              minDuration = minDuration * 60 * 1000; //microseconds
+              var eventsArr = [];
+
+              var index = 0;
+              while (index < dayLen - 1) {
+                begin = dayEvents[index];
+
+                for (var i = index + 1; i < dayLen; i++) {
+                  prev = dayEvents[i - 1];
+                  curr = dayEvents[i];
+                  index = i;
+
+                  if (curr[1] - prev[1] <= minDuration) {
+                    begin[2] = curr[2]; //extend end time of event
+                  } else {
+                    eventsArr.push(begin);
+
+                    if (index === dayLen - 1) {
+                      eventsArr.push(curr);
+                    }
+
+                    break;
+                  }
+
+                  if (index === dayLen - 1) {
+                    eventsArr.push(begin);
+                  }
+                }
+              }
+
+              return eventsArr;
+            }
 
             function batchInsertEvents(events) {
               var item,
@@ -612,7 +666,7 @@
                   minDuration,
                   requestToInsert;
 
-              minDuration = 5; //number of minutes
+              minDuration = 0; //number of minutes
               minDuration = minDuration * 60 * 1000; //microseconds
               batchInsert = gapi.client.newBatch();
 
@@ -622,7 +676,7 @@
                   startTime = item[j][1];
                   endTime = item[j][2];
 
-                  if ((endTime - startTime) > minDuration) {
+                  if ((endTime - startTime) >= minDuration) {
                     requestToInsert = insertSingleRequest(item[j]);
                     batchInsert.add(requestToInsert);
                     counter++;
@@ -672,7 +726,21 @@
 
               var dbscan = new DBSCAN();
               var clusters = dbscan.run(oneDayDatset, eps, minPts, haversineDistance);
-              console.log("noise points(", dbscan.noise.length, ") pts:", dbscan.noise);
+              var noiseValues = getClusterValues(dbscan.noise, oneDayDatset);
+
+              console.log("noise indices points(", dbscan.noise.length, ") pts:", dbscan.noise);
+              console.log("Actual noise values:", noiseValues);
+
+              var label = "PLACE**";
+              var eventColorId = 11;
+              for (var i = 0; i < noiseValues.length; i++) {
+                var point = noiseValues[i];
+                var latLng = point[0] + "," + point[1];
+                var eventTime = new Date(point[2]);
+                noiseValues[i] = [label, eventTime, eventTime, eventColorId, latLng];
+
+                console.log("noise date: ", eventTime);
+              }
 
               if (debug) {
                 console.log("Number of clusters:", clusters.length);
@@ -769,6 +837,9 @@
                   }
                 }
               }
+
+              //add noiseValues to allDayEvents because of people who have sparse data esp for iOS
+              // allDayEvents.push(noiseValues);
 
               return allDayEvents;
             }
