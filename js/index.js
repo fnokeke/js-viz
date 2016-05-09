@@ -60,7 +60,11 @@
             SCOPES = ["https://www.googleapis.com/auth/calendar"];
 
         window.onload = function () {
-          checkAuth();
+          if (helper.IS_DEBUGGING_OFFLINE) {
+            console.log("checkAuth skipped for offline debugging.");
+          } else {
+            checkAuth();
+          }
         };
 
         //Check if current user has authorized this application.
@@ -405,11 +409,12 @@
               }
             }
 
-            var data = clusterLocations(uploadedData, geocodedAddresses);
             promiseReset = resetCalendar(localStorage.createdCalendarId);
             promiseReset.then(function () {
               try {
-                analyzeData(data);
+                clusterLocations(uploadedData, geocodedAddresses);
+                // var data = clusterLocations(uploadedData, geocodedAddresses);
+                // analyzeData(data);
                 helper.updateStatus();
                 helper.goToAnchor('calendar');
               } catch (err) {
@@ -498,11 +503,6 @@
             noOfDays = localStorage.daysCount;
             helper.assert(data.length > 0, "uploaded data length test");
 
-            // var activitysCounter = 0;
-            // var totalDataPoint = 0;
-            // var onFootCounter = 0;
-            // var inVehicleCounter = 0;
-
             // convert columns to expected format and add other new columns
             data.forEach(function (row) {
               var timestamp = parseInt(row.timestampMs),
@@ -540,11 +540,6 @@
 
             });
 
-            // console.log("total activities", totalDataPoint);
-            // console.log("invehicle counter", inVehicleCounter);
-            // console.log("onFootCounter", onFootCounter);
-            // console.log("onFootcounter ratio:", 1.0 * onFootCounter / totalDataPoint);
-
             // sort entire time once otherwise have to sort each value from groupby date keys
             data = _.sortBy(data, 'timestampMs');
 
@@ -566,25 +561,87 @@
                 new Date(nDaysAgoTimestamp).toDateString() + " - " + new Date(lastDayTimestamp).toDateString() +
                 "</i>.";
 
+            // ==========================
+            //
+            //
+            // reduce data to have only days that the user is interested in tracking
+            //
+            //
+            // ==========================
             data = data.filter(function (row) {
               return (row.timestampMs >= nDaysAgoTimestamp) && (row.timestampMs <= lastDayTimestamp);
             });
 
+
+            // ==========================
+            //
+            //
+            // dbscan each day to get clusters of places for each point
+            //
+            //
+            // groupedData: { '2016-04-04': Array[28], '2016-04-05': Array[3] }
+            // Array[3]: [{lat:float, lng:float, accuracy: int, date: str}, {lat:float, lng:float, ...}, {...}]
+            //
+            // getDayEventsFromCluster return: Array[3]
+            // Array[3]:
+            // [["PLACE1", startTime endTime, eventColor, latLng],
+            //  ["PLACE2", startTime endTime, eventColor, latLng]
+            //  ["PLACE3", startTime endTime, eventColor, latLng]]
+            // ==========================
+            var batchedEventsArray = [],
+                groupedData = _.groupBy(data, 'date');
+
+            for (var day in groupedData) {
+              if (day === '2016-05-03') {
+                groupedData[day].forEach(function (row) {
+                  console.log(new Date(row.timestampMs), row.accuracy);
+                });
+              }
+              var events = groupedData[day];
+              var oneDayDataset = [];
+              events.forEach(function (row) {
+                oneDayDataset.push([row.latitudeE7, row.longitudeE7, new Date(row.timestampMs)]);
+              });
+
+              if (oneDayDataset.length > 0) {
+                var dayEvents = getDayEventsFromCluster(geocodedAddresses, oneDayDataset);
+                for (var i = 0; i < dayEvents.length; i++) {
+                  dayEvents[i] = mergeSimilarEvents(dayEvents[i]);
+                }
+                console.log("clustered events (", day, ")::::", dayEvents);
+                batchInsertEvents(dayEvents);
+
+                // dayEvents.forEach(function (event) {
+                //   batchedEventsArray.push(event);
+                // });
+              }
+            }
+
+            // ==========================
+            //
+            //
+            // batch insert all events from all clusters
+            //
+            //
+            // ==========================
+            // console.log("batchedEventsArray: ", batchedEventsArray);
+            // batchInsertEvents(batchedEventsArray);
+
             // show me all entries
             var prevRow = {};
-            data.forEach(function (row) {
-              // if (row.date === '2016-04-20') {
-              console.log(row.fullDate, row.accuracy, row.activitys || '', row.latitudeE7, row.longitudeE7,
-                  row.velocity || '', row.heading || '', row.altitude || '');
-              if (prevRow.latitudeE7 && prevRow.longitudeE7) {
-                console.log("Distance (prev-curr):",
-                    distance(prevRow.latitudeE7, prevRow.longitudeE7, row.latitudeE7, row.longitudeE7));
-                console.log("--------");
-              }
-              prevRow.latitudeE7 = row.latitudeE7;
-              prevRow.longitudeE7 = row.longitudeE7;
-              // }
-            });
+            // data.forEach(function (row) {
+            //   // if (row.date === '2016-04-20') {
+            //   console.log(row.fullDate, row.accuracy, row.activitys || '', row.latitudeE7, row.longitudeE7,
+            //       row.velocity || '', row.heading || '', row.altitude || '');
+            //   if (prevRow.latitudeE7 && prevRow.longitudeE7) {
+            //     console.log("Distance (prev-curr):",
+            //         distance(prevRow.latitudeE7, prevRow.longitudeE7, row.latitudeE7, row.longitudeE7));
+            //     console.log("--------");
+            //   }
+            //   prevRow.latitudeE7 = row.latitudeE7;
+            //   prevRow.longitudeE7 = row.longitudeE7;
+            //   // }
+            // });
             console.log("size of data:", data.length);
 
             // ignore locations with accuracy over threshold
@@ -599,31 +656,61 @@
             // dbscan
             // ==========
             // var selectedDates = ["2016-04-15", "2016-04-16", "2016-04-19", "2016-04-20"];
-            var datasetSelected = [];
 
-            data.forEach(function (row) {
-              datasetSelected.push([row.latitudeE7, row.longitudeE7, row.timestampMs]);
-            });
-            console.log("dataset rows selected for clusters:", datasetSelected.length);
 
-            // each cluster contains indices of values that belong to that cluster
-            var dayEvents = getDayEventsFromCluster(geocodedAddresses, datasetSelected);
-            console.log("total dayEvents::::::::::", dayEvents);
+            // ==========================
+            //
+            //
+            //
+            //
+            //
+            // ==========================
+            //
+            //
+            //
+            //
+            //
+            // ==========================
+            //
+            //
+            //
+            //
+            // ==========================
 
-            // compress events for each place
-            for (var i = 0; i < dayEvents.length; i++) {
-              dayEvents[i] = mergeSimilarEvents(dayEvents[i]);
-            }
-            console.log("compressed total dayEvents::::::::::", dayEvents);
+            // var datasetSelected = [];
+            //
+            // data.forEach(function (row) {
+            //   datasetSelected.push([row.latitudeE7, row.longitudeE7, row.timestampMs]);
+            // });
+            // console.log("dataset rows selected for clusters:", datasetSelected.length);
+            //
+            // // each cluster contains indices of values that belong to that cluster
+            // var dayEvents = getDayEventsFromCluster(geocodedAddresses, datasetSelected);
+            // console.log("total dayEvents::::::::::", dayEvents);
+            //
+            // // compress events for each place
+            // for (var i = 0; i < dayEvents.length; i++) {
+            //   dayEvents[i] = mergeSimilarEvents(dayEvents[i]);
+            // }
+            // console.log("compressed total dayEvents::::::::::", dayEvents);
 
             // batch insert all events
-            batchInsertEvents(dayEvents);
+            // batchInsertEvents(dayEvents);
 
 
+            // ==========================
+            //
+            // helper functions for clustering and inserting events
+            //
+            // all functions are contained within clusterLocations function
+            //
+            //
+            //
+            // ==========================
             function mergeSimilarEvents(dayEvents) {
               var dayLen = dayEvents.length;
               var begin, curr, prev;
-              var minDuration = 60; //mins
+              var minDuration = 30; //mins
               minDuration = minDuration * 60 * 1000; //microseconds
               var eventsArr = [];
 
@@ -658,6 +745,12 @@
             }
 
             function batchInsertEvents(events) {
+
+              if (helper.IS_DEBUGGING_OFFLINE) {
+                console.log("batchInsertEvents skipped for offline debugging mode.")
+                return;
+              }
+
               var item,
                   counter = 0,
                   batchInsert,
@@ -722,25 +815,17 @@
               });
             }
 
-            function getDayEventsFromCluster(geocodedAddresses, oneDayDatset, eps=100, minPts=3, debug) {
+            // @return: Array[3]
+            // Array[3]:
+            // [["PLACE1", startTime endTime, eventColor, latLng],
+            //  ["PLACE2", startTime endTime, eventColor, latLng]
+            //  ["PLACE3", startTime endTime, eventColor, latLng]]
+            function getDayEventsFromCluster(geocodedAddresses, oneDayDatset, eps=100, minPts=3, addNoise, debug, discover) {
 
+              // dbscan input: Array[3]
+              // Array[3]: [[row.lat, row.lng, row.time], [row.lat, row.lng, row.time], [row.lat, row.lng, row.time]]
               var dbscan = new DBSCAN();
               var clusters = dbscan.run(oneDayDatset, eps, minPts, haversineDistance);
-              var noiseValues = getClusterValues(dbscan.noise, oneDayDatset);
-
-              console.log("noise indices points(", dbscan.noise.length, ") pts:", dbscan.noise);
-              console.log("Actual noise values:", noiseValues);
-
-              var label = "PLACE**";
-              var eventColorId = 11;
-              for (var i = 0; i < noiseValues.length; i++) {
-                var point = noiseValues[i];
-                var latLng = point[0] + "," + point[1];
-                var eventTime = new Date(point[2]);
-                noiseValues[i] = [label, eventTime, eventTime, eventColorId, latLng];
-
-                console.log("noise date: ", eventTime);
-              }
 
               if (debug) {
                 console.log("Number of clusters:", clusters.length);
@@ -795,7 +880,7 @@
                         console.log("====================");
                       }
 
-                      helper.assert(labelClusterValues.length > 3, "DBSCAN should have min of 3 values");
+                      helper.assert(labelClusterValues.length >= 3, "DBSCAN should have min of 3 values");
                       eventLabel = label + ';' + arrLatLng;
                       events = getEvents(eventLabel, labelClusterValues);
                       allDayEvents.push(events);
@@ -815,31 +900,57 @@
                 }
               }
 
-              // add other places that user didn't specify
-              var count = 1;
-              var clusterLabel;
-              for (var centroid in sortedCentroidCluster) {
-                clusterLabel = "PLACE" + count + ';' + '8' + ';' + centroid; //PLACE1;colorId;lat,lng
-                if (count === 1) {
-                  console.log("debug for place", count);
-                }
-                events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
-                allDayEvents.push(events);
-                count++;
+              // add other places that user didn't specify as part of geocoded Addresses
+              // discover = true;
+              if (discover) {
+                var count = 1;
+                var clusterLabel;
+                var placeDiscovered;
+                for (var centroid in sortedCentroidCluster) {
+                  placeDiscovered = sortedCentroidCluster[centroid];
+                  // console.log("length of placeDiscovered:", placeDiscovered.length);
+                  clusterLabel = "PLACE" + count + ';' + '8' + ';' + centroid; //PLACE1;colorId;lat,lng
+                  if (count === 6) {
+                    // console.log("debug for place", count);
+                  }
+                  events = getEvents(clusterLabel, sortedCentroidCluster[centroid]);
+                  allDayEvents.push(events);
+                  count++;
 
-                if (debug) {
-                  console.log("summarized duration (", clusterLabel, "):", events);
+                  if (debug) {
+                    console.log("summarized duration (", clusterLabel, "):", events);
 
-                  var eventItem;
-                  for (var i = 0; i < events.length; i++) {
-                    eventItem = events[i];
-                    console.log(eventItem[0], "::::::::", eventItem[1], "-", eventItem[2]);
+                    var eventItem;
+                    for (var i = 0; i < events.length; i++) {
+                      eventItem = events[i];
+                      console.log(eventItem[0], "::::::::", eventItem[1], "-", eventItem[2]);
+                    }
                   }
                 }
               }
 
               //add noiseValues to allDayEvents because of people who have sparse data esp for iOS
-              // allDayEvents.push(noiseValues);
+              if (addNoise) {
+                var noiseValues = getClusterValues(dbscan.noise, oneDayDatset);
+                console.log("noise indices points(", dbscan.noise.length, ") pts:", dbscan.noise);
+                console.log("Actual noise values:", noiseValues);
+
+                var eventTime,
+                    latLng,
+                    point,
+                    label = "PLACE**",
+                    eventColorId = 11;
+
+                for (var i = 0; i < noiseValues.length; i++) {
+                  point = noiseValues[i];
+                  latLng = point[0] + "," + point[1];
+                  eventTime = new Date(point[2]);
+                  noiseValues[i] = [label, eventTime, eventTime, eventColorId, latLng];
+                  console.log("noise date: ", eventTime);
+                }
+
+                allDayEvents.push(noiseValues);
+              }
 
               return allDayEvents;
             }
@@ -972,52 +1083,62 @@
               return results;
             }
 
-
+            // ==========================
+            // manual labelling of places without using dbscan
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            // ==========================
             // cluster locations into different categories within margin of error
-            var listOfLatLng,
-                latLng,
-                foundLabel,
-                marginError = 200;
+            // var listOfLatLng,
+            //     latLng,
+            //     foundLabel,
+            //     marginError = 200;
 
-            data.forEach(function (row) {
-              foundLabel = false;
+            // data.forEach(function (row) {
+            //   foundLabel = false;
+            //
+            //   for (var label in geocodedAddresses) {
+            //     if (geocodedAddresses.hasOwnProperty(label)) {
+            //       listOfLatLng = geocodedAddresses[label];
+            //
+            //       for (var i = 0; i < listOfLatLng.length; i++) {
+            //         latLng = listOfLatLng[i];
+            //
+            //         if (distance(latLng[0], latLng[1], row.latitudeE7, row.longitudeE7) <= marginError) {
+            //           row.locationLabel = label;
+            //           foundLabel = true;
+            //           break;
+            //         }
+            //       }
+            //
+            //       if (foundLabel) {
+            //         break;
+            //       }
+            //
+            //     }
+            //   }
+            //
+            //   if (!foundLabel) {
+            //     row.locationLabel = 'other';
+            //   }
+            //
+            // });
 
-              for (var label in geocodedAddresses) {
-                if (geocodedAddresses.hasOwnProperty(label)) {
-                  listOfLatLng = geocodedAddresses[label];
-
-                  for (var i = 0; i < listOfLatLng.length; i++) {
-                    latLng = listOfLatLng[i];
-
-                    if (distance(latLng[0], latLng[1], row.latitudeE7, row.longitudeE7) <= marginError) {
-                      row.locationLabel = label;
-                      foundLabel = true;
-                      break;
-                    }
-                  }
-
-                  if (foundLabel) {
-                    break;
-                  }
-
-                }
-              }
-
-              if (!foundLabel) {
-                row.locationLabel = 'other';
-              }
-
-            });
-
-            function distance(lat1, lon1, lat2, lon2) {
-              var p = 0.017453292519943295;    // Math.PI / 180
-              var c = Math.cos;
-              var a = 0.5 - c((lat2 - lat1) * p) / 2 +
-                  c(lat1 * p) * c(lat2 * p) *
-                  (1 - c((lon2 - lon1) * p)) / 2;
-
-              return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
-            }
+            // function distance(lat1, lon1, lat2, lon2) {
+            //   var p = 0.017453292519943295;    // Math.PI / 180
+            //   var c = Math.cos;
+            //   var a = 0.5 - c((lat2 - lat1) * p) / 2 +
+            //       c(lat1 * p) * c(lat2 * p) *
+            //       (1 - c((lon2 - lon1) * p)) / 2;
+            //
+            //   return 1000 * 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+            // }
 
             return data;
           }
@@ -1025,49 +1146,57 @@
           function resetCalendar(calendarId) {
             helper.assert(calendarId, "calendarId exist test");
             return new Promise(function (resolve) {
-              var events,
-                  event,
-                  listRequest,
-                  batchDelete,
-                  requestDeleted,
-                  deleteRequest,
-                  msg;
 
-              listRequest = gapi.client.calendar.events.list({
-                'calendarId': calendarId,
-                'showDeleted': false,
-                'singleEvents': true,
-                'orderBy': 'startTime'
-              });
-              listRequest.execute(function (resp) {
-                if (!resp.result) {
-                  return;
-                }
+              if (helper.IS_DEBUGGING_OFFLINE) {
+                console.log("reset calendar events skipped for offline debugging.");
+                resolve("reset calendar events skipped for offline debugging.");
+              } else {
 
-                deleteRequest = function (eventId) {
-                  return gapi.client.calendar.events.delete({
-                    'calendarId': localStorage.createdCalendarId,
-                    'eventId': eventId
-                  });
-                };
+                var events,
+                    event,
+                    listRequest,
+                    batchDelete,
+                    requestDeleted,
+                    deleteRequest,
+                    msg;
 
-                events = resp.result.items;
-                if (events.length > 0) {
-                  batchDelete = gapi.client.newBatch();
-                  for (var i = 0; i < events.length; i++) {
-                    event = events[i];
-                    requestDeleted = deleteRequest(event.id);
-                    batchDelete.add(requestDeleted);
+                listRequest = gapi.client.calendar.events.list({
+                  'calendarId': calendarId,
+                  'showDeleted': false,
+                  'singleEvents': true,
+                  'orderBy': 'startTime'
+                });
+
+                listRequest.execute(function (resp) {
+                  if (!resp.result) {
+                    return;
                   }
-                  batchDelete.execute(function () {
-                    msg = "No of events deleted before loading new ones: " + events.length;
+
+                  deleteRequest = function (eventId) {
+                    return gapi.client.calendar.events.delete({
+                      'calendarId': localStorage.createdCalendarId,
+                      'eventId': eventId
+                    });
+                  };
+
+                  events = resp.result.items;
+                  if (events.length > 0) {
+                    batchDelete = gapi.client.newBatch();
+                    for (var i = 0; i < events.length; i++) {
+                      event = events[i];
+                      requestDeleted = deleteRequest(event.id);
+                      batchDelete.add(requestDeleted);
+                    }
+                    batchDelete.execute(function () {
+                      msg = "No of events deleted before loading new ones: " + events.length;
+                      resolve(msg);
+                    });
+                  } else {
+                    msg = "No events to delete.";
                     resolve(msg);
-                  });
-                } else {
-                  msg = "No events to delete.";
-                  resolve(msg);
-                }
-              });
+                  }
+                });
+              }
             });
           }
 
@@ -1425,6 +1554,7 @@
       // ===================
 
       var helper = {
+        IS_DEBUGGING_OFFLINE: false,
 
         assert: function (condition, message) {
           if (!condition) {
@@ -1494,34 +1624,39 @@
        */
       function checkCalendarExists(calSummary, callback) {
 
-        var
-            index,
-            request,
-            cal,
-            calendarList = [];
+        if (helper.IS_DEBUGGING_OFFLINE) {
+          console.log("checkCalendarExists skipped for offline debugging.");
+        } else {
 
-        request = gapi.client.calendar.calendarList.list();
-        request.execute(function (resp) {
-          if (!resp) {
-            callback(-1);
-          } else {
-            calendarList = resp.items;
-            helper.assert(resp.items !== undefined, "calendarList test.");
-            for (index = 0; index < calendarList.length; index++) {
-              cal = calendarList[index];
-              if (cal.summary === calSummary) {
-                localStorage.createdCalendarId = cal.id;
-                localStorage.createdCalendarSummary = cal.summary;
-                callback(cal.id);
-                break;
+          var
+              index,
+              request,
+              cal,
+              calendarList = [];
+
+          request = gapi.client.calendar.calendarList.list();
+          request.execute(function (resp) {
+            if (!resp) {
+              callback(-1);
+            } else {
+              calendarList = resp.items;
+              helper.assert(resp.items !== undefined, "calendarList test.");
+              for (index = 0; index < calendarList.length; index++) {
+                cal = calendarList[index];
+                if (cal.summary === calSummary) {
+                  localStorage.createdCalendarId = cal.id;
+                  localStorage.createdCalendarSummary = cal.summary;
+                  callback(cal.id);
+                  break;
+                }
+              }
+
+              if (index >= calendarList.length) {
+                callback(-1);
               }
             }
-
-            if (index >= calendarList.length) {
-              callback(-1);
-            }
-          }
-        });
+          });
+        }
       }
 
       function createCalendar(calendarSummary, callback) {
