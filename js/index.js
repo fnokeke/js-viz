@@ -687,7 +687,13 @@
 
                 if (allEventsForDay.length > 0) {
                   batchInsert = gapi.client.newBatch();
+
                   for (var i = 0; i < allEventsForDay.length; i++) {
+
+                    if (allEventsForDay[i].summary.indexOf('OTHER') > -1) {
+                      // continue; //ignore all events with 'OTHER' category
+                    }
+
                     requestToInsert = insertRequest(allEventsForDay[i]);
                     batchInsert.add(requestToInsert);
                     insertCounter++;
@@ -859,10 +865,16 @@
               for (var i = 0; i < tmpArr.length; i++) {
                 ev = tmpArr[i];
                 ev.summary = ev.summary.split('(')[0];
+
+                // TWEAK to stop OTHER from having huge hours that might be incorrect
+                if (ev.summary === 'OTHER') {
+                  ev.end.dateTime = new Date(ev.start.dateTime.getTime() + 2*60000); // a few minutes 
+                }
+
                 timeDiff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
 
                 if (timeDiff > 0) {
-                  
+
                   if (timeDiff < 1.67) {
                     timeDiff = 60 * timeDiff;
                     ev.summary += '(~ ' + timeDiff.toFixed(0) + ' mins)';
