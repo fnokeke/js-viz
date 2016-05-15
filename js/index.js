@@ -309,6 +309,7 @@
               else {
                 msg = 'Uh oh :/ Something weird happened. Please contact admin.';
               }
+              helper.modifyDiv('date-output', 'hide');
               helper.updateStatus(msg);
               return;
             }
@@ -362,6 +363,7 @@
                 analyzeData(data);
                 helper.updateStatus();
                 helper.goToAnchor('calendar');
+                helper.updateDiv('uploadStatus', 'File successfully uploaded! Click button below.', 'lightgreen');
               } catch (err) {
                 console.log("analyzeData error caught:", err);
                 helper.updateStatus("Uh oh, couldn't finish processing your location data. Please contact admin.");
@@ -868,7 +870,7 @@
 
                 // TWEAK to stop OTHER from having huge hours that might be incorrect
                 if (ev.summary === 'OTHER') {
-                  ev.end.dateTime = new Date(ev.start.dateTime.getTime() + 2*60000); // a few minutes 
+                  ev.end.dateTime = new Date(ev.start.dateTime.getTime() + 2*60000); // a few minutes
                 }
 
                 timeDiff = (ev.end.dateTime - ev.start.dateTime) / (1000 * 60 * 60);
